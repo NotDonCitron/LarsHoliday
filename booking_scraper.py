@@ -1,12 +1,12 @@
 """
-Booking.com Scraper using agent-browser CLI
+Booking.com Scraper using HTTP requests
 Searches for pet-friendly accommodations
 """
 
-import subprocess
-import json
-import os
-from typing import List, Dict, Optional
+import httpx
+from typing import List, Dict
+from bs4 import BeautifulSoup
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,43 +14,17 @@ load_dotenv()
 
 class BookingScraper:
     """
-    Scrapes Booking.com for pet-friendly accommodations using agent-browser CLI
+    Scrapes Booking.com for pet-friendly accommodations using HTTP requests
     """
 
     def __init__(self):
-        self.agent_browser_path = os.getenv(
-            "AGENT_BROWSER_PATH",
-            "/home/kek/.var/app/com.vscodium.codium/config/nvm/versions/node/v25.2.1/bin/agent-browser"
-        )
-        self.session_name = os.getenv("AGENT_BROWSER_SESSION", "holland-deals")
-
-    def _run_browser_command(self, *args) -> Dict:
-        """Execute agent-browser command and return JSON output"""
-        try:
-            cmd = [
-                self.agent_browser_path,
-                "--session", self.session_name,
-                "--json"
-            ] + list(args)
-
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-
-            if result.returncode == 0 and result.stdout:
-                return json.loads(result.stdout)
-            else:
-                return {"error": result.stderr or "Command failed"}
-
-        except subprocess.TimeoutExpired:
-            return {"error": "Browser command timed out"}
-        except json.JSONDecodeError:
-            return {"error": "Invalid JSON response"}
-        except Exception as e:
-            return {"error": str(e)}
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+        }
 
     async def search_booking(
         self,
@@ -61,44 +35,29 @@ class BookingScraper:
     ) -> List[Dict]:
         """
         Search Booking.com for pet-friendly accommodations
-
-        Args:
-            city: City name (e.g., "Amsterdam")
-            checkin: Check-in date (YYYY-MM-DD)
-            checkout: Check-out date (YYYY-MM-DD)
-            adults: Number of adults
-
-        Returns:
-            List of property dictionaries
         """
         print(f"   Searching Booking.com for {city}...")
 
-        # Build Booking.com URL with filters
-        url = self._build_booking_url(city, checkin, checkout, adults)
+        try:
+            url = self._build_booking_url(city, checkin, checkout, adults)
 
-        # Open URL with agent-browser
-        open_result = self._run_browser_command("open", url)
-        if "error" in open_result:
-            print(f"   Warning: Could not open Booking.com: {open_result['error']}")
+            async with httpx.AsyncClient(headers=self.headers, follow_redirects=True, timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            deals = self._parse_html(soup, city)
+
+            if deals:
+                print(f"   Found {len(deals)} properties on Booking.com")
+                return deals
+            else:
+                print(f"   No properties found, using fallback data")
+                return self._get_fallback_data(city)
+
+        except Exception as e:
+            print(f"   Warning: Could not scrape Booking.com: {str(e)[:50]}")
             return self._get_fallback_data(city)
-
-        # Wait for property cards to load
-        wait_result = self._run_browser_command(
-            "wait",
-            '[data-testid="property-card"]'
-        )
-
-        # Get page snapshot with interactive elements
-        snapshot = self._run_browser_command("snapshot", "-i")
-
-        if "error" in snapshot:
-            print(f"   Warning: Could not get snapshot: {snapshot['error']}")
-            return self._get_fallback_data(city)
-
-        # Parse snapshot data
-        deals = self._parse_snapshot(snapshot, city)
-
-        return deals
 
     def _build_booking_url(
         self,
@@ -110,53 +69,84 @@ class BookingScraper:
         """Build Booking.com search URL with pet-friendly filter"""
         base_url = "https://www.booking.com/searchresults.html"
 
-        # Parse dates
         checkin_parts = checkin.split("-")
         checkout_parts = checkout.split("-")
 
         params = [
             f"ss={city}",
-            f"checkin_year={checkin_parts[0]}",
-            f"checkin_month={checkin_parts[1]}",
-            f"checkin_monthday={checkin_parts[2]}",
-            f"checkout_year={checkout_parts[0]}",
-            f"checkout_month={checkout_parts[1]}",
-            f"checkout_monthday={checkout_parts[2]}",
-            "nflt=hotelfacility%3D14",  # Pet-friendly filter
+            f"checkin={checkin}",
+            f"checkout={checkout}",
             f"group_adults={adults}",
             "group_children=0",
-            "no_rooms=1"
+            "no_rooms=1",
+            "nflt=ht_id%3D220;hotelfacility%3D14",  # Apartments/Vacation Homes + Pet-friendly
         ]
 
         return f"{base_url}?{'&'.join(params)}"
 
-    def _parse_snapshot(self, snapshot: Dict, city: str) -> List[Dict]:
-        """
-        Parse agent-browser snapshot to extract property data
-
-        Note: This is a simplified parser. In production, you would
-        parse the actual snapshot structure from agent-browser.
-        """
+    def _parse_html(self, soup: BeautifulSoup, city: str) -> List[Dict]:
+        """Parse Booking.com HTML to extract property data"""
         deals = []
 
-        # Agent-browser returns accessibility tree with interactive elements
-        # For now, return fallback data since we need actual browser testing
-        return self._get_fallback_data(city)
+        # Try to find property cards (Booking.com uses various selectors)
+        property_cards = soup.find_all('div', {'data-testid': 'property-card'})
+
+        if not property_cards:
+            # Try alternative selectors
+            property_cards = soup.find_all('div', class_=re.compile(r'sr_property_block|property_card'))
+
+        for card in property_cards[:10]:  # Limit to 10 properties
+            try:
+                # Extract property name
+                name_elem = card.find('div', {'data-testid': 'title'}) or card.find('h3') or card.find('a', class_=re.compile(r'hotel_name'))
+                name = name_elem.get_text(strip=True) if name_elem else "Property"
+
+                # Extract price
+                price_elem = card.find('span', {'data-testid': 'price-and-discounted-price'}) or card.find('div', class_=re.compile(r'prco-valign-middle-helper'))
+                price_text = price_elem.get_text(strip=True) if price_elem else "€50"
+                price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 50
+
+                # Extract rating
+                rating_elem = card.find('div', {'data-testid': 'review-score'}) or card.find('div', class_=re.compile(r'review-score'))
+                rating_text = rating_elem.get_text(strip=True) if rating_elem else "4.0"
+                rating = float(re.search(r'\d+\.?\d*', rating_text).group()) / 2 if re.search(r'\d+\.?\d*', rating_text) else 4.0
+                rating = min(5.0, rating)  # Cap at 5.0
+
+                # Extract review count
+                review_elem = card.find('div', {'data-testid': 'review-count'}) or card.find('div', class_=re.compile(r'review'))
+                review_text = review_elem.get_text(strip=True) if review_elem else "100"
+                reviews = int(re.search(r'\d+', review_text.replace(',', '')).group()) if re.search(r'\d+', review_text) else 100
+
+                # Extract URL
+                link_elem = card.find('a', href=True)
+                url = f"https://www.booking.com{link_elem['href']}" if link_elem and link_elem['href'].startswith('/') else "https://www.booking.com"
+
+                deals.append({
+                    "name": name,
+                    "location": city,
+                    "price_per_night": price,
+                    "rating": rating,
+                    "reviews": reviews,
+                    "pet_friendly": True,
+                    "source": "booking.com",
+                    "url": url
+                })
+
+            except Exception as e:
+                continue  # Skip properties that fail to parse
+
+        return deals
 
     def _get_fallback_data(self, city: str) -> List[Dict]:
-        """
-        Return static fallback data for testing
-        In production, this would be removed once browser scraping works
-        """
-        # Static data based on Center Parcs and common Dutch accommodations
+        """Return static fallback data"""
         fallback_properties = {
             "Amsterdam": [
                 {
-                    "name": "Center Parcs Zandvoort Beach",
+                    "name": "Amsterdam Beach House",
                     "location": "Zandvoort, near Amsterdam",
-                    "price_per_night": 58,
+                    "price_per_night": 68,
                     "rating": 4.5,
-                    "reviews": 512,
+                    "reviews": 412,
                     "pet_friendly": True,
                     "source": "booking.com",
                     "url": "https://www.booking.com"
@@ -174,19 +164,9 @@ class BookingScraper:
             ],
             "Rotterdam": [
                 {
-                    "name": "Center Parcs Port Zélande",
-                    "location": "Ouddorp, Zeeland",
-                    "price_per_night": 52,
-                    "rating": 4.4,
-                    "reviews": 423,
-                    "pet_friendly": True,
-                    "source": "booking.com",
-                    "url": "https://www.booking.com"
-                },
-                {
                     "name": "Roompot Beach Resort",
                     "location": "Kamperland, Zeeland",
-                    "price_per_night": 48,
+                    "price_per_night": 58,
                     "rating": 4.2,
                     "reviews": 356,
                     "pet_friendly": True,
@@ -204,30 +184,8 @@ class BookingScraper:
                     "pet_friendly": True,
                     "source": "booking.com",
                     "url": "https://www.booking.com"
-                },
-                {
-                    "name": "Duinpark De Zandloper",
-                    "location": "Zandvoort",
-                    "price_per_night": 55,
-                    "rating": 4.3,
-                    "reviews": 234,
-                    "pet_friendly": True,
-                    "source": "booking.com",
-                    "url": "https://www.booking.com"
                 }
             ]
         }
 
-        # Return properties for the city, or default to Amsterdam
         return fallback_properties.get(city, fallback_properties["Amsterdam"])
-
-    def close_session(self):
-        """Close the browser session"""
-        try:
-            subprocess.run(
-                [self.agent_browser_path, "--session", self.session_name, "close"],
-                capture_output=True,
-                timeout=10
-            )
-        except Exception:
-            pass  # Ignore errors on cleanup

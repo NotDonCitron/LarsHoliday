@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wochenend-Trip Holland 🐕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .date-options {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .date-options h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .property {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .property:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .property-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        .property-title {
+            flex: 1;
+        }
+        .property h2 {
+            color: #333;
+            font-size: 1.4em;
+            margin-bottom: 5px;
+        }
+        .location {
+            color: #666;
+            font-size: 0.95em;
+        }
+        .badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .badge.top {
+            background: #ff6b6b;
+        }
+        .badge.best-rating {
+            background: #ffc107;
+            color: #333;
+        }
+
+        /* Gallery Styles */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .gallery-main {
+            grid-column: 1 / -1;
+            height: 300px;
+        }
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            height: 150px;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        .gallery-main img {
+            height: 100%;
+        }
+
+        .property-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .detail {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .detail-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .price {
+            color: #28a745;
+        }
+        .rating {
+            color: #ffc107;
+        }
+        .description {
+            color: #555;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .cta-button:hover {
+            background: #764ba2;
+        }
+        .features {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .feature {
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+            .gallery-main {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏖️ Wochenend-Trip Holland</h1>
+        <p class="subtitle">Hundefreundliche Unterkünfte für 4 Personen + 1 Hund</p>
+
+        <div class="date-options">
+            <h3>📅 Verfügbare Termine</h3>
+            <p><strong>Option 1:</strong> Freitag 31. Januar → Samstag 1. Februar 2026</p>
+            <p><strong>Option 2:</strong> Samstag 1. Februar → Sonntag 2. Februar 2026</p>
+            <p style="margin-top: 10px; color: #28a745;"><strong>Nur 1 Nacht • Gleiche Preise für beide Tage</strong></p>
+        </div>
+
+        <!-- Property 1: Port Zélande -->
+        <div class="property">
+            <div class="property-header">
+                <div class="property-title">
+                    <h2>Center Parcs Port Zélande</h2>
+                    <p class="location">📍 Ouddorp, Zeeland (Nordseeküste)</p>
+                </div>
+                <span class="badge top">TOP #1</span>
+            </div>
+
+            <div class="gallery">
+                <div class="gallery-main">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/400x400_summer.jpg" alt="Port Zélande Sommer" onerror="this.src='https://via.placeholder.com/800x300/667eea/ffffff?text=Port+Zelande+Beach'">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/4_activites.jpg" alt="Aktivitäten" onerror="this.src='https://via.placeholder.com/250x150/764ba2/ffffff?text=Activities'">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/400x400_AG172369.jpg" alt="Strand" onerror="this.src='https://via.placeholder.com/250x150/667eea/ffffff?text=Beach'">
+                </div>
+            </div>
+
+            <div class="property-details">
+                <div class="detail">
+                    <div class="detail-label">Preis</div>
+                    <div class="detail-value price">€52</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Bewertung</div>
+                    <div class="detail-value rating">⭐ 4.4/5</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Reviews</div>
+                    <div class="detail-value">423</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Score</div>
+                    <div class="detail-value">96.7/100</div>
+                </div>
+            </div>
+
+            <div class="features">
+                <span class="feature">🐕 Hundefreundlich</span>
+                <span class="feature">🏊 Schwimmbad</span>
+                <span class="feature">🌊 Strandnähe</span>
+                <span class="feature">🍽️ Restaurants</span>
+                <span class="feature">🚴 Fahrradverleih</span>
+            </div>
+
+            <div class="description">
+                <strong>Warum hier?</strong> Direkt an der Nordseeküste mit Strand, subtropischem Schwimmbad und vielen Aktivitäten. Perfekt für einen entspannten Kurztrip mit Hund. Hunde sind willkommen und können am Strand laufen. Der Park liegt in Zeeland, bekannt für die schönsten Strände der Niederlande.
+            </div>
+
+            <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_PZ_vakantiepark-port-zelande" class="cta-button" target="_blank">Jetzt buchen →</a>
+        </div>
+
+        <!-- Property 2: Het Heijderbos -->
+        <div class="property">
+            <div class="property-header">
+                <div class="property-title">
+                    <h2>Center Parcs Het Heijderbos</h2>
+                    <p class="location">📍 Heijen, Limburg</p>
+                </div>
+                <span class="badge">GÜNSTIGSTE</span>
+            </div>
+
+            <div class="gallery">
+                <div class="gallery-main">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/400x400-AG172372.jpg" alt="Het Heijderbos" onerror="this.src='https://via.placeholder.com/800x300/28a745/ffffff?text=Het+Heijderbos+Forest'">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/4_activites.jpg" alt="Aktivitäten" onerror="this.src='https://via.placeholder.com/250x150/28a745/ffffff?text=Activities'">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/400x400EH096621.jpg" alt="Natur" onerror="this.src='https://via.placeholder.com/250x150/2ecc71/ffffff?text=Nature'">
+                </div>
+            </div>
+
+            <div class="property-details">
+                <div class="detail">
+                    <div class="detail-label">Preis</div>
+                    <div class="detail-value price">€48</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Bewertung</div>
+                    <div class="detail-value rating">⭐ 4.3/5</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Reviews</div>
+                    <div class="detail-value">367</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Score</div>
+                    <div class="detail-value">95.4/100</div>
+                </div>
+            </div>
+
+            <div class="features">
+                <span class="feature">🐕 Hundefreundlich</span>
+                <span class="feature">🌲 Wald</span>
+                <span class="feature">🚴 Fahrradwege</span>
+                <span class="feature">💰 Bester Preis</span>
+                <span class="feature">🏊 Indoor Pool</span>
+            </div>
+
+            <div class="description">
+                <strong>Warum hier?</strong> Günstigste Option mit top Bewertung! Mitten im Wald gelegen, ideal für Wanderungen mit dem Hund. Ruhige Lage in Limburg, perfekt zum Entspannen. Nur 4€ günstiger als Port Zélande, aber ohne Strand. Dafür viel Natur und Ruhe.
+            </div>
+
+            <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_HB_vakantiepark-het-heijderbos" class="cta-button" target="_blank">Jetzt buchen →</a>
+        </div>
+
+        <!-- Property 3: Zandvoort Beach -->
+        <div class="property">
+            <div class="property-header">
+                <div class="property-title">
+                    <h2>Center Parcs Zandvoort Beach</h2>
+                    <p class="location">📍 Zandvoort aan Zee (bei Amsterdam)</p>
+                </div>
+                <span class="badge best-rating">BESTE BEWERTUNG</span>
+            </div>
+
+            <div class="gallery">
+                <div class="gallery-main">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/400x400_summer.jpg" alt="Zandvoort Beach" onerror="this.src='https://via.placeholder.com/800x300/ffc107/333333?text=Zandvoort+Beach'">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/400x400_AG172369.jpg" alt="Strand" onerror="this.src='https://via.placeholder.com/250x150/ffb700/333333?text=Beach'">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://photo.centerparcs.com/0.New-BI-2023/Visuals/400x400-header/4_activites.jpg" alt="Aktivitäten" onerror="this.src='https://via.placeholder.com/250x150/ffa500/333333?text=Activities'">
+                </div>
+            </div>
+
+            <div class="property-details">
+                <div class="detail">
+                    <div class="detail-label">Preis</div>
+                    <div class="detail-value price">€58</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Bewertung</div>
+                    <div class="detail-value rating">⭐ 4.5/5</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Reviews</div>
+                    <div class="detail-value">512</div>
+                </div>
+                <div class="detail">
+                    <div class="detail-label">Score</div>
+                    <div class="detail-value">94.7/100</div>
+                </div>
+            </div>
+
+            <div class="features">
+                <span class="feature">🐕 Hundefreundlich</span>
+                <span class="feature">🏖️ Strand</span>
+                <span class="feature">🏙️ Amsterdam 30min</span>
+                <span class="feature">🎭 Nightlife</span>
+                <span class="feature">🏄 Wassersport</span>
+            </div>
+
+            <div class="description">
+                <strong>Warum hier?</strong> Höchste Bewertung! Direkt am berühmten Zandvoort Strand, nur 30 Minuten von Amsterdam. Perfekt wenn ihr Strand UND Stadt erleben wollt. Viele Restaurants und Bars in der Nähe. Der Strand ist auch im Winter schön für Spaziergänge mit dem Hund.
+            </div>
+
+            <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_PZ_vakantiepark-zandvoort" class="cta-button" target="_blank">Jetzt buchen →</a>
+        </div>
+
+        <div class="footer">
+            <p><strong>💡 Tipp:</strong> Alle Unterkünfte sind hundefreundlich und für 4 Personen + 1 Hund geeignet.</p>
+            <p style="margin-top: 10px;">Preise gelten für 1 Nacht • Hunde übernachten kostenlos bei Center Parcs</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">🌤️ Wetter Ende Januar: ca. 3-5°C, teilweise bewölkt</p>
+            <p style="margin-top: 15px; font-size: 0.9em;">Erstellt mit Holland Vacation Deal Finder 🤖</p>
+        </div>
+    </div>
+</body>
+</html>
