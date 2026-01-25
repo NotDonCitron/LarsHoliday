@@ -1,9 +1,9 @@
 """
-Booking.com Scraper using HTTP requests
+Booking.com Scraper using curl-cffi for stealth
 Searches for pet-friendly accommodations
 """
 
-import httpx
+from curl_cffi import requests
 from typing import List, Dict
 from bs4 import BeautifulSoup
 import re
@@ -14,17 +14,12 @@ load_dotenv()
 
 class BookingScraper:
     """
-    Scrapes Booking.com for pet-friendly accommodations using HTTP requests
+    Scrapes Booking.com for pet-friendly accommodations using curl-cffi stealth
     """
 
     def __init__(self):
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-        }
+        # curl-cffi handles headers automatically with browser impersonation
+        self.session = requests.Session()
 
     async def search_booking(
         self,
@@ -41,9 +36,14 @@ class BookingScraper:
         try:
             url = self._build_booking_url(city, checkin, checkout, adults)
 
-            async with httpx.AsyncClient(headers=self.headers, follow_redirects=True, timeout=30.0) as client:
-                response = await client.get(url)
-                response.raise_for_status()
+            # Use curl-cffi with Chrome impersonation for stealth
+            response = self.session.get(
+                url,
+                impersonate="chrome120",
+                timeout=30,
+                allow_redirects=True
+            )
+            response.raise_for_status()
 
             soup = BeautifulSoup(response.text, 'html.parser')
             deals = self._parse_html(soup, city)
