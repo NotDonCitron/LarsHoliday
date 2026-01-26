@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
+import threading
+import asyncio
+from holland_agent import HollandVacationAgent
 
 class HollandVacationApp:
     def __init__(self):
@@ -12,6 +15,9 @@ class HollandVacationApp:
         self.bg_color = "#2E2E2E"
         self.fg_color = "#FFFFFF"
         self.root.configure(bg=self.bg_color)
+        
+        # Initialize Agent
+        self.agent = HollandVacationAgent()
         
         # Configure styles
         style = ttk.Style()
@@ -38,6 +44,10 @@ class HollandVacationApp:
         title_label.pack(pady=(0, 20))
         
         self.create_input_form()
+        
+        # Status Area (Placeholder for now)
+        self.status_label = ttk.Label(self.main_frame, text="", style="Dark.TLabel")
+        self.status_label.pack(pady=10)
 
     def create_input_form(self):
         # Form Container
@@ -126,7 +136,49 @@ class HollandVacationApp:
     def start_search(self):
         if not self.validate_inputs():
             return
-        print("Search validation passed. Starting search...")
+        
+        self.status_label.config(text="Starting search... Please wait.")
+        self.search_btn.state(['disabled'])
+        
+        # Capture values to pass to thread
+        cities = [c.strip() for c in self.cities_var.get().split(",")]
+        checkin = self.checkin_var.get()
+        checkout = self.checkout_var.get()
+        adults = self.adults_var.get()
+        budget = self.budget_var.get()
+        pets = 1 if self.allow_dogs_var.get() else 0
+        
+        # Update agent budget
+        self.agent.budget_max = budget
+        
+        # Start thread
+        thread = threading.Thread(
+            target=self.run_search_thread,
+            args=(cities, checkin, checkout, adults, pets)
+        )
+        thread.start()
+
+    def run_search_thread(self, cities, checkin, checkout, adults, pets):
+        try:
+            # Run async agent in this thread
+            results = asyncio.run(
+                self.agent.find_best_deals(
+                    cities=cities,
+                    checkin=checkin,
+                    checkout=checkout,
+                    group_size=adults,
+                    pets=pets
+                )
+            )
+            print(f"Search complete. Found {len(results.get('top_10_deals', []))} top deals.")
+            # We will handle UI updates (success message) in next task via after() or queue
+        except Exception as e:
+            print(f"Search failed: {e}")
+        finally:
+            # Re-enable button (not thread-safe strictly, but Tkinter often handles it, 
+            # ideally use root.after)
+            # self.search_btn.state(['!disabled']) 
+            pass
 
         self.root.mainloop()
 
