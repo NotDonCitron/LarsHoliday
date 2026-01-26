@@ -15,7 +15,7 @@
 - [x] Task: Conductor - User Manual Verification 'Prototype and Basic Structure' (Protocol in workflow.md) [checkpoint: 8bf4765]
 
 ## Phase 2: Agent Integration
-- [ ] Task: Connect GUI to Agent
+- [x] Task: Connect GUI to Agent 62866be
     - [ ] Import `HollandVacationAgent`.
     - [ ] Create a thread-safe wrapper to run `agent.find_best_deals` without blocking the main loop.
     - [ ] Redirect `print` statements or status updates from the agent to the GUI's status area (optional: using a callback or queue).
