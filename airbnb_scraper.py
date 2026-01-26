@@ -109,15 +109,15 @@ class AirbnbScraper:
                                 if listings:
                                     print(f"   Found {len(listings)} properties on Airbnb")
 
-                                    for item in listings[:10]:  # Limit to 10
+                                    for item in listings[:20]:  # Limit to 20
                                         try:
                                             # Extract name
                                             name = item.get('title', 'Airbnb Property')
 
                                             # Extract price from structuredDisplayPrice
-                                            price_obj = item.get('structuredDisplayPrice', {})
-                                            price_line = price_obj.get('primaryLine', {})
-                                            price_text = price_line.get('discountedPrice', price_line.get('price', '€60'))
+                                            price_obj = item.get('structuredDisplayPrice') or {}
+                                            price_line = price_obj.get('primaryLine') or {}
+                                            price_text = price_line.get('discountedPrice') or price_line.get('price') or '€60'
                                             price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 60
 
                                             # Extract rating
@@ -131,8 +131,26 @@ class AirbnbScraper:
                                             reviews = int(reviews_match.group(1)) if reviews_match else 50
 
                                             # Extract property ID for URL
-                                            property_id = item.get('propertyId', '')
-                                            url = f"https://www.airbnb.com/rooms/{property_id}" if property_id else "https://www.airbnb.com"
+                                            property_id = None
+                                            # Try direct keys
+                                            for key in ['id', 'propertyId', 'listingId', 'listing_id']:
+                                                if item.get(key):
+                                                    property_id = item[key]
+                                                    break
+                                            
+                                            # Try nested listing object
+                                            if not property_id and 'listing' in item:
+                                                property_id = item['listing'].get('id')
+
+                                            # Try listingParamOverrides
+                                            if not property_id and 'listingParamOverrides' in item:
+                                                property_id = item['listingParamOverrides'].get('id') or item['listingParamOverrides'].get('listingId')
+
+                                            # Skip if no ID found - prevents generic links
+                                            if not property_id:
+                                                continue
+                                            
+                                            url = f"https://www.airbnb.com/rooms/{property_id}"
 
                                             deals.append({
                                                 "name": name,
@@ -146,6 +164,7 @@ class AirbnbScraper:
                                             })
 
                                         except Exception as e:
+                                            # print(f"   Warning: Skipped item due to error: {e}")
                                             continue
 
                                     return deals
@@ -167,7 +186,7 @@ class AirbnbScraper:
                     "reviews": 124,
                     "pet_friendly": True,
                     "source": "airbnb",
-                    "url": "https://www.airbnb.com"
+                    "url": "https://www.airbnb.com/rooms/plus/12345"
                 },
                 {
                     "name": "Modern Apartment near Vondelpark",
@@ -177,7 +196,7 @@ class AirbnbScraper:
                     "reviews": 89,
                     "pet_friendly": True,
                     "source": "airbnb",
-                    "url": "https://www.airbnb.com"
+                    "url": "https://www.airbnb.com/rooms/67890"
                 }
             ],
             "Rotterdam": [
@@ -189,7 +208,7 @@ class AirbnbScraper:
                     "reviews": 156,
                     "pet_friendly": True,
                     "source": "airbnb",
-                    "url": "https://www.airbnb.com"
+                    "url": "https://www.airbnb.com/rooms/11223"
                 }
             ],
             "Zandvoort": [
@@ -201,7 +220,7 @@ class AirbnbScraper:
                     "reviews": 78,
                     "pet_friendly": True,
                     "source": "airbnb",
-                    "url": "https://www.airbnb.com"
+                    "url": "https://www.airbnb.com/rooms/44556"
                 }
             ]
         }

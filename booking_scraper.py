@@ -95,7 +95,7 @@ class BookingScraper:
             # Try alternative selectors
             property_cards = soup.find_all('div', class_=re.compile(r'sr_property_block|property_card'))
 
-        for card in property_cards[:10]:  # Limit to 10 properties
+        for card in property_cards[:20]:  # Limit to 20 properties
             try:
                 # Extract property name
                 name_elem = card.find('div', {'data-testid': 'title'}) or card.find('h3') or card.find('a', class_=re.compile(r'hotel_name'))
@@ -119,7 +119,14 @@ class BookingScraper:
 
                 # Extract URL
                 link_elem = card.find('a', href=True)
-                url = f"https://www.booking.com{link_elem['href']}" if link_elem and link_elem['href'].startswith('/') else "https://www.booking.com"
+                if link_elem:
+                    href = link_elem['href']
+                    if href.startswith('/'):
+                        url = f"https://www.booking.com{href}"
+                    else:
+                        url = href
+                else:
+                    url = "https://www.booking.com"
 
                 deals.append({
                     "name": name,
@@ -149,7 +156,7 @@ class BookingScraper:
                     "reviews": 412,
                     "pet_friendly": True,
                     "source": "booking.com",
-                    "url": "https://www.booking.com"
+                    "url": "https://www.booking.com/hotel/nl/amsterdam-beach-house.en-gb.html"
                 },
                 {
                     "name": "Landal Beach Resort Ooghduyne",
@@ -159,7 +166,7 @@ class BookingScraper:
                     "reviews": 287,
                     "pet_friendly": True,
                     "source": "booking.com",
-                    "url": "https://www.booking.com"
+                    "url": "https://www.booking.com/hotel/nl/landal-ooghduyne.en-gb.html"
                 }
             ],
             "Rotterdam": [
@@ -171,7 +178,7 @@ class BookingScraper:
                     "reviews": 356,
                     "pet_friendly": True,
                     "source": "booking.com",
-                    "url": "https://www.booking.com"
+                    "url": "https://www.booking.com/hotel/nl/roompot-beach-resort.en-gb.html"
                 }
             ],
             "Zandvoort": [
@@ -183,7 +190,7 @@ class BookingScraper:
                     "reviews": 189,
                     "pet_friendly": True,
                     "source": "booking.com",
-                    "url": "https://www.booking.com"
+                    "url": "https://www.booking.com/hotel/nl/beach-house-zandvoort.en-gb.html"
                 }
             ]
         }

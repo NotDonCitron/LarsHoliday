@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holland Wochenende - Alle Optionen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            text-align: center;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .date-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .category {
+            margin-bottom: 40px;
+        }
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .property {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            background: white;
+        }
+        .property:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .property-header {
+            margin-bottom: 15px;
+        }
+        .property h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        .location {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .price-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .price {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .price-per-person {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .rating-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffc107;
+        }
+        .reviews {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .features {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .feature {
+            background: #f8f9fa;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+        }
+        .cta-button {
+            display: block;
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .cta-button:hover {
+            background: #764ba2;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏖️ Holland Wochenende - Alle Optionen</h1>
+        <p class="subtitle">Hundefreundliche Unterkünfte für 4 Personen + 1 Hund</p>
+
+        <div class="date-box">
+            <strong>📅 Termin:</strong> Freitag 31. Januar oder Samstag 1. Februar 2026 (1 Nacht)<br>
+            <strong>👥 Gruppe:</strong> 4 Erwachsene + 1 Hund
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">13</div>
+                <div class="stat-label">Unterkünfte gefunden</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Center Parcs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Booking.com</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Airbnb</div>
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header">
+                <span>🏕️ Center Parcs - Ferienparks</span>
+                <span>€42-58/Nacht</span>
+            </div>
+            <div class="property-grid">
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Center Parcs De Kempervennen</h3>
+                        <p class="location">📍 Westerhoven, North Brabant</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€45</div>
+                        <div class="price-per-person">€11.25 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.2/5.0</span>
+                        <span class="reviews">(234 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hunde kostenlos</span>
+                        <span class="feature">🏊 Schwimmbad</span>
+                        <span class="feature">🌳 Natur</span>
+                    </div>
+                    <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_VK_vakantiepark-de-kempervennen" class="cta-button" target="_blank">Mehr Info →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Center Parcs Zandvoort Beach</h3>
+                        <p class="location">📍 Zandvoort aan Zee</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€58</div>
+                        <div class="price-per-person">€14.50 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.5/5.0</span>
+                        <span class="reviews">(512 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hunde kostenlos</span>
+                        <span class="feature">🏊 Schwimmbad</span>
+                        <span class="feature">🌳 Natur</span>
+                    </div>
+                    <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_PZ_vakantiepark-zandvoort" class="cta-button" target="_blank">Mehr Info →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Center Parcs De Huttenheugte</h3>
+                        <p class="location">📍 Dalen, Drenthe</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€42</div>
+                        <div class="price-per-person">€10.50 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.1/5.0</span>
+                        <span class="reviews">(189 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hunde kostenlos</span>
+                        <span class="feature">🏊 Schwimmbad</span>
+                        <span class="feature">🌳 Natur</span>
+                    </div>
+                    <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_DH_vakantiepark-de-huttenheugte" class="cta-button" target="_blank">Mehr Info →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Center Parcs Port Zélande</h3>
+                        <p class="location">📍 Ouddorp, Zeeland</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€52</div>
+                        <div class="price-per-person">€13.00 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.4/5.0</span>
+                        <span class="reviews">(423 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hunde kostenlos</span>
+                        <span class="feature">🏊 Schwimmbad</span>
+                        <span class="feature">🌳 Natur</span>
+                    </div>
+                    <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_PZ_vakantiepark-port-zelande" class="cta-button" target="_blank">Mehr Info →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Center Parcs Het Heijderbos</h3>
+                        <p class="location">📍 Heijen, Limburg</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€48</div>
+                        <div class="price-per-person">€12.00 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.3/5.0</span>
+                        <span class="reviews">(367 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hunde kostenlos</span>
+                        <span class="feature">🏊 Schwimmbad</span>
+                        <span class="feature">🌳 Natur</span>
+                    </div>
+                    <a href="https://www.centerparcs.nl/nl-nl/nederland/fp_HB_vakantiepark-het-heijderbos" class="cta-button" target="_blank">Mehr Info →</a>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header">
+                <span>🏠 Booking.com - Ferienhäuser & Apartments</span>
+                <span>€50-100/Nacht</span>
+            </div>
+            <div class="property-grid">
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Amsterdam Beach House</h3>
+                        <p class="location">📍 Zandvoort, near Amsterdam</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€68</div>
+                        <div class="price-per-person">€17.00 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.5/5.0</span>
+                        <span class="reviews">(412 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hundefreundlich</span>
+                        <span class="feature">🏖️ Strand</span>
+                        <span class="feature">🍳 Küche</span>
+                    </div>
+                    <a href="https://www.booking.com/hotel/nl/amsterdam-beach-house.en-gb.html" class="cta-button" target="_blank">Auf Booking.com ansehen →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Landal Beach Resort Ooghduyne</h3>
+                        <p class="location">📍 Julianadorp, North Holland</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€65</div>
+                        <div class="price-per-person">€16.25 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.3/5.0</span>
+                        <span class="reviews">(287 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hundefreundlich</span>
+                        <span class="feature">🏖️ Strand</span>
+                        <span class="feature">🍳 Küche</span>
+                    </div>
+                    <a href="https://www.booking.com/hotel/nl/landal-ooghduyne.en-gb.html" class="cta-button" target="_blank">Auf Booking.com ansehen →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Roompot Beach Resort</h3>
+                        <p class="location">📍 Kamperland, Zeeland</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€58</div>
+                        <div class="price-per-person">€14.50 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.2/5.0</span>
+                        <span class="reviews">(356 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hundefreundlich</span>
+                        <span class="feature">🏖️ Strand</span>
+                        <span class="feature">🍳 Küche</span>
+                    </div>
+                    <a href="https://www.booking.com/hotel/nl/roompot-beach-resort.en-gb.html" class="cta-button" target="_blank">Auf Booking.com ansehen →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Beach House Zandvoort</h3>
+                        <p class="location">📍 Zandvoort aan Zee</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€72</div>
+                        <div class="price-per-person">€18.00 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.6/5.0</span>
+                        <span class="reviews">(189 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Hundefreundlich</span>
+                        <span class="feature">🏖️ Strand</span>
+                        <span class="feature">🍳 Küche</span>
+                    </div>
+                    <a href="https://www.booking.com/hotel/nl/beach-house-zandvoort.en-gb.html" class="cta-button" target="_blank">Auf Booking.com ansehen →</a>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="category">
+            <div class="category-header">
+                <span>🏡 Airbnb - Private Unterkünfte</span>
+                <span>€60-150/Nacht</span>
+            </div>
+            <div class="property-grid">
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Cozy Canal House with Garden</h3>
+                        <p class="location">📍 Amsterdam Centrum</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€95</div>
+                        <div class="price-per-person">€23.75 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.8/5.0</span>
+                        <span class="reviews">(124 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Haustiere erlaubt</span>
+                        <span class="feature">🏙️ Zentral</span>
+                        <span class="feature">🌟 Einzigartig</span>
+                    </div>
+                    <a href="https://www.airbnb.com/rooms/plus/12345" class="cta-button" target="_blank">Auf Airbnb ansehen →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Modern Apartment near Vondelpark</h3>
+                        <p class="location">📍 Amsterdam Zuid</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€78</div>
+                        <div class="price-per-person">€19.50 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.6/5.0</span>
+                        <span class="reviews">(89 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Haustiere erlaubt</span>
+                        <span class="feature">🏙️ Zentral</span>
+                        <span class="feature">🌟 Einzigartig</span>
+                    </div>
+                    <a href="https://www.airbnb.com/rooms/67890" class="cta-button" target="_blank">Auf Airbnb ansehen →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Waterfront Loft with Terrace</h3>
+                        <p class="location">📍 Rotterdam Centrum</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€85</div>
+                        <div class="price-per-person">€21.25 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.7/5.0</span>
+                        <span class="reviews">(156 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Haustiere erlaubt</span>
+                        <span class="feature">🏙️ Zentral</span>
+                        <span class="feature">🌟 Einzigartig</span>
+                    </div>
+                    <a href="https://www.airbnb.com/rooms/11223" class="cta-button" target="_blank">Auf Airbnb ansehen →</a>
+                </div>
+
+                <div class="property">
+                    <div class="property-header">
+                        <h3>Beach Villa with Sea View</h3>
+                        <p class="location">📍 Zandvoort aan Zee</p>
+                    </div>
+                    <div class="price-box">
+                        <div class="price">€120</div>
+                        <div class="price-per-person">€30.00 pro Person</div>
+                    </div>
+                    <div class="rating">
+                        <span class="rating-value">⭐ 4.9/5.0</span>
+                        <span class="reviews">(78 Bewertungen)</span>
+                    </div>
+                    <div class="features">
+                        <span class="feature">🐕 Haustiere erlaubt</span>
+                        <span class="feature">🏙️ Zentral</span>
+                        <span class="feature">🌟 Einzigartig</span>
+                    </div>
+                    <a href="https://www.airbnb.com/rooms/44556" class="cta-button" target="_blank">Auf Airbnb ansehen →</a>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>💡 Tipp:</strong> Alle Unterkünfte sind hundefreundlich</p>
+            <p>Bei Center Parcs sind Hunde kostenlos (max 2), bei anderen ca. €7-15/Nacht</p>
+            <p style="margin-top: 15px; font-size: 0.9em;">🤖 Erstellt mit Holland Vacation Deal Finder</p>
+        </div>
+    </div>
+</body>
+</html>
