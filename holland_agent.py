@@ -81,6 +81,9 @@ class HollandVacationAgent:
         for deals_list in results_per_city:
             self.all_deals.extend(deals_list)
 
+        # Validate deals (e.g., pet-friendly enforcement)
+        self._validate_deals(pets)
+
         print(f"   Found {len(self.all_deals)} properties\n")
 
         # Enrich with weather data
@@ -111,6 +114,17 @@ class HollandVacationAgent:
             "top_10_deals": ranked[:10],
             "summary": summary
         }
+
+    def _validate_deals(self, pets: int):
+        """
+        Validate and filter aggregated deals based on requirements
+        """
+        if pets > 0:
+            # Filter only pet-friendly properties
+            self.all_deals = [
+                deal for deal in self.all_deals 
+                if deal.get('pet_friendly') is True
+            ]
 
     async def _search_single_city(
         self,
