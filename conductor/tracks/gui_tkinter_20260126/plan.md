@@ -19,7 +19,7 @@
     - [ ] Import `HollandVacationAgent`.
     - [ ] Create a thread-safe wrapper to run `agent.find_best_deals` without blocking the main loop.
     - [ ] Redirect `print` statements or status updates from the agent to the GUI's status area (optional: using a callback or queue).
-- [ ] Task: Handle Search Results
+- [x] Task: Handle Search Results d472f84
     - [ ] Upon search completion, display a "Success" message.
     - [ ] Add a button to open the generated `holland_alle_optionen.html` in the default browser.
 - [ ] Task: Conductor - User Manual Verification 'Agent Integration' (Protocol in workflow.md)
