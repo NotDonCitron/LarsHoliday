@@ -15,7 +15,7 @@
 - [x] Task: Conductor - User Manual Verification 'Diagnosis and Validation' (Protocol in workflow.md) [checkpoint: 2e7738c]
 
 ## Phase 2: Scraper Fixes
-- [ ] Task: Update Booking.com Scraper
+- [x] Task: Update Booking.com Scraper b2c90ea
     - [ ] Write Tests: Create unit test with a saved HTML snippet (mock) to verify price extraction.
     - [ ] Implement Feature: Update `booking_scraper.py` selectors based on analysis.
     - [ ] Implement Feature: Explicitly parse "total price" and calculate "per night" if necessary.
