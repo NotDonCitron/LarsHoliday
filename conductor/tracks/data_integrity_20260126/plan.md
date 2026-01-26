@@ -26,7 +26,7 @@
 - [x] Task: Conductor - User Manual Verification 'Scraper Fixes' (Protocol in workflow.md) [checkpoint: 0c575d3]
 
 ## Phase 3: Integration and Verification
-- [ ] Task: Enforce Pet Filter Validation
+- [x] Task: Enforce Pet Filter Validation 5b8e6fc
     - [ ] Write Tests: Add a test case that checks if the "pet friendly" flag is being respected in the agent results.
     - [ ] Implement Feature: Add a post-processing check in `holland_agent.py` (or scrapers) to ensure `pet_friendly=True`.
 - [ ] Task: End-to-End Verification
