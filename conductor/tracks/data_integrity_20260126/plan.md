@@ -4,11 +4,11 @@
 - [x] Task: Create a reproduction script to isolate scraper output a939af5
     - [ ] Create `debug_scrapers.py` to run `BookingScraper` and `AirbnbScraper` independently with verbose logging.
     - [ ] capture raw HTML/JSON responses for a few sample queries to inspect the actual DOM structure vs. expected selectors.
-- [ ] Task: Analyze Booking.com price discrepancies
+- [x] Task: Analyze Booking.com price discrepancies 1a122b4
     - [ ] Run `debug_scrapers.py` for Booking.com.
     - [ ] Compare scraped prices against the actual website values for specific properties.
     - [ ] Identify if the issue is "price per night" vs "total price" or currency parsing.
-- [ ] Task: Analyze Airbnb data missing fields
+- [x] Task: Analyze Airbnb data missing fields 1a122b4
     - [ ] Run `debug_scrapers.py` for Airbnb.
     - [ ] detailed log of `listingParamOverrides` and `structuredDisplayPrice` for failed items.
     - [ ] Confirm if `guestLabel` or similar fields are available to verify person count.
