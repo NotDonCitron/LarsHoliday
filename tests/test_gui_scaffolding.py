@@ -15,7 +15,13 @@ class TestGUIScaffolding(unittest.TestCase):
         with patch('tkinter.Tk') as mock_tk, \
              patch('tkinter.ttk.Style') as mock_style, \
              patch('tkinter.ttk.Frame') as mock_frame, \
-             patch('tkinter.ttk.Label') as mock_label:
+             patch('tkinter.ttk.Label') as mock_label, \
+             patch('tkinter.ttk.Entry') as mock_entry, \
+             patch('tkinter.ttk.Checkbutton') as mock_checkbutton, \
+             patch('tkinter.ttk.Button') as mock_button, \
+             patch('tkinter.StringVar') as mock_string_var, \
+             patch('tkinter.IntVar') as mock_int_var, \
+             patch('tkinter.BooleanVar') as mock_bool_var:
             
             # Re-import to apply patches if it was already imported
             if 'gui_app' in sys.modules:

@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement Interactive Tkinter GUI**
+- [~] **Track: Implement Interactive Tkinter GUI**
   *Link: [./conductor/tracks/gui_tkinter_20260126/](./conductor/tracks/gui_tkinter_20260126/)*
