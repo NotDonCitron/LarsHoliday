@@ -54,9 +54,21 @@ class HollandVacationApp:
         style.configure("Dark.TEntry", fieldbackground="#3D3D3D", foreground=self.fg_color, insertcolor=self.fg_color)
 
     def setup_ui(self):
-        # Main Layout
-        self.main_frame = ttk.Frame(self.root, style="Dark.TFrame")
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        # Main Container with Sidebar
+        self.container = ttk.Frame(self.root, style="Dark.TFrame")
+        self.container.pack(fill=tk.BOTH, expand=True)
+        
+        # Left Side (Search Area)
+        self.main_frame = ttk.Frame(self.container, style="Dark.TFrame")
+        self.main_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Right Side (Sidebar)
+        self.sidebar = ttk.Frame(self.container, width=200, style="Dark.TFrame")
+        self.sidebar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 20), pady=20)
+        
+        # Sidebar Content
+        ttk.Label(self.sidebar, text="⭐ Favorites", style="Title.TLabel", font=("Helvetica", 14, "bold")).pack(pady=(0, 10))
+        ttk.Label(self.sidebar, text="Coming Soon...", style="Dark.TLabel", font=("Helvetica", 10, "italic")).pack()
         
         # Title
         title_label = ttk.Label(
