@@ -47,7 +47,7 @@ class AirbnbScraper:
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            deals = self._parse_html(soup, region)
+            deals = self._parse_html(soup, region, required_capacity=adults)
 
             if deals:
                 print(f"   Found {len(deals)} properties on Airbnb")
@@ -80,7 +80,7 @@ class AirbnbScraper:
 
         return f"{base_url}?{'&'.join(params)}"
 
-    def _parse_html(self, soup: BeautifulSoup, region: str) -> List[Dict]:
+    def _parse_html(self, soup: BeautifulSoup, region: str, required_capacity: int = 1) -> List[Dict]:
         """Parse Airbnb HTML to extract property data from JSON"""
         deals = []
 
@@ -111,8 +111,20 @@ class AirbnbScraper:
 
                                     for item in listings[:20]:  # Limit to 20
                                         try:
+                                            # Helper to get value from top-level or nested listing
+                                            def get_val(key):
+                                                val = item.get(key)
+                                                if val is None and 'listing' in item:
+                                                    val = item['listing'].get(key)
+                                                return val
+
+                                            # Filter by capacity
+                                            capacity = get_val('personCapacity')
+                                            if capacity and int(capacity) < required_capacity:
+                                                continue
+
                                             # Extract name
-                                            name = item.get('title', 'Airbnb Property')
+                                            name = get_val('title') or 'Airbnb Property'
 
                                             # Extract price from structuredDisplayPrice
                                             price_obj = item.get('structuredDisplayPrice') or {}
@@ -121,12 +133,12 @@ class AirbnbScraper:
                                             price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 60
 
                                             # Extract rating
-                                            rating_text = item.get('avgRatingLocalized', '4.5')
+                                            rating_text = get_val('avgRatingLocalized') or '4.5'
                                             rating_match = re.search(r'(\d+\.?\d*)', rating_text)
                                             rating = float(rating_match.group(1)) if rating_match else 4.5
 
                                             # Extract review count from avgRatingA11yLabel
-                                            reviews_text = item.get('avgRatingA11yLabel', '50 reviews')
+                                            reviews_text = get_val('avgRatingA11yLabel') or '50 reviews'
                                             reviews_match = re.search(r'(\d+)\s+review', reviews_text)
                                             reviews = int(reviews_match.group(1)) if reviews_match else 50
 
