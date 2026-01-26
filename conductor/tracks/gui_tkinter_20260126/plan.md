@@ -31,4 +31,4 @@
 - [x] Task: Add Favorites Sidebar (Visual Only) 84ebe27
     - [ ] Create a sidebar frame on the left or right.
     - [ ] Add a placeholder label "Favorites (Coming Soon)".
-- [ ] Task: Conductor - User Manual Verification 'Polish and Favorites Placeholder' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Polish and Favorites Placeholder' (Protocol in workflow.md) [checkpoint: 1ee6282]
