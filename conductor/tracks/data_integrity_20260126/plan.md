@@ -12,7 +12,7 @@
     - [ ] Run `debug_scrapers.py` for Airbnb.
     - [ ] detailed log of `listingParamOverrides` and `structuredDisplayPrice` for failed items.
     - [ ] Confirm if `guestLabel` or similar fields are available to verify person count.
-- [ ] Task: Conductor - User Manual Verification 'Diagnosis and Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Diagnosis and Validation' (Protocol in workflow.md) [checkpoint: 2e7738c]
 
 ## Phase 2: Scraper Fixes
 - [ ] Task: Update Booking.com Scraper
