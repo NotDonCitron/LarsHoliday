@@ -22,7 +22,7 @@
 - [x] Task: Handle Search Results d472f84
     - [ ] Upon search completion, display a "Success" message.
     - [ ] Add a button to open the generated `holland_alle_optionen.html` in the default browser.
-- [ ] Task: Conductor - User Manual Verification 'Agent Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Agent Integration' (Protocol in workflow.md) [checkpoint: 5a3ee31]
 
 ## Phase 3: Polish and Favorites Placeholder
 - [ ] Task: Style the Application
