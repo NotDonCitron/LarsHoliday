@@ -32,4 +32,4 @@
 - [x] Task: End-to-End Verification cfe32e3
     - [ ] Run `generate_full_html.py` (or the new debug script) and generate a new HTML report.
     - [ ] Manually verify 3-5 links from the report to ensure the price and capacity on the landing page match the report.
-- [ ] Task: Conductor - User Manual Verification 'Integration and Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Integration and Verification' (Protocol in workflow.md) [checkpoint: f2509da]
