@@ -12,7 +12,7 @@
 - [x] Task: Implement Input Validation Logic fb0f69b
     - [ ] Write a function to validate date formats and logic (End > Start).
     - [ ] Show error message boxes (`messagebox.showerror`) for invalid inputs.
-- [ ] Task: Conductor - User Manual Verification 'Prototype and Basic Structure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Prototype and Basic Structure' (Protocol in workflow.md) [checkpoint: 8bf4765]
 
 ## Phase 2: Agent Integration
 - [ ] Task: Connect GUI to Agent
