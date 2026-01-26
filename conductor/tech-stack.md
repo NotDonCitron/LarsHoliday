@@ -4,8 +4,7 @@
 - **Python 3.8+**: The primary language for the application logic, scrapers, and GUI.
 
 ## Frontend / GUI
-- **Tkinter**: The standard Python interface for creating the interactive desktop application.
-- **CustomTkinter (Optional)**: To be considered for achieving the "Dark Mode" aesthetic more easily.
+- **Tkinter**: Primary GUI framework. The application (`gui_app.py`) uses `tkinter` and `tkinter.ttk` with custom styles for Dark Mode.
 
 ## Web Scraping & Data Extraction
 - **BeautifulSoup4**: For parsing HTML content from vacation rental sites.

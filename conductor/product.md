@@ -11,7 +11,7 @@ A user-friendly tool that simplifies finding affordable, pet-friendly vacation r
 - **Group Travelers:** Friends planning weekend getaways who need to coordinate budgets and locations.
 
 ## Core Goals
-1. **Interactive Python GUI:** Implement a Tkinter-based interface allowing non-developers to input group size, budget, and location. **Crucially, this GUI must have a specific, dedicated checkbox or input to toggle "Allow Dogs" to ensure pet-friendly results.**
+1. **Interactive Python GUI:** [Implemented] A Tkinter-based desktop application (`gui_app.py`) is now available. It includes a dark mode interface, input validation, and a dedicated "Allow Dogs" toggle.
 2. **Data Accuracy & Integrity:** [Improved] Scraped prices are now normalized by the number of nights (Booking.com), and results are strictly filtered by required person capacity (Airbnb). The agent explicitly enforces the pet-friendly flag across all sources.
 3. **International Expansion:** Expand the search capabilities beyond the Netherlands to include Belgium and Germany.
 4. **Enhanced Data Sourcing:** Integrate additional platforms like Expedia and local vacation park websites to provide more comprehensive options.
