@@ -1,7 +1,7 @@
 # Implementation Plan - Fix Data Integrity Issues
 
 ## Phase 1: Diagnosis and Validation
-- [ ] Task: Create a reproduction script to isolate scraper output
+- [x] Task: Create a reproduction script to isolate scraper output a939af5
     - [ ] Create `debug_scrapers.py` to run `BookingScraper` and `AirbnbScraper` independently with verbose logging.
     - [ ] capture raw HTML/JSON responses for a few sample queries to inspect the actual DOM structure vs. expected selectors.
 - [ ] Task: Analyze Booking.com price discrepancies
