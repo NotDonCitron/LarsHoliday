@@ -31,7 +31,7 @@ class TestGUIInputs(unittest.TestCase):
             
             # We expect Label creation for:
             # Cities, Check-in, Check-out, Adults, Budget, Pets
-            expected_labels = ["Cities:", "Check-in (YYYY-MM-DD):", "Check-out (YYYY-MM-DD):", "Adults:", "Max Budget (€):"]
+            expected_labels = ["Cities (comma-separated):", "Check-in (YYYY-MM-DD):", "Check-out (YYYY-MM-DD):", "Number of Adults:", "Max Budget (€/night):"]
             
             # Get all text arguments passed to Label constructor
             created_labels = []
@@ -47,12 +47,12 @@ class TestGUIInputs(unittest.TestCase):
             mock_checkbutton.assert_called()
             # Check if text "Allow Dogs" was passed
             checkbutton_texts = [call[1].get('text') for call in mock_checkbutton.call_args_list]
-            self.assertIn("Allow Dogs", checkbutton_texts)
+            self.assertIn("🐕 Allow Dogs (Hundefreundlich)", checkbutton_texts)
             
             # Verify Search Button
             mock_button.assert_called()
             button_texts = [call[1].get('text') for call in mock_button.call_args_list]
-            self.assertIn("Search Deals", button_texts)
+            self.assertIn("🔍 Search Best Deals", button_texts)
 
 if __name__ == '__main__':
     unittest.main()

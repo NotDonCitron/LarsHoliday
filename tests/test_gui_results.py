@@ -49,7 +49,7 @@ class TestGUIResults(unittest.TestCase):
             # Verify "Open Report" button creation or enabling
             # We check if a button with text "Open Report" was created
             button_texts = [call[1].get('text') for call in mock_button.call_args_list]
-            self.assertIn("Open Report", button_texts)
+            self.assertIn("📄 Open HTML Report", button_texts)
             
             # Simulate clicking "Open Report"
             app.open_report()

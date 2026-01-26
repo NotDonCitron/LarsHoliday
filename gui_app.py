@@ -22,14 +22,36 @@ class HollandVacationApp:
         self.agent = HollandVacationAgent()
         
         # Configure styles
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure("Dark.TFrame", background=self.bg_color)
-        style.configure("Dark.TLabel", background=self.bg_color, foreground=self.fg_color)
-        style.configure("Dark.TButton", background="#4A4A4A", foreground=self.fg_color)
-        style.configure("Dark.TCheckbutton", background=self.bg_color, foreground=self.fg_color)
+        self.configure_styles()
         
         self.setup_ui()
+
+    def configure_styles(self):
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        # Colors
+        self.bg_color = "#2E2E2E"
+        self.fg_color = "#FFFFFF"
+        self.accent_color = "#4A4A4A"
+        self.button_color = "#0078D4" # Standard blue
+        
+        style.configure("Dark.TFrame", background=self.bg_color)
+        style.configure("Dark.TLabel", background=self.bg_color, foreground=self.fg_color)
+        style.configure("Title.TLabel", background=self.bg_color, foreground=self.fg_color, font=("Helvetica", 18, "bold"))
+        
+        style.configure("Dark.TButton", 
+                        background=self.button_color, 
+                        foreground=self.fg_color,
+                        padding=10)
+        style.map("Dark.TButton",
+                  background=[('active', '#005A9E'), ('disabled', '#555555')])
+        
+        style.configure("Dark.TCheckbutton", background=self.bg_color, foreground=self.fg_color)
+        style.map("Dark.TCheckbutton",
+                  background=[('active', self.bg_color)])
+        
+        style.configure("Dark.TEntry", fieldbackground="#3D3D3D", foreground=self.fg_color, insertcolor=self.fg_color)
 
     def setup_ui(self):
         # Main Layout
@@ -39,9 +61,8 @@ class HollandVacationApp:
         # Title
         title_label = ttk.Label(
             self.main_frame, 
-            text="Holland Vacation Deal Finder", 
-            style="Dark.TLabel",
-            font=("Helvetica", 16, "bold")
+            text="🏖️ Holland Vacation Deal Finder", 
+            style="Title.TLabel"
         )
         title_label.pack(pady=(0, 20))
         
@@ -54,11 +75,10 @@ class HollandVacationApp:
         # Results Area (Open Report Button) - Hidden initially
         self.open_report_btn = ttk.Button(
             self.main_frame,
-            text="Open Report",
+            text="📄 Open HTML Report",
             style="Dark.TButton",
             command=self.open_report
         )
-        # We don't pack it yet
 
     def create_input_form(self):
         # Form Container
@@ -68,43 +88,36 @@ class HollandVacationApp:
         # Grid Configuration
         form_frame.columnconfigure(1, weight=1)
         
+        # Helper for form rows
+        def add_row(label_text, var, row):
+            ttk.Label(form_frame, text=label_text, style="Dark.TLabel").grid(row=row, column=0, sticky="w", pady=8)
+            entry = ttk.Entry(form_frame, textvariable=var)
+            entry.grid(row=row, column=1, sticky="ew", padx=(15, 0))
+            return entry
+
         # --- Cities ---
-        ttk.Label(form_frame, text="Cities:", style="Dark.TLabel").grid(row=0, column=0, sticky="w", pady=5)
         self.cities_var = tk.StringVar(value="Amsterdam, Rotterdam, Zandvoort")
-        self.cities_entry = ttk.Entry(form_frame, textvariable=self.cities_var)
-        self.cities_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0))
+        add_row("Cities (comma-separated):", self.cities_var, 0)
         
         # --- Dates ---
-        # Check-in
-        ttk.Label(form_frame, text="Check-in (YYYY-MM-DD):", style="Dark.TLabel").grid(row=1, column=0, sticky="w", pady=5)
         self.checkin_var = tk.StringVar(value="2026-02-15")
-        self.checkin_entry = ttk.Entry(form_frame, textvariable=self.checkin_var)
-        self.checkin_entry.grid(row=1, column=1, sticky="ew", padx=(10, 0))
+        add_row("Check-in (YYYY-MM-DD):", self.checkin_var, 1)
         
-        # Check-out
-        ttk.Label(form_frame, text="Check-out (YYYY-MM-DD):", style="Dark.TLabel").grid(row=2, column=0, sticky="w", pady=5)
         self.checkout_var = tk.StringVar(value="2026-02-22")
-        self.checkout_entry = ttk.Entry(form_frame, textvariable=self.checkout_var)
-        self.checkout_entry.grid(row=2, column=1, sticky="ew", padx=(10, 0))
+        add_row("Check-out (YYYY-MM-DD):", self.checkout_var, 2)
         
         # --- Group & Budget ---
-        # Adults
-        ttk.Label(form_frame, text="Adults:", style="Dark.TLabel").grid(row=3, column=0, sticky="w", pady=5)
         self.adults_var = tk.IntVar(value=4)
-        self.adults_entry = ttk.Entry(form_frame, textvariable=self.adults_var)
-        self.adults_entry.grid(row=3, column=1, sticky="ew", padx=(10, 0))
+        add_row("Number of Adults:", self.adults_var, 3)
         
-        # Budget
-        ttk.Label(form_frame, text="Max Budget (€):", style="Dark.TLabel").grid(row=4, column=0, sticky="w", pady=5)
         self.budget_var = tk.IntVar(value=250)
-        self.budget_entry = ttk.Entry(form_frame, textvariable=self.budget_var)
-        self.budget_entry.grid(row=4, column=1, sticky="ew", padx=(10, 0))
+        add_row("Max Budget (€/night):", self.budget_var, 4)
         
         # --- Pet Toggle ---
         self.allow_dogs_var = tk.BooleanVar(value=True)
         self.dogs_check = ttk.Checkbutton(
             form_frame, 
-            text="Allow Dogs", 
+            text="🐕 Allow Dogs (Hundefreundlich)", 
             variable=self.allow_dogs_var,
             style="Dark.TCheckbutton"
         )
@@ -113,7 +126,7 @@ class HollandVacationApp:
         # --- Search Button ---
         self.search_btn = ttk.Button(
             self.main_frame,
-            text="Search Deals",
+            text="🔍 Search Best Deals",
             style="Dark.TButton",
             command=self.start_search
         )
