@@ -28,7 +28,7 @@
 - [x] Task: Style the Application 1b8ed0d
     - [ ] Refine the Dark Mode colors for inputs and buttons.
     - [ ] Ensure the layout is responsive or fixed-size appropriately.
-- [ ] Task: Add Favorites Sidebar (Visual Only)
+- [x] Task: Add Favorites Sidebar (Visual Only) 84ebe27
     - [ ] Create a sidebar frame on the left or right.
     - [ ] Add a placeholder label "Favorites (Coming Soon)".
 - [ ] Task: Conductor - User Manual Verification 'Polish and Favorites Placeholder' (Protocol in workflow.md)
