@@ -34,8 +34,71 @@ class HollandVacationApp:
             font=("Helvetica", 16, "bold")
         )
         title_label.pack(pady=(0, 20))
+        
+        self.create_input_form()
 
-    def run(self):
+    def create_input_form(self):
+        # Form Container
+        form_frame = ttk.Frame(self.main_frame, style="Dark.TFrame")
+        form_frame.pack(fill=tk.X, pady=10)
+        
+        # Grid Configuration
+        form_frame.columnconfigure(1, weight=1)
+        
+        # --- Cities ---
+        ttk.Label(form_frame, text="Cities:", style="Dark.TLabel").grid(row=0, column=0, sticky="w", pady=5)
+        self.cities_var = tk.StringVar(value="Amsterdam, Rotterdam, Zandvoort")
+        self.cities_entry = ttk.Entry(form_frame, textvariable=self.cities_var)
+        self.cities_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0))
+        
+        # --- Dates ---
+        # Check-in
+        ttk.Label(form_frame, text="Check-in (YYYY-MM-DD):", style="Dark.TLabel").grid(row=1, column=0, sticky="w", pady=5)
+        self.checkin_var = tk.StringVar(value="2026-02-15")
+        self.checkin_entry = ttk.Entry(form_frame, textvariable=self.checkin_var)
+        self.checkin_entry.grid(row=1, column=1, sticky="ew", padx=(10, 0))
+        
+        # Check-out
+        ttk.Label(form_frame, text="Check-out (YYYY-MM-DD):", style="Dark.TLabel").grid(row=2, column=0, sticky="w", pady=5)
+        self.checkout_var = tk.StringVar(value="2026-02-22")
+        self.checkout_entry = ttk.Entry(form_frame, textvariable=self.checkout_var)
+        self.checkout_entry.grid(row=2, column=1, sticky="ew", padx=(10, 0))
+        
+        # --- Group & Budget ---
+        # Adults
+        ttk.Label(form_frame, text="Adults:", style="Dark.TLabel").grid(row=3, column=0, sticky="w", pady=5)
+        self.adults_var = tk.IntVar(value=4)
+        self.adults_entry = ttk.Entry(form_frame, textvariable=self.adults_var)
+        self.adults_entry.grid(row=3, column=1, sticky="ew", padx=(10, 0))
+        
+        # Budget
+        ttk.Label(form_frame, text="Max Budget (€):", style="Dark.TLabel").grid(row=4, column=0, sticky="w", pady=5)
+        self.budget_var = tk.IntVar(value=250)
+        self.budget_entry = ttk.Entry(form_frame, textvariable=self.budget_var)
+        self.budget_entry.grid(row=4, column=1, sticky="ew", padx=(10, 0))
+        
+        # --- Pet Toggle ---
+        self.allow_dogs_var = tk.BooleanVar(value=True)
+        self.dogs_check = ttk.Checkbutton(
+            form_frame, 
+            text="Allow Dogs", 
+            variable=self.allow_dogs_var,
+            style="Dark.TCheckbutton"  # Note: Standard ttk Checkbutton might not respect style fully without more config
+        )
+        self.dogs_check.grid(row=5, column=0, columnspan=2, sticky="w", pady=15)
+        
+        # --- Search Button ---
+        self.search_btn = ttk.Button(
+            self.main_frame,
+            text="Search Deals",
+            style="Dark.TButton",
+            command=self.start_search
+        )
+        self.search_btn.pack(pady=20, fill=tk.X)
+
+    def start_search(self):
+        print("Search clicked")  # Placeholder
+
         self.root.mainloop()
 
 if __name__ == "__main__":
