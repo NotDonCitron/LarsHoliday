@@ -19,7 +19,7 @@
     - [ ] Write Tests: Create unit test with a saved HTML snippet (mock) to verify price extraction.
     - [ ] Implement Feature: Update `booking_scraper.py` selectors based on analysis.
     - [ ] Implement Feature: Explicitly parse "total price" and calculate "per night" if necessary.
-- [ ] Task: Update Airbnb Scraper
+- [x] Task: Update Airbnb Scraper 743f189
     - [ ] Write Tests: Create unit test with a saved JSON snippet (mock) to verify price and capacity extraction.
     - [ ] Implement Feature: Refine `airbnb_scraper.py` to correctly extract `price` (handling discounts).
     - [ ] Implement Feature: Add extraction for "max guests" and filter out listings that are too small.
