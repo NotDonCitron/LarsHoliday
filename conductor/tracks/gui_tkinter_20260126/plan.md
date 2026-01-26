@@ -5,7 +5,7 @@
     - [ ] Create `gui_app.py`.
     - [ ] Setup the main `tk.Tk` window with a dark theme (configure background colors).
     - [ ] Implement the basic layout using `tk.Frame` and `grid` or `pack`.
-- [ ] Task: Implement Input Forms
+- [x] Task: Implement Input Forms a309619
     - [ ] Add Label and Entry widgets for Cities, Dates, Adults, and Budget.
     - [ ] Add the critical "Allow Dogs" Checkbox.
     - [ ] Add a "Search" button.
