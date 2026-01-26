@@ -9,7 +9,7 @@
     - [ ] Add Label and Entry widgets for Cities, Dates, Adults, and Budget.
     - [ ] Add the critical "Allow Dogs" Checkbox.
     - [ ] Add a "Search" button.
-- [ ] Task: Implement Input Validation Logic
+- [x] Task: Implement Input Validation Logic fb0f69b
     - [ ] Write a function to validate date formats and logic (End > Start).
     - [ ] Show error message boxes (`messagebox.showerror`) for invalid inputs.
 - [ ] Task: Conductor - User Manual Verification 'Prototype and Basic Structure' (Protocol in workflow.md)
