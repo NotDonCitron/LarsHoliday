@@ -23,7 +23,7 @@
     - [ ] Write Tests: Create unit test with a saved JSON snippet (mock) to verify price and capacity extraction.
     - [ ] Implement Feature: Refine `airbnb_scraper.py` to correctly extract `price` (handling discounts).
     - [ ] Implement Feature: Add extraction for "max guests" and filter out listings that are too small.
-- [ ] Task: Conductor - User Manual Verification 'Scraper Fixes' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Scraper Fixes' (Protocol in workflow.md) [checkpoint: 0c575d3]
 
 ## Phase 3: Integration and Verification
 - [ ] Task: Enforce Pet Filter Validation
