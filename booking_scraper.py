@@ -7,6 +7,7 @@ from curl_cffi import requests
 from typing import List, Dict
 from bs4 import BeautifulSoup
 import re
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -34,6 +35,11 @@ class BookingScraper:
         print(f"   Searching Booking.com for {city}...")
 
         try:
+            # Calculate nights for price normalization
+            d1 = datetime.strptime(checkin, "%Y-%m-%d")
+            d2 = datetime.strptime(checkout, "%Y-%m-%d")
+            nights = max(1, (d2 - d1).days)
+
             url = self._build_booking_url(city, checkin, checkout, adults)
 
             # Use curl-cffi with Chrome impersonation for stealth
@@ -46,7 +52,7 @@ class BookingScraper:
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            deals = self._parse_html(soup, city)
+            deals = self._parse_html(soup, city, nights)
 
             if deals:
                 print(f"   Found {len(deals)} properties on Booking.com")
@@ -84,7 +90,7 @@ class BookingScraper:
 
         return f"{base_url}?{'&'.join(params)}"
 
-    def _parse_html(self, soup: BeautifulSoup, city: str) -> List[Dict]:
+    def _parse_html(self, soup: BeautifulSoup, city: str, nights: int = 1) -> List[Dict]:
         """Parse Booking.com HTML to extract property data"""
         deals = []
 
@@ -104,7 +110,12 @@ class BookingScraper:
                 # Extract price
                 price_elem = card.find('span', {'data-testid': 'price-and-discounted-price'}) or card.find('div', class_=re.compile(r'prco-valign-middle-helper'))
                 price_text = price_elem.get_text(strip=True) if price_elem else "€50"
-                price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 50
+                
+                # Booking.com usually shows TOTAL price for the stay
+                total_price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 50
+                
+                # Normalize to price per night
+                price_per_night = round(total_price / max(1, nights))
 
                 # Extract rating
                 rating_elem = card.find('div', {'data-testid': 'review-score'}) or card.find('div', class_=re.compile(r'review-score'))
@@ -131,7 +142,7 @@ class BookingScraper:
                 deals.append({
                     "name": name,
                     "location": city,
-                    "price_per_night": price,
+                    "price_per_night": price_per_night,
                     "rating": rating,
                     "reviews": reviews,
                     "pet_friendly": True,
