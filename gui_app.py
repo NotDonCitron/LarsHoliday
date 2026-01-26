@@ -3,6 +3,8 @@ from tkinter import ttk, messagebox
 from datetime import datetime
 import threading
 import asyncio
+import webbrowser
+import os
 from holland_agent import HollandVacationAgent
 
 class HollandVacationApp:
@@ -45,9 +47,18 @@ class HollandVacationApp:
         
         self.create_input_form()
         
-        # Status Area (Placeholder for now)
+        # Status Area
         self.status_label = ttk.Label(self.main_frame, text="", style="Dark.TLabel")
         self.status_label.pack(pady=10)
+        
+        # Results Area (Open Report Button) - Hidden initially
+        self.open_report_btn = ttk.Button(
+            self.main_frame,
+            text="Open Report",
+            style="Dark.TButton",
+            command=self.open_report
+        )
+        # We don't pack it yet
 
     def create_input_form(self):
         # Form Container
@@ -122,9 +133,6 @@ class HollandVacationApp:
                 return False
                 
             if d1 < datetime.now():
-                # Just a warning or strict? Product vision says "validate", let's be strict for simplicity or assume future dates.
-                # Actually, datetime.now() in test might be tricky if not mocked, but we'll leave it simple.
-                # Let's allow past dates for testing unless strictly required.
                 pass
                 
         except ValueError:
@@ -139,6 +147,7 @@ class HollandVacationApp:
         
         self.status_label.config(text="Starting search... Please wait.")
         self.search_btn.state(['disabled'])
+        self.open_report_btn.pack_forget() # Hide previous button if any
         
         # Capture values to pass to thread
         cities = [c.strip() for c in self.cities_var.get().split(",")]
@@ -170,18 +179,26 @@ class HollandVacationApp:
                     pets=pets
                 )
             )
-            print(f"Search complete. Found {len(results.get('top_10_deals', []))} top deals.")
-            # We will handle UI updates (success message) in next task via after() or queue
+            # Schedule UI update on main thread
+            self.root.after(0, self.search_complete, results)
         except Exception as e:
             print(f"Search failed: {e}")
-        finally:
-            # Re-enable button (not thread-safe strictly, but Tkinter often handles it, 
-            # ideally use root.after)
-            # self.search_btn.state(['!disabled']) 
-            pass
+            self.root.after(0, self.status_label.config, {"text": f"Search failed: {e}"})
+            self.root.after(0, self.search_btn.state, ['!disabled'])
 
-        self.root.mainloop()
+    def search_complete(self, results):
+        count = results.get('total_deals_found', 0) if results else 0
+        self.status_label.config(text=f"Search complete. Found {count} deals.")
+        self.search_btn.state(['!disabled'])
+        self.open_report_btn.pack(pady=10)
+        
+    def open_report(self):
+        report_path = os.path.abspath("holland_alle_optionen.html")
+        if os.path.exists(report_path):
+            webbrowser.open(f"file://{report_path}")
+        else:
+            messagebox.showerror("Error", "Report file not found.")
 
 if __name__ == "__main__":
     app = HollandVacationApp()
-    app.run()
+    app.root.mainloop()
