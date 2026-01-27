@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
 import threading
 import asyncio
@@ -7,6 +7,7 @@ import webbrowser
 import os
 from holland_agent import VacationAgent
 from favorites_manager import FavoritesManager
+from report_generator import ReportGenerator
 
 class VacationApp:
     def __init__(self):
@@ -19,9 +20,13 @@ class VacationApp:
         self.fg_color = "#FFFFFF"
         self.root.configure(bg=self.bg_color)
         
-        # Initialize Agent and Favorites
+        # Initialize Agent and Managers
         self.agent = VacationAgent()
         self.favorites_manager = FavoritesManager()
+        self.report_generator = ReportGenerator()
+        
+        # Store last results
+        self.current_results = None
         
         # Configure styles
         self.configure_styles()
@@ -124,13 +129,25 @@ class VacationApp:
         self.results_canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
         
-        # Open Report Button (Fixed at bottom)
+        # Bottom Buttons Frame
+        self.bottom_frame = ttk.Frame(self.main_frame, style="Dark.TFrame")
+        self.bottom_frame.pack(pady=10, fill=tk.X)
+        
         self.open_report_btn = ttk.Button(
-            self.main_frame,
-            text="📄 Open Full HTML Report",
+            self.bottom_frame,
+            text="📄 Open HTML Report",
             style="Dark.TButton",
             command=self.open_report
         )
+        # Hidden initially
+        
+        self.export_pdf_btn = ttk.Button(
+            self.bottom_frame,
+            text="💾 Export PDF",
+            style="Dark.TButton",
+            command=self.export_pdf
+        )
+        # Hidden initially
 
     def create_input_form(self):
         # Form Container
@@ -208,6 +225,7 @@ class VacationApp:
         self.status_label.config(text="Starting search... Please wait.")
         self.search_btn.state(['disabled'])
         self.open_report_btn.pack_forget()
+        self.export_pdf_btn.pack_forget()
         
         # Clear previous results
         for widget in self.scrollable_frame.winfo_children():
@@ -245,10 +263,14 @@ class VacationApp:
             self.root.after(0, self.search_btn.state, ['!disabled'])
 
     def search_complete(self, results):
+        self.current_results = results # Store results
         count = results.get('total_deals_found', 0) if results else 0
         self.status_label.config(text=f"Search complete. Found {count} deals.")
         self.search_btn.state(['!disabled'])
-        self.open_report_btn.pack(pady=10)
+        
+        # Show buttons
+        self.open_report_btn.pack(side=tk.LEFT, padx=10)
+        self.export_pdf_btn.pack(side=tk.LEFT, padx=10)
         
         # Populate results list
         top_deals = results.get('top_10_deals', [])
@@ -309,6 +331,29 @@ class VacationApp:
             webbrowser.open(f"file://{report_path}")
         else:
             messagebox.showerror("Error", "Report file not found.")
+
+    def export_pdf(self):
+        if not self.current_results:
+            messagebox.showerror("Error", "No search results to export.")
+            return
+
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF Documents", "*.pdf")],
+            initialfile=f"vacation_deals_{datetime.now().strftime('%Y%m%d')}.pdf"
+        )
+        
+        if filename:
+            success = self.report_generator.generate_report(
+                self.current_results.get('top_10_deals', []),
+                self.current_results.get('search_params', {}),
+                filename
+            )
+            if success:
+                messagebox.showinfo("Success", f"Report saved to {filename}")
+                webbrowser.open(f"file://{filename}")
+            else:
+                messagebox.showerror("Error", "Failed to generate report.")
 
 if __name__ == "__main__":
     app = VacationApp()
