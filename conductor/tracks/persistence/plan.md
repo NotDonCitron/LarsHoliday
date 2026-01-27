@@ -14,6 +14,6 @@
     - [x] Update Sidebar immediately upon saving.
 
 ## Phase 3: Verification
-- [~] Task: Verify Persistence
-    - [ ] Restart app and ensure favorites remain.
-- [ ] Task: Conductor - User Manual Verification
+- [x] Task: Verify Persistence 0606ec5
+    - [x] Restart app and ensure favorites remain.
+- [x] Task: Conductor - User Manual Verification 'Persistence' (Protocol in workflow.md) [checkpoint: 0606ec5]
