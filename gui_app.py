@@ -6,25 +6,28 @@ import asyncio
 import webbrowser
 import os
 from holland_agent import VacationAgent
+from favorites_manager import FavoritesManager
 
 class VacationApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Vacation Deal Finder")
-        self.root.geometry("800x600")
+        self.root.geometry("900x700")
         
         # Dark Theme Configuration
         self.bg_color = "#2E2E2E"
         self.fg_color = "#FFFFFF"
         self.root.configure(bg=self.bg_color)
         
-        # Initialize Agent
+        # Initialize Agent and Favorites
         self.agent = VacationAgent()
+        self.favorites_manager = FavoritesManager()
         
         # Configure styles
         self.configure_styles()
         
         self.setup_ui()
+        self.refresh_favorites()
 
     def configure_styles(self):
         style = ttk.Style()
@@ -39,6 +42,7 @@ class VacationApp:
         style.configure("Dark.TFrame", background=self.bg_color)
         style.configure("Dark.TLabel", background=self.bg_color, foreground=self.fg_color)
         style.configure("Title.TLabel", background=self.bg_color, foreground=self.fg_color, font=("Helvetica", 18, "bold"))
+        style.configure("Card.TFrame", background="#3D3D3D", relief="raised", borderwidth=1)
         
         style.configure("Dark.TButton", 
                         background=self.button_color, 
@@ -46,6 +50,8 @@ class VacationApp:
                         padding=10)
         style.map("Dark.TButton",
                   background=[('active', '#005A9E'), ('disabled', '#555555')])
+        
+        style.configure("Fav.TButton", background="#FFD700", foreground="#000000") # Gold
         
         style.configure("Dark.TCheckbutton", background=self.bg_color, foreground=self.fg_color)
         style.map("Dark.TCheckbutton",
@@ -63,12 +69,25 @@ class VacationApp:
         self.main_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=20, pady=20)
         
         # Right Side (Sidebar)
-        self.sidebar = ttk.Frame(self.container, width=200, style="Dark.TFrame")
+        self.sidebar = ttk.Frame(self.container, width=250, style="Dark.TFrame")
         self.sidebar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 20), pady=20)
         
         # Sidebar Content
         ttk.Label(self.sidebar, text="⭐ Favorites", style="Title.TLabel", font=("Helvetica", 14, "bold")).pack(pady=(0, 10))
-        ttk.Label(self.sidebar, text="Coming Soon...", style="Dark.TLabel", font=("Helvetica", 10, "italic")).pack()
+        
+        self.fav_listbox = tk.Listbox(
+            self.sidebar, 
+            bg="#3D3D3D", 
+            fg="#FFFFFF", 
+            selectbackground="#0078D4",
+            borderwidth=0,
+            highlightthickness=0,
+            font=("Helvetica", 10)
+        )
+        self.fav_listbox.pack(fill=tk.BOTH, expand=True, pady=10)
+        self.fav_listbox.bind("<Double-Button-1>", self.open_favorite)
+        
+        ttk.Button(self.sidebar, text="Remove Selected", style="Dark.TButton", command=self.remove_selected_favorite).pack(fill=tk.X)
         
         # Title
         title_label = ttk.Label(
@@ -84,10 +103,31 @@ class VacationApp:
         self.status_label = ttk.Label(self.main_frame, text="", style="Dark.TLabel")
         self.status_label.pack(pady=10)
         
-        # Results Area (Open Report Button) - Hidden initially
+        # Results Scrollable Area
+        self.results_container = ttk.Frame(self.main_frame, style="Dark.TFrame")
+        self.results_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.results_canvas = tk.Canvas(self.results_container, bg=self.bg_color, highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(self.results_container, orient="vertical", command=self.results_canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.results_canvas, style="Dark.TFrame")
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.results_canvas.configure(
+                scrollregion=self.results_canvas.bbox("all")
+            )
+        )
+
+        self.results_canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.results_canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.results_canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        
+        # Open Report Button (Fixed at bottom)
         self.open_report_btn = ttk.Button(
             self.main_frame,
-            text="📄 Open HTML Report",
+            text="📄 Open Full HTML Report",
             style="Dark.TButton",
             command=self.open_report
         )
@@ -107,9 +147,9 @@ class VacationApp:
             entry.grid(row=row, column=1, sticky="ew", padx=(15, 0))
             return entry
 
-        # --- Cities ---
+        # --- Destinations ---
         self.cities_var = tk.StringVar(value="Amsterdam, Berlin, Ardennes")
-        add_row("Destinations / Cities (comma-separated):", self.cities_var, 0)
+        add_row("Destinations (comma-separated):", self.cities_var, 0)
         
         # --- Dates ---
         self.checkin_var = tk.StringVar(value="2026-02-15")
@@ -142,7 +182,7 @@ class VacationApp:
             style="Dark.TButton",
             command=self.start_search
         )
-        self.search_btn.pack(pady=20, fill=tk.X)
+        self.search_btn.pack(pady=10, fill=tk.X)
 
     def validate_inputs(self) -> bool:
         """Validate form inputs"""
@@ -156,14 +196,9 @@ class VacationApp:
             if d2 <= d1:
                 messagebox.showerror("Invalid Dates", "Check-out date must be after check-in date.")
                 return False
-                
-            if d1 < datetime.now():
-                pass
-                
         except ValueError:
             messagebox.showerror("Invalid Date Format", "Please use YYYY-MM-DD format.")
             return False
-            
         return True
 
     def start_search(self):
@@ -172,9 +207,12 @@ class VacationApp:
         
         self.status_label.config(text="Starting search... Please wait.")
         self.search_btn.state(['disabled'])
-        self.open_report_btn.pack_forget() # Hide previous button if any
+        self.open_report_btn.pack_forget()
         
-        # Capture values to pass to thread
+        # Clear previous results
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        
         cities = [c.strip() for c in self.cities_var.get().split(",")]
         checkin = self.checkin_var.get()
         checkout = self.checkout_var.get()
@@ -182,10 +220,8 @@ class VacationApp:
         budget = self.budget_var.get()
         pets = 1 if self.allow_dogs_var.get() else 0
         
-        # Update agent budget
         self.agent.budget_max = budget
         
-        # Start thread
         thread = threading.Thread(
             target=self.run_search_thread,
             args=(cities, checkin, checkout, adults, pets)
@@ -194,7 +230,6 @@ class VacationApp:
 
     def run_search_thread(self, cities, checkin, checkout, adults, pets):
         try:
-            # Run async agent in this thread
             results = asyncio.run(
                 self.agent.find_best_deals(
                     cities=cities,
@@ -204,10 +239,8 @@ class VacationApp:
                     pets=pets
                 )
             )
-            # Schedule UI update on main thread
             self.root.after(0, self.search_complete, results)
         except Exception as e:
-            print(f"Search failed: {e}")
             self.root.after(0, self.status_label.config, {"text": f"Search failed: {e}"})
             self.root.after(0, self.search_btn.state, ['!disabled'])
 
@@ -217,6 +250,59 @@ class VacationApp:
         self.search_btn.state(['!disabled'])
         self.open_report_btn.pack(pady=10)
         
+        # Populate results list
+        top_deals = results.get('top_10_deals', [])
+        for deal in top_deals:
+            self.add_deal_card(deal)
+
+    def add_deal_card(self, deal):
+        card = ttk.Frame(self.scrollable_frame, style="Card.TFrame", padding=10)
+        card.pack(fill=tk.X, pady=5, padx=5)
+        
+        # Info
+        name = deal.get('name', 'Unknown')
+        price = deal.get('price_per_night', 0)
+        location = deal.get('location', 'Unknown')
+        rating = deal.get('rating', 0)
+        
+        info_text = f"{name}\n📍 {location} | €{price}/night | ⭐ {rating}/5"
+        ttk.Label(card, text=info_text, style="Dark.TLabel", justify=tk.LEFT).pack(side=tk.LEFT, padx=5)
+        
+        # Actions
+        btn_frame = ttk.Frame(card, style="Dark.TFrame")
+        btn_frame.pack(side=tk.RIGHT)
+        
+        ttk.Button(btn_frame, text="⭐", width=3, command=lambda d=deal: self.toggle_favorite(d)).pack(side=tk.RIGHT, padx=2)
+        ttk.Button(btn_frame, text="🔗", width=3, command=lambda u=deal.get('url'): webbrowser.open(u)).pack(side=tk.RIGHT, padx=2)
+
+    def toggle_favorite(self, deal):
+        success = self.favorites_manager.add_favorite(deal)
+        if success:
+            self.refresh_favorites()
+            messagebox.showinfo("Favorites", f"Added '{deal.get('name')}' to favorites!")
+        else:
+            messagebox.showinfo("Favorites", "Already in favorites.")
+
+    def refresh_favorites(self):
+        self.fav_listbox.delete(0, tk.END)
+        for fav in self.favorites_manager.get_all():
+            self.fav_listbox.insert(tk.END, f"{fav.get('name')} (€{fav.get('price_per_night')})")
+
+    def open_favorite(self, event):
+        selection = self.fav_listbox.curselection()
+        if selection:
+            index = selection[0]
+            fav = self.favorites_manager.get_all()[index]
+            webbrowser.open(fav.get('url'))
+
+    def remove_selected_favorite(self):
+        selection = self.fav_listbox.curselection()
+        if selection:
+            index = selection[0]
+            fav = self.favorites_manager.get_all()[index]
+            self.favorites_manager.remove_favorite(fav.get('url'))
+            self.refresh_favorites()
+
     def open_report(self):
         report_path = os.path.abspath("holland_alle_optionen.html")
         if os.path.exists(report_path):

@@ -17,7 +17,7 @@
     - [x] Allow comma-separated lists of arbitrary places.
 
 ## Phase 3: Integration & Validation
-- [ ] Task: Verify International Search
-    - [ ] Test searching for a location in Germany (e.g., "Winterberg").
-    - [ ] Test searching for a location in Belgium (e.g., "Ardennes").
-- [ ] Task: Conductor - User Manual Verification
+- [x] Task: Verify International Search f85d977
+    - [x] Test searching for a location in Germany (e.g., "Winterberg").
+    - [x] Test searching for a location in Belgium (e.g., "Ardennes").
+- [x] Task: Conductor - User Manual Verification 'International Expansion' (Protocol in workflow.md) [checkpoint: f85d977]

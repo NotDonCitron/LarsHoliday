@@ -42,10 +42,10 @@ class WeatherIntegration:
 
     async def get_weather_forecast(self, city: str) -> Dict:
         """
-        Fetch 5-day weather forecast for a city
+        Fetch 5-day weather forecast for a city/region
 
         Args:
-            city: City name (e.g., "Amsterdam")
+            city: City or region name (e.g., "Amsterdam", "Berlin")
 
         Returns:
             Dict with city, forecast data, and average temperature
@@ -56,8 +56,9 @@ class WeatherIntegration:
         if cached:
             return cached
 
+        # Search for the city globally (removing hardcoded ,NL)
         params = {
-            "q": f"{city},NL",  # Netherlands
+            "q": city,
             "appid": self.api_key,
             "units": "metric",  # Celsius
             "lang": "en"
