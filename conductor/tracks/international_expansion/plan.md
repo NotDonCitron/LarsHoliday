@@ -1,7 +1,7 @@
 # Implementation Plan - International Expansion
 
 ## Phase 1: Scraper Refactoring
-- [ ] Task: Refactor Booking.com Scraper for dynamic locations
+- [~] Task: Refactor Booking.com Scraper for dynamic locations
     - [ ] Update `booking_scraper.py` to accept a generic location query instead of pre-defined cities.
     - [ ] Verify URL construction for international destinations.
 - [ ] Task: Refactor Airbnb Scraper for dynamic locations

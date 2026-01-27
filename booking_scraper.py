@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+from urllib.parse import quote
+
 class BookingScraper:
     """
     Scrapes Booking.com for pet-friendly accommodations using curl-cffi stealth
@@ -75,11 +77,9 @@ class BookingScraper:
         """Build Booking.com search URL with pet-friendly filter"""
         base_url = "https://www.booking.com/searchresults.html"
 
-        checkin_parts = checkin.split("-")
-        checkout_parts = checkout.split("-")
-
+        # Safe encoding of parameters
         params = [
-            f"ss={city}",
+            f"ss={quote(city)}",
             f"checkin={checkin}",
             f"checkout={checkout}",
             f"group_adults={adults}",
@@ -156,7 +156,7 @@ class BookingScraper:
         return deals
 
     def _get_fallback_data(self, city: str) -> List[Dict]:
-        """Return static fallback data"""
+        """Return static fallback data or generate mock data for unknown cities"""
         fallback_properties = {
             "Amsterdam": [
                 {
@@ -206,4 +206,30 @@ class BookingScraper:
             ]
         }
 
-        return fallback_properties.get(city, fallback_properties["Amsterdam"])
+        # Return specific fallback if available
+        if city in fallback_properties:
+            return fallback_properties[city]
+        
+        # Otherwise generate generic fallback data for the requested city
+        return [
+            {
+                "name": f"Beautiful Home in {city}",
+                "location": city,
+                "price_per_night": 60,
+                "rating": 4.2,
+                "reviews": 50,
+                "pet_friendly": True,
+                "source": "booking.com (fallback)",
+                "url": "https://www.booking.com"
+            },
+            {
+                "name": f"{city} Center Apartment",
+                "location": city,
+                "price_per_night": 85,
+                "rating": 4.5,
+                "reviews": 120,
+                "pet_friendly": True,
+                "source": "booking.com (fallback)",
+                "url": "https://www.booking.com"
+            }
+        ]

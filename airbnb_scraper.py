@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+from urllib.parse import quote
+
 class AirbnbScraper:
     """
     Scrapes Airbnb for pet-friendly accommodations using curl-cffi stealth
@@ -68,9 +70,11 @@ class AirbnbScraper:
         adults: int
     ) -> str:
         """Build Airbnb search URL with pet-friendly filter"""
-        base_url = f"https://www.airbnb.com/s/{region}/homes"
+        # Using the generic search endpoint with query parameter is more robust for international locations
+        base_url = "https://www.airbnb.com/s/homes"
 
         params = [
+            f"query={quote(region)}",
             f"checkin={checkin}",
             f"checkout={checkout}",
             f"adults={adults}",
@@ -187,7 +191,7 @@ class AirbnbScraper:
         return deals
 
     def _get_fallback_data(self, region: str) -> List[Dict]:
-        """Return static fallback data"""
+        """Return static fallback data or generate mock data"""
         fallback_properties = {
             "Amsterdam": [
                 {
@@ -237,4 +241,30 @@ class AirbnbScraper:
             ]
         }
 
-        return fallback_properties.get(region, fallback_properties["Amsterdam"])
+        # Return specific fallback if available
+        if region in fallback_properties:
+            return fallback_properties[region]
+            
+        # Generic fallback for international/unknown regions
+        return [
+            {
+                "name": f"Charming {region} Apartment",
+                "location": region,
+                "price_per_night": 75,
+                "rating": 4.5,
+                "reviews": 32,
+                "pet_friendly": True,
+                "source": "airbnb (fallback)",
+                "url": "https://www.airbnb.com"
+            },
+            {
+                "name": f"Spacious Home in {region}",
+                "location": region,
+                "price_per_night": 110,
+                "rating": 4.8,
+                "reviews": 15,
+                "pet_friendly": True,
+                "source": "airbnb (fallback)",
+                "url": "https://www.airbnb.com"
+            }
+        ]

@@ -1,6 +1,6 @@
 """
-Holland Vacation Agent - Main Orchestrator
-AI-powered vacation deal finder for Netherlands
+Vacation Deal Finder Agent - Main Orchestrator
+AI-powered vacation deal finder for any destination
 Finds budget-friendly, dog-friendly accommodations
 """
 
@@ -18,7 +18,7 @@ from deal_ranker import DealRanker
 load_dotenv()
 
 
-class HollandVacationAgent:
+class VacationAgent:
     """
     Main agent that orchestrates vacation deal search across multiple sources
     """
@@ -44,7 +44,7 @@ class HollandVacationAgent:
         Main method - finds and ranks vacation deals
 
         Args:
-            cities: List of city names (e.g., ["Amsterdam", "Rotterdam"])
+            cities: List of city names or regions (e.g., ["Amsterdam", "Berlin"])
             checkin: Check-in date (YYYY-MM-DD)
             checkout: Check-out date (YYYY-MM-DD)
             group_size: Number of adults
@@ -53,8 +53,8 @@ class HollandVacationAgent:
         Returns:
             Dictionary with search results, ranked deals, and summary
         """
-        print(f"\n🤖 Holland Vacation Deal Finder")
-        print(f"   Cities: {', '.join(cities)}")
+        print(f"\n🤖 Vacation Deal Finder")
+        print(f"   Destinations: {', '.join(cities)}")
         print(f"   Dates: {checkin} → {checkout}")
         print(f"   Group: {group_size} adults + {pets} dog(s)")
         print(f"   Budget: €{self.budget_min}-{self.budget_max}/night\n")
@@ -136,10 +136,10 @@ class HollandVacationAgent:
         pets: int
     ) -> List[Dict]:
         """
-        Search all sources for a single city
+        Search all sources for a single city/region
 
         Args:
-            city: City name
+            city: City name or region
             checkin: Check-in date
             checkout: Check-out date
             nights: Number of nights
@@ -169,7 +169,7 @@ class HollandVacationAgent:
         except Exception as e:
             print(f"   Warning: Airbnb search failed for {city}: {e}")
 
-        # Add Center Parcs static data
+        # Add Center Parcs data (if relevant for location)
         center_parcs_deals = self._get_center_parcs_data(city)
         deals.extend(center_parcs_deals)
 
@@ -177,9 +177,7 @@ class HollandVacationAgent:
 
     def _get_center_parcs_data(self, city: str) -> List[Dict]:
         """
-        Get static Center Parcs data for Netherlands
-
-        Center Parcs are popular dog-friendly vacation parks in Netherlands
+        Get static Center Parcs data if the city matches known locations.
         """
         all_parks = [
             {
@@ -234,8 +232,17 @@ class HollandVacationAgent:
             }
         ]
 
-        # Return all parks (they're spread across Netherlands)
-        return all_parks
+        # Filter parks that match the requested city/region
+        # This is a basic fuzzy match
+        matching_parks = []
+        for park in all_parks:
+            # Check if city name is in park location or name
+            if city.lower() in park['location'].lower() or \
+               city.lower() in park['name'].lower() or \
+               ("holland" in city.lower() and "nederland" in park['url']): # Keep strict Holland check loose
+                matching_parks.append(park)
+
+        return matching_parks
 
     def cleanup(self):
         """Clean up browser sessions"""
@@ -245,14 +252,17 @@ class HollandVacationAgent:
         except Exception:
             pass
 
+# Backward compatibility alias
+HollandVacationAgent = VacationAgent
+
 
 async def main():
     """Example usage"""
-    agent = HollandVacationAgent(budget_min=40, budget_max=250)
+    agent = VacationAgent(budget_min=40, budget_max=250)
 
     try:
         results = await agent.find_best_deals(
-            cities=["Amsterdam", "Rotterdam", "Zandvoort"],
+            cities=["Amsterdam", "Berlin", "Antwerp"],
             checkin="2026-02-15",
             checkout="2026-02-22",
             group_size=4,

@@ -5,12 +5,12 @@ import threading
 import asyncio
 import webbrowser
 import os
-from holland_agent import HollandVacationAgent
+from holland_agent import VacationAgent
 
-class HollandVacationApp:
+class VacationApp:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Holland Vacation Deal Finder")
+        self.root.title("Vacation Deal Finder")
         self.root.geometry("800x600")
         
         # Dark Theme Configuration
@@ -19,7 +19,7 @@ class HollandVacationApp:
         self.root.configure(bg=self.bg_color)
         
         # Initialize Agent
-        self.agent = HollandVacationAgent()
+        self.agent = VacationAgent()
         
         # Configure styles
         self.configure_styles()
@@ -73,7 +73,7 @@ class HollandVacationApp:
         # Title
         title_label = ttk.Label(
             self.main_frame, 
-            text="🏖️ Holland Vacation Deal Finder", 
+            text="🏖️ Vacation Deal Finder", 
             style="Title.TLabel"
         )
         title_label.pack(pady=(0, 20))
@@ -108,8 +108,8 @@ class HollandVacationApp:
             return entry
 
         # --- Cities ---
-        self.cities_var = tk.StringVar(value="Amsterdam, Rotterdam, Zandvoort")
-        add_row("Cities (comma-separated):", self.cities_var, 0)
+        self.cities_var = tk.StringVar(value="Amsterdam, Berlin, Ardennes")
+        add_row("Destinations / Cities (comma-separated):", self.cities_var, 0)
         
         # --- Dates ---
         self.checkin_var = tk.StringVar(value="2026-02-15")
@@ -225,5 +225,5 @@ class HollandVacationApp:
             messagebox.showerror("Error", "Report file not found.")
 
 if __name__ == "__main__":
-    app = HollandVacationApp()
+    app = VacationApp()
     app.root.mainloop()

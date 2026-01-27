@@ -1,5 +1,5 @@
 """
-CLI Entry Point for Holland Vacation Deal Finder
+CLI Entry Point for Vacation Deal Finder
 Command-line interface for searching vacation deals
 """
 
@@ -8,24 +8,24 @@ import argparse
 import json
 import sys
 from datetime import datetime
-from holland_agent import HollandVacationAgent
+from holland_agent import VacationAgent
 
 
 def parse_args():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
-        description="Holland Vacation Deal Finder - Find budget-friendly, dog-friendly accommodations",
+        description="Vacation Deal Finder - Find budget-friendly, dog-friendly accommodations globally",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Search Amsterdam for 7 nights in February
-  python main.py --cities Amsterdam --checkin 2026-02-15 --checkout 2026-02-22
+  # Search Berlin for 7 nights in February
+  python main.py --cities Berlin --checkin 2026-02-15 --checkout 2026-02-22
 
-  # Search multiple cities with budget limit
-  python main.py --cities Amsterdam,Rotterdam,Zandvoort --checkin 2026-02-15 --checkout 2026-02-22 --budget-max 200
+  # Search multiple destinations with budget limit
+  python main.py --cities "Amsterdam,Ardennes,Winterberg" --checkin 2026-02-15 --checkout 2026-02-22 --budget-max 200
 
   # Search with custom group size
-  python main.py --cities Amsterdam --checkin 2026-03-01 --checkout 2026-03-08 --adults 2 --pets 1
+  python main.py --cities "Paris, France" --checkin 2026-03-01 --checkout 2026-03-08 --adults 2 --pets 1
         """
     )
 
@@ -33,7 +33,7 @@ Examples:
         "--cities",
         type=str,
         required=True,
-        help="Comma-separated list of cities (e.g., 'Amsterdam,Rotterdam,Zandvoort')"
+        help="Comma-separated list of cities, regions, or countries (e.g., 'Amsterdam, Berlin, Ardennes')"
     )
 
     parser.add_argument(
@@ -119,13 +119,13 @@ def validate_dates(checkin: str, checkout: str) -> bool:
 def print_summary(results: dict, top_n: int):
     """Print human-readable summary"""
     print("\n" + "="*70)
-    print("HOLLAND VACATION DEAL FINDER - RESULTS")
+    print("VACATION DEAL FINDER - RESULTS")
     print("="*70)
 
     # Search parameters
     params = results["search_params"]
     print(f"\nSearch Parameters:")
-    print(f"  Cities: {', '.join(params['cities'])}")
+    print(f"  Destinations: {', '.join(params['cities'])}")
     print(f"  Dates: {params['checkin']} to {params['checkout']} ({params['nights']} nights)")
     print(f"  Group: {params['group_size']} adults + {params['pets']} pet(s)")
     print(f"  Budget: {params['budget_range']} per night")
@@ -182,7 +182,7 @@ async def main():
     cities = [city.strip() for city in args.cities.split(",")]
 
     # Create agent
-    agent = HollandVacationAgent(
+    agent = VacationAgent(
         budget_min=args.budget_min,
         budget_max=args.budget_max
     )
