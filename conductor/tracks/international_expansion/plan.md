@@ -21,3 +21,9 @@
     - [x] Test searching for a location in Germany (e.g., "Winterberg").
     - [x] Test searching for a location in Belgium (e.g., "Ardennes").
 - [x] Task: Conductor - User Manual Verification 'International Expansion' (Protocol in workflow.md) [checkpoint: f85d977]
+
+## Phase 4: Reliability Refinements
+- [x] Task: Fix Airbnb Deep Links
+    - [x] Update `airbnb_scraper.py` to use stable "Region Search" URLs.
+    - [x] Verified that this format bypasses the 503 "Ice Cream" error.
+    - [x] Final strategy: Link to the region's search results with pre-filled dates.

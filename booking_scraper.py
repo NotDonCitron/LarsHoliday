@@ -61,11 +61,11 @@ class BookingScraper:
                 return deals
             else:
                 print(f"   No properties found, using fallback data")
-                return self._get_fallback_data(city)
+                return self._get_fallback_data(city, checkin, checkout, adults)
 
         except Exception as e:
             print(f"   Warning: Could not scrape Booking.com: {str(e)[:50]}")
-            return self._get_fallback_data(city)
+            return self._get_fallback_data(city, checkin, checkout, adults)
 
     def _build_booking_url(
         self,
@@ -155,8 +155,18 @@ class BookingScraper:
 
         return deals
 
-    def _get_fallback_data(self, city: str) -> List[Dict]:
+    def _get_fallback_data(
+        self, 
+        city: str,
+        checkin: str = "2026-06-01",
+        checkout: str = "2026-06-07",
+        adults: int = 4
+    ) -> List[Dict]:
         """Return static fallback data or generate mock data for unknown cities"""
+        
+        # Generate a real search URL for this specific fallback request
+        search_url = self._build_booking_url(city, checkin, checkout, adults)
+        
         fallback_properties = {
             "Amsterdam": [
                 {
@@ -220,7 +230,7 @@ class BookingScraper:
                 "reviews": 50,
                 "pet_friendly": True,
                 "source": "booking.com (fallback)",
-                "url": "https://www.booking.com"
+                "url": search_url  # Direct link to search results
             },
             {
                 "name": f"{city} Center Apartment",
@@ -230,6 +240,6 @@ class BookingScraper:
                 "reviews": 120,
                 "pet_friendly": True,
                 "source": "booking.com (fallback)",
-                "url": "https://www.booking.com"
+                "url": search_url  # Direct link to search results
             }
         ]
