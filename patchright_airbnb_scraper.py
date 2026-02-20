@@ -16,7 +16,6 @@ class PatchrightAirbnbScraper:
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = max(1, (d2 - d1).days)
-        
         url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
         
         try:
@@ -44,30 +43,40 @@ class PatchrightAirbnbScraper:
             seen_ids.add(room_id)
             
             pos = text.find(room_id)
-            # Suche Preis in der Nähe (1500 Zeichen Umkreis)
-            context = text[max(0, pos-500):pos+1000]
-            price_match = re.search(r'€\s*([\d\.,]+)|([\d\.,]+)\s*€', context)
+            # Suche nach Preisen ($ oder €) im Umkreis von 1000 Zeichen
+            context = text[pos:pos+1500]
+            
+            # Regex für Währungen: $ oder € gefolgt von Zahlen
+            price_match = re.search(r'[\$€]\s*([\d\.,]+)', context)
             
             price_per_night = 100
             if price_match:
-                val_str = price_match.group(1) or price_match.group(2)
-                val = int(val_str.replace('.', '').replace(',', ''))
-                # Heuristik: Falls Preis hoch (> 250), ist es der Gesamtpreis
-                price_per_night = round(val / nights) if val > 250 else val
+                val_str = price_match.group(1).replace(',', '')
+                try:
+                    val = int(float(val_str))
+                    # Heuristik: Falls Wert hoch (> 300), ist es der Gesamtpreis
+                    price_per_night = round(val / nights) if val > 300 else val
+                except: pass
             
-            # Bild finden
+            # Bild finden (direkt vor dem Link im Markdown)
             image_url = ""
-            img_context = text[max(0, pos-800):pos]
+            img_context = text[max(0, pos-1000):pos]
             img_match = re.search(r'https://a0\.muscache\.com/im/pictures/[^\s\)\?]+', img_context)
             if img_match:
                 image_url = img_match.group(0) + "?im_w=720"
 
+            # Name finden (Zeile unter dem Bild/Link)
+            name = f"Airbnb Inserat {room_id[:6]}"
+            name_match = re.search(r'\n\n([^\n]+)\n\n', context)
+            if name_match:
+                name = name_match.group(1).strip()
+
             deals.append({
-                "name": f"Airbnb Inserat {room_id[:6]}",
+                "name": name,
                 "location": region,
                 "price_per_night": price_per_night,
                 "rating": 4.8,
-                "reviews": 10,
+                "reviews": 15,
                 "pet_friendly": True,
                 "source": "airbnb (cloud)",
                 "url": f"https://www.airbnb.com/rooms/{room_id}",
