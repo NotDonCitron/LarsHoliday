@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lars Urlaubs-Deals | Holland mit Hund</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .deal-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- Navigation -->
+    <nav class="bg-emerald-700 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center">
+                <i class="fa-solid fa-paw mr-3"></i> Lars Urlaubs-Deals
+            </h1>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-emerald-200">Suche</a>
+                <a href="#" class="hover:text-emerald-200">Favoriten</a>
+                <a href="#" class="hover:text-emerald-200">Wetter</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-8 px-4 flex flex-col lg:flex-row gap-8">
+        
+        <!-- Sidebar Suche -->
+        <aside class="w-full lg:w-1/4 bg-white p-6 rounded-2xl shadow-sm h-fit">
+            <h2 class="text-xl font-semibold mb-6 flex items-center">
+                <i class="fa-solid fa-sliders mr-2 text-emerald-600"></i> Suche anpassen
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Reiseziele</label>
+                    <input type="text" value="Amsterdam, Zandvoort, Rotterdam" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Check-In</label>
+                        <input type="date" value="2026-02-15" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Check-Out</label>
+                        <input type="date" value="2026-02-22" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Gäste</label>
+                    <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border">
+                        <option>4 Personen + 1 Hund</option>
+                        <option>2 Personen + 1 Hund</option>
+                    </select>
+                </div>
+
+                <button id="search-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition shadow-md mt-4">
+                    Angebote finden
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="w-full lg:w-3/4">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">Top Empfehlungen</h2>
+                    <p id="status-text" class="text-gray-500">Gefundene Deals für Holland im Februar 2026</p>
+                </div>
+                <div class="text-sm text-gray-500">Sortiert nach: <span class="font-semibold text-emerald-600 underline">Beste Bewertung</span></div>
+            </div>
+
+            <!-- Deal Grid -->
+            <div id="deal-grid" class="grid md:grid-cols-2 gap-6">
+                <!-- Initialer Lade-Zustand oder Platzhalter -->
+                <div class="col-span-2 text-center py-20 text-gray-400">
+                    <i class="fa-solid fa-search fa-3x mb-4"></i>
+                    <p>Klicke auf "Angebote finden", um die Suche zu starten.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 bg-gray-800 text-gray-400 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2026 Lars Urlaubs-Deals - Mit ❤️ für 4 Personen & 1 Hund gebaut.</p>
+        </div>
+    </footer>
+
+    <script>
+        const searchBtn = document.getElementById('search-btn');
+        const dealGrid = document.getElementById('deal-grid');
+        const statusText = document.getElementById('status-text');
+
+        searchBtn.addEventListener('click', async () => {
+            const cities = "Amsterdam, Zandvoort, Rotterdam"; // Könnte man dynamisch aus Input lesen
+            const checkin = "2026-02-15";
+            const checkout = "2026-02-22";
+
+            // Lade-Anzeige
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Suche läuft...';
+            dealGrid.innerHTML = '<div class="col-span-2 text-center py-20"><i class="fa-solid fa-compass fa-spin fa-3x text-emerald-600 mb-4"></i><p class="text-lg">Wir durchsuchen Booking.com, Airbnb und Center Parcs...</p></div>';
+
+            try {
+                const response = await fetch(`http://localhost:8000/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}`);
+                const data = await response.json();
+
+                renderDeals(data.top_10_deals);
+                statusText.innerText = `${data.total_deals_found} Deals gefunden für ${data.search_params.nights} Nächte`;
+            } catch (error) {
+                console.error('Error:', error);
+                dealGrid.innerHTML = '<div class="col-span-2 text-center py-20 text-red-500"><i class="fa-solid fa-circle-exclamation fa-3x mb-4"></i><p>Fehler bei der Suche. Ist das Backend (api.py) gestartet?</p></div>';
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = 'Angebote finden';
+            }
+        });
+
+        function renderDeals(deals) {
+            if (!deals || deals.length === 0) {
+                dealGrid.innerHTML = '<div class="col-span-2 text-center py-20"><p>Keine Angebote gefunden. Versuche es mit anderen Daten oder Zielen.</p></div>';
+                return;
+            }
+
+            dealGrid.innerHTML = deals.map(deal => `
+                <div class="deal-card bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 flex flex-col">
+                    <div class="relative h-48 bg-emerald-100">
+                        <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80" alt="Ferienhaus" class="object-cover w-full h-full">
+                        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-emerald-700 flex items-center">
+                            <i class="fa-solid fa-sun mr-1"></i> Wetter Bonus aktiv
+                        </div>
+                        <div class="absolute top-4 right-4 bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                            ${deal.rank_score} Score
+                        </div>
+                    </div>
+                    <div class="p-5 flex-grow">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-bold">${deal.name}</h3>
+                            ${deal.pet_friendly ? '<span class="bg-blue-100 text-blue-700 text-[10px] uppercase font-black px-2 py-0.5 rounded">Hundefreundlich</span>' : ''}
+                        </div>
+                        <p class="text-gray-500 text-sm mb-4"><i class="fa-solid fa-location-dot mr-1 text-emerald-500"></i> ${deal.location}</p>
+                        
+                        <div class="flex justify-between items-center border-t pt-4 mt-auto">
+                            <div>
+                                <p class="text-xs text-gray-400">Preis pro Nacht</p>
+                                <p class="text-xl font-bold text-emerald-700">€${deal.price_per_night}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400">Gesamtpreis</p>
+                                <p class="text-lg font-semibold text-gray-800">€${deal.total_cost_for_trip}</p>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-emerald-600 font-bold mt-2 uppercase tracking-wider">${deal.recommendation.split('|')[0]}</p>
+                        <button class="w-full mt-4 border-2 border-emerald-600 text-emerald-600 py-2 rounded-lg font-bold hover:bg-emerald-50 transition">
+                            Details (via ${deal.source})
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

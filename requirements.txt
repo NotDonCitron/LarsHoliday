@@ -4,3 +4,6 @@ beautifulsoup4==4.12.0
 curl-cffi
 fpdf2
 patchright
+fastapi
+uvicorn
+python-dotenv
