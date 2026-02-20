@@ -12,6 +12,7 @@ Key improvements:
 import asyncio
 import json
 import random
+import os
 from datetime import datetime
 from typing import List, Dict, Optional
 from dotenv import load_dotenv  # pyre-ignore[21]
@@ -24,7 +25,6 @@ from scraper_health import health_reporter  # pyre-ignore[21]
 
 load_dotenv()
 
-
 class VacationAgent:
     """
     Main agent that orchestrates vacation deal search across multiple sources
@@ -34,8 +34,11 @@ class VacationAgent:
         self.budget_min = budget_min
         self.budget_max = budget_max
         self.booking_scraper = BookingScraper()
-        self.airbnb_scraper = SmartAirbnbScraper()  # Enhanced with rate limit bypass
+        self.airbnb_scraper = SmartAirbnbScraper()
         self.weather = WeatherIntegration()
+        # Explicitly set API Key for weather if needed
+        if not os.getenv("OPENWEATHER_API_KEY"):
+             print("   ⚠️ WARNUNG: OPENWEATHER_API_KEY fehlt in Umgebungsvariablen!")
         self.ranker = DealRanker(budget_max=budget_max)
         self.all_deals = []
 
