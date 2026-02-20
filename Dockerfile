@@ -8,23 +8,24 @@ ENV HOME=/home/user
 ENV PATH="/home/user/.local/bin:${PATH}"
 
 # Install system dependencies for Chromium
-RUN apt-get update && apt-get install -y 
-    wget 
-    gnupg 
-    libnss3 
-    libnspr4 
-    libatk1.0-0 
-    libatk-bridge2.0-0 
-    libcups2 
-    libdrm2 
-    libxkbcommon0 
-    libxcomposite1 
-    libxdamage1 
-    libxext6 
-    libxfixes3 
-    libxrandr2 
-    libgbm1 
-    libasound2 
+# Fixed: Added backslashes for multi-line command
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and switch to a non-root user
