@@ -58,12 +58,16 @@ async def search_deals(
         "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80"
     ]
     
+    final_deals = []
     for i, deal in enumerate(results.get("top_10_deals", [])):
-        if not deal.get("image_url") or len(deal["image_url"]) < 5:
-            # Better hash with index to avoid duplicates
-            image_idx = (hash(deal.get("name", "deal")) + i) % len(fallback_images)
-            deal["image_url"] = fallback_images[image_idx]
+        # STRENGE VALIDIERUNG: Nur Deals mit Preis und Link
+        if deal.get("price_per_night", 0) > 0 and deal.get("url"):
+            if not deal.get("image_url") or len(deal["image_url"]) < 5:
+                image_idx = (hash(deal.get("name", "deal")) + i) % len(fallback_images)
+                deal["image_url"] = fallback_images[image_idx]
+            final_deals.append(deal)
     
+    results["top_10_deals"] = final_deals
     return results
 
 if __name__ == "__main__":

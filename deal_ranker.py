@@ -88,7 +88,9 @@ class DealRanker:
 
         # 1. Price Score (0-40 points)
         # Lower price = higher score
-        price = deal.get("price_per_night", 100)
+        price = deal.get("price_per_night", 0)
+        if price <= 0:
+            return 0.0 # Invalid deal
         price_score = max(0, 40 - (price / 3))
         score += price_score
 
