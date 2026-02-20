@@ -37,15 +37,16 @@ class PatchrightAirbnbScraper:
         url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
         
         try:
-            await page.goto(url, wait_until='domcontentloaded', timeout=40000)
-            await page.wait_for_selector('[data-testid="card-container"]', timeout=15000)
+            # Erhöhter Timeout für Cloud
+            await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+            await page.wait_for_selector('[data-testid="card-container"]', timeout=30000)
             for _ in range(3):
                 await page.mouse.wheel(0, 800)
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
             content = await page.content()
             return self._parse_content(content, region, nights)
         except Exception as e:
-            print(f"   [Patchright] Error: {e}")
+            print(f"   [Patchright] Cloud Error: {e}")
             return []
         finally:
             await page.close()
@@ -56,13 +57,30 @@ class PatchrightAirbnbScraper:
         cards = soup.find_all('div', {'data-testid': 'card-container'})
         for card in cards:
             try:
-                name = (card.find('div', {'data-testid': 'listing-card-title'}) or soup.new_tag('div')).get_text(strip=True)
-                card_text = card.get_text(separator=' ')
-                prices = [int(p.replace('.', '').replace(',', '')) for p in re.findall(r'€\s*([\d\.,]+)', card_text)]
-                if not prices: continue
-                max_val = max(prices)
-                price_per_night = round(max_val / nights) if max_val > 300 else max_val
+                name_elem = card.find('div', {'data-testid': 'listing-card-title'})
+                name = name_elem.get_text(strip=True) if name_elem else "Airbnb"
                 
+                # Preis-Parsing (Nur echtes Parsing!)
+                price_per_night = 0
+                card_text = card.get_text(separator=' ')
+                price_matches = re.findall(r'(?:€\s*([\d\.,]+)|([\d\.,]+)\s*€)', card_text)
+                extracted_vals = []
+                for m in price_matches:
+                    val_str = m[0] or m[1]
+                    val = int(val_str.replace('.', '').replace(',', ''))
+                    extracted_vals.append(val)
+                
+                if extracted_vals:
+                    min_val = min(extracted_vals)
+                    max_val = max(extracted_vals)
+                    if len(extracted_vals) > 1 and max_val > min_val * 2:
+                        price_per_night = min_val
+                    else:
+                        price_per_night = round(max_val / nights) if max_val > 250 else max_val
+                
+                if price_per_night <= 0: continue
+
+                # Bild-Extraktion (Deep Search)
                 image_url = ""
                 for img in card.find_all('img'):
                     src = img.get('src', '') or img.get('data-src', '')
@@ -71,7 +89,12 @@ class PatchrightAirbnbScraper:
                         break
                 
                 link = card.find('a', href=True)
-                url = f"https://www.airbnb.com{link['href']}".split('?')[0] if link else ""
+                url = ""
+                if link and '/rooms/' in link['href']:
+                    room_id = re.search(r'/rooms/(\d+)', link['href'])
+                    if room_id: url = f"https://www.airbnb.com/rooms/{room_id.group(1)}"
+                
+                if not url: continue
 
                 deals.append({
                     "name": name, "location": region, "price_per_night": price_per_night,
@@ -80,3 +103,4 @@ class PatchrightAirbnbScraper:
                 })
             except Exception: continue
         return deals
+\nSmartAirbnbScraper = PatchrightAirbnbScraper
