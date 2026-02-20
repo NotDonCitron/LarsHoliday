@@ -72,7 +72,8 @@ class VacationAgent:
         # Calculate nights
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
-        nights = (d2 - d1).days
+        nights = max(1, (d2 - d1).days)
+        print(f"   Duration: {nights} night(s)")
 
         # Start search across all cities with staggered parallel scraping
         print("🔍 Searching accommodations...")
