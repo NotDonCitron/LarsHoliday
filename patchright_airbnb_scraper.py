@@ -1,7 +1,7 @@
 import asyncio
+import re
 import os
 import httpx
-import re
 from typing import List, Dict
 from datetime import datetime
 from urllib.parse import quote
@@ -27,13 +27,11 @@ class PatchrightAirbnbScraper:
                 if response.status_code == 200:
                     markdown = response.json().get('data', {}).get('markdown', '')
                     return self._parse_markdown(markdown, region, nights)
-        except Exception as e:
-            print(f"   [Airbnb Cloud] Fehler: {e}")
+        except Exception: pass
         return []
 
     def _parse_markdown(self, text: str, region: str, nights: int) -> List[Dict]:
         deals = []
-        # Finde Room-Links
         room_links = re.findall(r'https://www\.airbnb\.com/rooms/(\d+)', text)
         seen_ids = set()
         
@@ -42,35 +40,28 @@ class PatchrightAirbnbScraper:
             seen_ids.add(room_id)
             
             pos = text.find(room_id)
-            # Suche Bereich um den Link (Preise stehen oft davor oder danach)
             context = text[max(0, pos-1000):pos+1500]
             
-            # 1. Preis-Parsing (Extrem robust gegen , und .)
+            # Preis-Parsing (Erkennt $ und €)
             price_match = re.search(r'[\$€]\s*([\d\.,]+)', context)
             price_per_night = 100
             if price_match:
-                # Entferne alles außer Ziffern
                 digits = "".join(re.findall(r'\d+', price_match.group(1)))
                 if digits:
                     val = int(digits)
-                    # Falls der Wert sehr hoch ist, ist es das Trip-Total
-                    if val > 350:
-                        price_per_night = round(val / nights)
-                    else:
-                        price_per_night = val
+                    price_per_night = round(val / nights) if val > 300 else val
             
-            # 2. Bild finden
+            # Bild finden
             image_url = ""
             img_match = re.search(r'https://a0\.muscache\.com/im/pictures/[^\s\)\?]+', context)
             if img_match: image_url = img_match.group(0) + "?im_w=720"
 
-            # 3. Name finden (Suche nach markanten Begriffen im Umfeld)
+            # Name extrahieren (Erste Zeile im Kontext, die wie ein Titel aussieht)
             name = "Airbnb Unterkunft"
-            # Suche nach dem ersten Textblock, der nicht Link oder Bild ist
-            name_candidates = re.findall(r'\n([A-Z][^\n]+)\n', context)
-            for cand in name_candidates:
-                if any(x in cand.lower() for x in ['apartment', 'house', 'home', 'cottage', 'villa', 'studio', 'loft', 'suite']):
-                    name = cand.strip()
+            lines = [l.strip() for l in context.split('\n') if len(l.strip()) > 5]
+            for line in lines:
+                if any(kw in line.lower() for x in ['apartment', 'house', 'home', 'cottage', 'villa', 'studio', 'loft', 'suite']):
+                    name = line[:50]
                     break
 
             deals.append({

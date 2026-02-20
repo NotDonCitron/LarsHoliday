@@ -31,18 +31,8 @@ class BookingScraper:
         return []
 
     def _build_booking_url(self, city: str, checkin: str, checkout: str, adults: int):
-        # Wir erzwingen EUR in der URL, um Sicherzugehen (lang=de)
         base = "https://www.booking.com/searchresults.html"
-        params = [
-            f"ss={quote(city)}", 
-            f"checkin={checkin}", 
-            f"checkout={checkout}", 
-            f"group_adults={adults}", 
-            "no_rooms=1", 
-            "selected_currency=EUR",
-            "lang=de",
-            "nflt=ht_id%3D220%3Bhotelfacility%3D14"
-        ]
+        params = [f"ss={quote(city)}", f"checkin={checkin}", f"checkout={checkout}", f"group_adults={adults}", "no_rooms=1", "selected_currency=EUR", "nflt=ht_id%3D220%3Bhotelfacility%3D14"]
         return f"{base}?{'&'.join(params)}"
 
     def _parse_html(self, soup, city, checkin, checkout, nights):
@@ -51,34 +41,34 @@ class BookingScraper:
         for card in cards[:15]:
             try:
                 name_elem = card.find('div', {'data-testid': 'title'}) or card.find('h3')
-                name = name_elem.get_text(strip=True) if name_elem else "Booking Unterkunft"
+                if not name_elem: continue
+                name = name_elem.get_text(strip=True)
                 
-                # Preis-Parsing (Erkennt $ und €)
+                # Preis-Parsing (Erkennt jetzt $ und € und ignoriert Tausender-Kommas)
                 price_text = card.get_text()
-                price_match = re.search(r'[\$€]\s*([\d\.,]+)', price_text)
+                price_match = re.search(r'[\$€]\s*([\d\.,\s]+)', price_text)
                 price_per_night = 100
                 if price_match:
                     digits = "".join(re.findall(r'\d+', price_match.group(1)))
                     total = int(digits) if digits else 0
-                    price_per_night = round(total / nights) if total > 300 else total
+                    if total > 0:
+                        # Falls der Wert sehr hoch ist, ist es der Gesamtpreis
+                        price_per_night = round(total / nights) if total > 350 else total
                 
-                # Link-Aufbereitung
-                link_elem = card.find('a', href=True)
-                href = link_elem['href'] if link_elem else ""
-                if "https://" in href:
-                    final_url = f"{href.split('?')[0]}?checkin={checkin}&checkout={checkout}"
-                else:
-                    final_url = f"https://www.booking.com{href.split('?')[0]}?checkin={checkin}&checkout={checkout}"
-                
-                # Bild-Aufbereitung (Größere Version wählen)
+                # Bild-Extraktion (Wir nehmen die echten Inseratsfotos)
                 img = card.find('img')
                 image_url = ""
                 if img:
+                    # Booking.com nutzt oft src oder data-src
                     image_url = img.get('src') or img.get('data-src') or ""
-                    # Von square240 auf max500/original umstellen für bessere Qualität
+                    # Qualität erhöhen: square240 -> max500
                     image_url = image_url.replace('square240', 'max500')
                 
                 if image_url.startswith('//'): image_url = f"https:{image_url}"
+
+                link_elem = card.find('a', href=True)
+                href = link_elem['href'] if link_elem else ""
+                final_url = f"https://www.booking.com{href.split('?')[0]}?checkin={checkin}&checkout={checkout}" if not href.startswith('http') else href
 
                 deals.append({
                     "name": name, "location": city, "price_per_night": price_per_night,
