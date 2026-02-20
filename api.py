@@ -21,15 +21,26 @@ app.add_middleware(
 
 agent = HollandVacationAgent()
 
+def get_env_robust(key_name):
+    # Try exact match
+    val = os.getenv(key_name)
+    if val: return val
+    # Try lowercase/uppercase
+    for k, v in os.environ.items():
+        if k.upper().strip() == key_name.upper():
+            return v
+    return None
+
 @app.get("/health")
 async def health_check():
     return {
         "status": "online",
         "keys_found": {
-            "OPENWEATHER_API_KEY": bool(os.getenv("OPENWEATHER_API_KEY")),
-            "FIRECRAWL_API_KEY": bool(os.getenv("FIRECRAWL_API_KEY")),
-            "AGENT_BROWSER_SESSION": bool(os.getenv("AGENT_BROWSER_SESSION"))
+            "OPENWEATHER_API_KEY": bool(get_env_robust("OPENWEATHER_API_KEY")),
+            "FIRECRAWL_API_KEY": bool(get_env_robust("FIRECRAWL_API_KEY")),
+            "AGENT_BROWSER_SESSION": bool(get_env_robust("AGENT_BROWSER_SESSION"))
         },
+        "available_vars": [k for k in os.environ.keys() if "API" in k or "KEY" in k],
         "python_version": os.sys.version
     }
 
