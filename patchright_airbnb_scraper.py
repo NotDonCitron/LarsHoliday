@@ -127,4 +127,5 @@ class PatchrightAirbnbScraper:
                 })
             except Exception: continue
         return deals
-\nSmartAirbnbScraper = PatchrightAirbnbScraper
+
+SmartAirbnbScraper = PatchrightAirbnbScraper
