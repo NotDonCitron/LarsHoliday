@@ -33,9 +33,11 @@ async def search_deals(
     adults: int = 4,
     pets: int = 1
 ):
+    print(f"\n--- [API Request] Suche gestartet: {cities} ---")
     city_list = [c.strip() for c in cities.split(",")]
     
     # Run the existing agent logic
+    print(f"--- [API Request] Agent findet Deals für {len(city_list)} Städte...")
     results = await agent.find_best_deals(
         cities=city_list,
         checkin=checkin,
@@ -43,6 +45,7 @@ async def search_deals(
         group_size=adults,
         pets=pets
     )
+    print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
     
     # Vibe Polish: Ensure every deal has an image
     fallback_images = [
