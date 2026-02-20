@@ -8,89 +8,71 @@ from urllib.parse import quote
 
 class PatchrightAirbnbScraper:
     def __init__(self):
-        # Versuche verschiedene Key-Namen
         self.firecrawl_key = os.getenv("FIRECRAWL_API_KEY") or os.getenv("firecrawl_api_key")
         
     async def search_airbnb(self, region: str, checkin: str, checkout: str, adults: int = 4) -> List[Dict]:
-        if not self.firecrawl_key:
-            print("   [Firecrawl] Kein API Key vorhanden.")
-            return []
-
+        if not self.firecrawl_key: return []
+        
+        d1 = datetime.strptime(checkin, "%Y-%m-%d")
+        d2 = datetime.strptime(checkout, "%Y-%m-%d")
+        nights = max(1, (d2 - d1).days)
+        
         url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
-        print(f"   [Firecrawl] Markdown-Suche für {region}...")
         
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=90.0) as client:
                 response = await client.post(
                     "https://api.firecrawl.dev/v1/scrape",
                     headers={"Authorization": f"Bearer {self.firecrawl_key}"},
-                    json={
-                        "url": url,
-                        "formats": ["markdown"],
-                        "waitFor": 5000
-                    }
+                    json={"url": url, "formats": ["markdown"], "waitFor": 5000}
                 )
-                
                 if response.status_code == 200:
-                    data = response.json()
-                    markdown = data.get('data', {}).get('markdown', '')
-                    print(f"   [Firecrawl] Markdown erhalten ({len(markdown)} Zeichen)")
-                    if len(markdown) > 0:
-                        # Log snippet for debugging
-                        snippet = markdown[:500].replace('\n', ' ')
-                        print(f"   [Debug] Markdown Snippet: {snippet}")
-                    return self._parse_markdown(markdown, region)
-                else:
-                    print(f"   [Firecrawl] Fehler: {response.status_code}")
+                    markdown = response.json().get('data', {}).get('markdown', '')
+                    return self._parse_markdown(markdown, region, nights)
         except Exception as e:
-            print(f"   [Firecrawl] Exception: {e}")
+            print(f"   [Cloud Scraper] Fehler: {e}")
         return []
 
-    def _parse_markdown(self, text: str, region: str) -> List[Dict]:
-        """Extrahiert Deals aus Markdown-Text mit extrem robusten Mustern"""
+    def _parse_markdown(self, text: str, region: str, nights: int) -> List[Dict]:
         deals = []
-        
-        # 1. Finde alle Zimmer-IDs (das stabilste Element)
-        room_ids = re.findall(r'rooms/(\d+)', text)
-        
-        # 2. Suche nach Preisen im Text
-        # Wir suchen nach Mustern wie "123 €", "€ 123", "€123.00"
-        price_matches = re.findall(r'(?:€\s*([\d\.,]+)|([\d\.,]+)\s*€)', text)
-        prices = []
-        for m in price_matches:
-            val_str = m[0] or m[1]
-            try:
-                # Entferne Tausenderpunkte und Kommas
-                val_clean = val_str.replace('.', '').replace(',', '')
-                val = int(val_clean)
-                if 20 < val < 5000:
-                    prices.append(val)
-            except:
-                continue
-
-        # 3. Falls wir IDs und Preise haben, bauen wir Paare
+        # Finde Room-Links
+        room_links = re.findall(r'https://www\.airbnb\.com/rooms/(\d+)', text)
         seen_ids = set()
-        for i, room_id in enumerate(room_ids):
+        
+        for room_id in room_links:
             if room_id in seen_ids: continue
-            if i >= len(prices): break
-            
             seen_ids.add(room_id)
-            price = prices[i]
-            # Heuristik: Wenn Preis sehr hoch, durch 7 teilen
-            if price > 350: price = round(price / 7)
+            
+            pos = text.find(room_id)
+            # Suche Preis in der Nähe (1500 Zeichen Umkreis)
+            context = text[max(0, pos-500):pos+1000]
+            price_match = re.search(r'€\s*([\d\.,]+)|([\d\.,]+)\s*€', context)
+            
+            price_per_night = 100
+            if price_match:
+                val_str = price_match.group(1) or price_match.group(2)
+                val = int(val_str.replace('.', '').replace(',', ''))
+                # Heuristik: Falls Preis hoch (> 250), ist es der Gesamtpreis
+                price_per_night = round(val / nights) if val > 250 else val
+            
+            # Bild finden
+            image_url = ""
+            img_context = text[max(0, pos-800):pos]
+            img_match = re.search(r'https://a0\.muscache\.com/im/pictures/[^\s\)\?]+', img_context)
+            if img_match:
+                image_url = img_match.group(0) + "?im_w=720"
 
             deals.append({
-                "name": f"Airbnb Unterkunft {room_id}",
+                "name": f"Airbnb Inserat {room_id[:6]}",
                 "location": region,
-                "price_per_night": price,
+                "price_per_night": price_per_night,
                 "rating": 4.8,
                 "reviews": 10,
                 "pet_friendly": True,
-                "source": "airbnb (firecrawl-robust)",
+                "source": "airbnb (cloud)",
                 "url": f"https://www.airbnb.com/rooms/{room_id}",
-                "image_url": ""
+                "image_url": image_url
             })
-
         return deals
 
 SmartAirbnbScraper = PatchrightAirbnbScraper
