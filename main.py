@@ -8,7 +8,9 @@ import argparse
 import json
 import sys
 from datetime import datetime
-from holland_agent import VacationAgent
+from datetime import datetime
+from holland_agent import VacationAgent  # pyre-ignore[21]
+from html_report_generator import HTMLReportGenerator  # pyre-ignore[21]
 
 
 def parse_args():
@@ -93,6 +95,14 @@ Examples:
         help="Number of top deals to show (default: 10)"
     )
 
+    parser.add_argument(
+        "--report",
+        type=str,
+        choices=["none", "html"],
+        default="html",
+        help="Generate report file: 'html' for VacationDeals_YYYYMMDD.html (default: html)"
+    )
+
     return parser.parse_args()
 
 
@@ -161,6 +171,10 @@ def print_summary(results: dict, top_n: int):
         print(f"  Score: {deal['rank_score']}/100")
         print(f"  {deal['recommendation']}")
 
+        # Direct link
+        if deal.get("url"):
+            print(f"  🔗 {deal['url']}")
+
         # Weather info if available
         if deal.get("weather_forecast"):
             weather = deal["weather_forecast"]
@@ -202,6 +216,17 @@ async def main():
             print("\n" + json.dumps(results, indent=2, ensure_ascii=False))
         else:
             print_summary(results, args.top)
+            
+        # Generate Report
+        if args.report == "html":
+            report_gen = HTMLReportGenerator()
+            filename = f"VacationDeals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            path = report_gen.generate_report(
+                deals=results["top_10_deals"], # Or all deals if preferred, but top is cleaner
+                search_params=results["search_params"],
+                filename=filename
+            )
+            print(f"\n📊 Report generated: {path}")
 
     except KeyboardInterrupt:
         print("\n\nSearch cancelled by user")
@@ -210,7 +235,7 @@ async def main():
         print(f"\nError: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
-        agent.cleanup()
+        await agent.cleanup()
 
 
 if __name__ == "__main__":

@@ -3,17 +3,17 @@ Booking.com Scraper using curl-cffi for stealth
 Searches for pet-friendly accommodations
 """
 
-from curl_cffi import requests
+from curl_cffi import requests  # pyre-ignore[21]
 from typing import List, Dict
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup  # pyre-ignore[21]
 import re
 from datetime import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # pyre-ignore[21]
 
 load_dotenv()
 
 
-from urllib.parse import quote
+from urllib.parse import quote, urlparse, parse_qs, urlencode, urlunparse
 
 class BookingScraper:
     """
@@ -22,7 +22,7 @@ class BookingScraper:
 
     def __init__(self):
         # curl-cffi handles headers automatically with browser impersonation
-        self.session = requests.Session()
+        pass
 
     async def search_booking(
         self,
@@ -30,11 +30,14 @@ class BookingScraper:
         checkin: str,
         checkout: str,
         adults: int = 4
-    ) -> List[Dict]:
+    ) -> List[Dict]:  # pyre-ignore[3]
         """
         Search Booking.com for pet-friendly accommodations
         """
         print(f"   Searching Booking.com for {city}...")
+
+        # Create a fresh session for each request to avoid state issues
+        session = requests.Session()
 
         try:
             # Calculate nights for price normalization
@@ -45,27 +48,35 @@ class BookingScraper:
             url = self._build_booking_url(city, checkin, checkout, adults)
 
             # Use curl-cffi with Chrome impersonation for stealth
-            response = self.session.get(
+            response = session.get(
                 url,
                 impersonate="chrome120",
                 timeout=30,
                 allow_redirects=True
             )
-            response.raise_for_status()
+            # print(f"   [Debug] Booking.com Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                 print(f"   Warning: Booking.com returned status {response.status_code}")
+                 return self._get_fallback_data(city, checkin, checkout, adults)
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            deals = self._parse_html(soup, city, nights)
+            # print(f"   [Debug] Page Title: {soup.title.string.strip() if soup.title else 'No Title'}")
+            
+            deals = self._parse_html(soup, city, checkin, checkout, adults, nights)
 
             if deals:
                 print(f"   Found {len(deals)} properties on Booking.com")
                 return deals
             else:
-                print(f"   No properties found, using fallback data")
+                print(f"   No properties found on Booking.com, using fallback data. (Title: {soup.title.string.strip() if soup.title else 'No Title'})")
                 return self._get_fallback_data(city, checkin, checkout, adults)
 
         except Exception as e:
-            print(f"   Warning: Could not scrape Booking.com: {str(e)[:50]}")
+            print(f"   Warning: Could not scrape Booking.com: {str(e)[:50]}")  # pyre-ignore[6]
             return self._get_fallback_data(city, checkin, checkout, adults)
+        finally:
+            session.close()
 
     def _build_booking_url(
         self,
@@ -90,9 +101,29 @@ class BookingScraper:
 
         return f"{base_url}?{'&'.join(params)}"
 
-    def _parse_html(self, soup: BeautifulSoup, city: str, nights: int = 1) -> List[Dict]:
+    def _clean_url(self, url: str) -> str:
+        """Remove session IDs and other tracking params from Booking.com URLs"""
+        try:
+            parsed = urlparse(url)
+            # Booking.com hotel links are usually /hotel/cc/name.html
+            # If it's a search result link with many params, strip them
+            if '/hotel/' in parsed.path:
+                # Keep only necessary params if any (usually none needed for direct link)
+                # But sometimes hapos is useful. Safest is to strip everything for clean link.
+                return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+            return url
+        except Exception:
+            return url
+
+    def _parse_html(self, soup: BeautifulSoup, city: str, checkin: str, checkout: str, adults: int, nights: int = 1) -> List[Dict]:
         """Parse Booking.com HTML to extract property data"""
         deals = []
+        
+        # Helper to add params to clean URL
+        def add_params(clean_url):
+            if '?' in clean_url:
+                return f"{clean_url}&checkin={checkin}&checkout={checkout}&group_adults={adults}&no_rooms=1&group_children=0"
+            return f"{clean_url}?checkin={checkin}&checkout={checkout}&group_adults={adults}&no_rooms=1&group_children=0"
 
         # Try to find property cards (Booking.com uses various selectors)
         property_cards = soup.find_all('div', {'data-testid': 'property-card'})
@@ -112,7 +143,10 @@ class BookingScraper:
                 price_text = price_elem.get_text(strip=True) if price_elem else "€50"
                 
                 # Booking.com usually shows TOTAL price for the stay
-                total_price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 50
+                total_price = 50
+                price_match = re.search(r'\d+', price_text.replace(',', ''))
+                if price_match:
+                    total_price = int(price_match.group())
                 
                 # Normalize to price per night
                 price_per_night = round(total_price / max(1, nights))
@@ -120,24 +154,34 @@ class BookingScraper:
                 # Extract rating
                 rating_elem = card.find('div', {'data-testid': 'review-score'}) or card.find('div', class_=re.compile(r'review-score'))
                 rating_text = rating_elem.get_text(strip=True) if rating_elem else "4.0"
-                rating = float(re.search(r'\d+\.?\d*', rating_text).group()) / 2 if re.search(r'\d+\.?\d*', rating_text) else 4.0
+                
+                rating = 4.0
+                rating_match = re.search(r'\d+\.?\d*', rating_text)
+                if rating_match:
+                    rating = float(rating_match.group()) / 2
                 rating = min(5.0, rating)  # Cap at 5.0
 
                 # Extract review count
                 review_elem = card.find('div', {'data-testid': 'review-count'}) or card.find('div', class_=re.compile(r'review'))
                 review_text = review_elem.get_text(strip=True) if review_elem else "100"
-                reviews = int(re.search(r'\d+', review_text.replace(',', '')).group()) if re.search(r'\d+', review_text) else 100
+                
+                reviews = 100
+                review_match = re.search(r'\d+', review_text.replace(',', ''))
+                if review_match:
+                    reviews = int(review_match.group())
 
                 # Extract URL
-                link_elem = card.find('a', href=True)
-                if link_elem:
-                    href = link_elem['href']
-                    if href.startswith('/'):
-                        url = f"https://www.booking.com{href}"
-                    else:
-                        url = href
-                else:
-                    url = "https://www.booking.com"
+                link_elem = card.find('a', {'data-testid': 'title-link'}) or \
+                           card.find('a', class_=re.compile(r'hotel_name_link|js-sr-hotel-link')) or \
+                           card.find('a', href=True)
+                
+                url = "https://www.booking.com"
+                if link_elem and link_elem.get('href'):
+                    raw_href = link_elem['href']
+                    if raw_href.startswith('/'):
+                        raw_href = f"https://www.booking.com{raw_href}"
+                    clean = self._clean_url(raw_href)
+                    url = add_params(clean)
 
                 deals.append({
                     "name": name,

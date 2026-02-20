@@ -22,7 +22,18 @@ class AirbnbScraper:
 
     def __init__(self):
         # curl-cffi handles headers automatically with browser impersonation
-        self.session = requests.Session()
+        pass
+
+    def _get_random_impersonation(self):
+        """Return a random browser impersonation string"""
+        import random
+        browsers = [
+            "chrome120",
+            "chrome119", 
+            "safari15_3",
+            "edge101"
+        ]
+        return random.choice(browsers)
 
     async def search_airbnb(
         self,
@@ -36,31 +47,61 @@ class AirbnbScraper:
         """
         print(f"   Searching Airbnb for {region}...")
 
+        session = requests.Session()
+
         try:
             url = self._build_airbnb_url(region, checkin, checkout, adults)
 
-            # Use curl-cffi with Chrome impersonation for stealth
-            response = self.session.get(
-                url,
-                impersonate="chrome120",
-                timeout=30,
-                allow_redirects=True
-            )
-            response.raise_for_status()
+            # Retry logic for 429
+            for attempt in range(5): # Increased attempts
+                try:
+                    # Randomize browser fingerprint
+                    impersonation = self._get_random_impersonation()
+                    
+                    # Use curl-cffi with impersonation for stealth
+                    response = session.get(
+                        url,
+                        impersonate=impersonation,
+                        timeout=30,
+                        allow_redirects=True
+                    )
+                    
+                    if response.status_code == 429:
+                        raise Exception("HTTP Error 429")
+                        
+                    response.raise_for_status()
+                    
+                    # If successful, parse
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    deals = self._parse_html(soup, region, checkin, checkout, required_capacity=adults)
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-            deals = self._parse_html(soup, region, checkin, checkout, required_capacity=adults)
+                    if deals:
+                        print(f"   Found {len(deals)} properties on Airbnb")
+                        return deals
+                    else:
+                        print(f"   No properties found, using fallback data")
+                        return self._get_fallback_data(region, checkin, checkout, adults)
 
-            if deals:
-                print(f"   Found {len(deals)} properties on Airbnb")
-                return deals
-            else:
-                print(f"   No properties found, using fallback data")
-                return self._get_fallback_data(region, checkin, checkout, adults)
+                except Exception as e:
+                    if "429" in str(e) and attempt < 4:
+                        import asyncio
+                        import random
+                        # Exponential backoff with jitter: 2^attempt * 30 + jitter
+                        wait_time = (2 ** attempt) * 30 + random.uniform(1, 10)
+                        print(f"   ⚠️ Airbnb Rate limit (429). Waiting {wait_time:.1f}s to retry (Attempt {attempt+1}/5)...")
+                        await asyncio.sleep(wait_time)
+                        # New session for retry
+                        session.close()
+                        session = requests.Session()
+                        continue
+                    else:
+                        raise e
 
         except Exception as e:
             print(f"   Warning: Could not scrape Airbnb: {str(e)[:50]}")
             return self._get_fallback_data(region, checkin, checkout, adults)
+        finally:
+            session.close()
 
     def _build_airbnb_url(
         self,
@@ -105,10 +146,10 @@ class AirbnbScraper:
 
                                     for item in listings[:20]:  # Limit to 20
                                         try:
-                                            # Helper to get value from top-level or nested listing
+                                            # Helper to safely get value from top-level or nested listing
                                             def get_val(key):
                                                 val = item.get(key)
-                                                if val is None and 'listing' in item:
+                                                if val is None and item.get('listing'):
                                                     val = item['listing'].get(key)
                                                 return val
 
@@ -124,7 +165,20 @@ class AirbnbScraper:
                                             price_obj = item.get('structuredDisplayPrice') or {}
                                             price_line = price_obj.get('primaryLine') or {}
                                             price_text = price_line.get('discountedPrice') or price_line.get('price') or '€60'
-                                            price = int(re.search(r'\d+', price_text.replace(',', '')).group()) if re.search(r'\d+', price_text) else 60
+                                            raw_price = int(re.search(r'\d+', price_text.replace(',', '').replace('\u00a0', '')).group()) if re.search(r'\d+', price_text) else 60
+                                            
+                                            # Calculate per-night price if the price is total
+                                            price = raw_price
+                                            if price_line.get('qualifier') == 'total':
+                                                try:
+                                                    from datetime import datetime
+                                                    d1 = datetime.strptime(checkin, "%Y-%m-%d")
+                                                    d2 = datetime.strptime(checkout, "%Y-%m-%d")
+                                                    nights = (d2 - d1).days
+                                                    if nights > 0:
+                                                        price = raw_price // nights
+                                                except:
+                                                    pass
 
                                             # Extract rating
                                             rating_text = get_val('avgRatingLocalized') or '4.5'
@@ -138,32 +192,40 @@ class AirbnbScraper:
 
                                             # Extract property ID for URL
                                             property_id = None
+                                            
+                                            # Try demandStayListing (Base64 encoded)
+                                            encoded_id = item.get('demandStayListing', {}).get('id')
+                                            if encoded_id:
+                                                try:
+                                                    import base64
+                                                    decoded = base64.b64decode(encoded_id).decode('utf-8')
+                                                    if ':' in decoded:
+                                                        property_id = decoded.split(':')[-1]
+                                                except:
+                                                    pass
+
                                             # Try direct keys
-                                            for key in ['id', 'propertyId', 'listingId', 'listing_id']:
-                                                if item.get(key):
-                                                    property_id = item[key]
-                                                    break
+                                            if not property_id:
+                                                for key in ['id', 'propertyId', 'listingId', 'listing_id']:
+                                                    if item.get(key):
+                                                        property_id = item[key]
+                                                        break
                                             
                                             # Try nested listing object
-                                            if not property_id and 'listing' in item:
+                                            if not property_id and item.get('listing'):
                                                 property_id = item['listing'].get('id')
 
                                             # Try listingParamOverrides
-                                            if not property_id and 'listingParamOverrides' in item:
+                                            if not property_id and item.get('listingParamOverrides'):
                                                 property_id = item['listingParamOverrides'].get('id') or item['listingParamOverrides'].get('listingId')
 
                                             # Skip if no ID found - prevents generic links
                                             if not property_id:
                                                 continue
                                             
-                                            # FINAL STABLE FIX: Region-based Search URL.
-                                            # Direct links (rooms/ID) -> 503.
-                                            # Specific search (query=ID/Title) -> 503.
-                                            # Google Search -> No results (not indexed).
-                                            # Region Search -> WORKS.
-                                            # We link to the region's results. User has to find the property in the list.
-                                            safe_region = quote(region)
-                                            url = f"https://www.airbnb.com/s/{safe_region}/homes?checkin={checkin}&checkout={checkout}&adults={required_capacity}"
+                                            # Direct Room URL (Verified working with curl_cffi)
+                                            # Using the correct query params ensures the price matches the search
+                                            url = f"https://www.airbnb.com/rooms/{property_id}?check_in={checkin}&check_out={checkout}&guests={required_capacity}&adults={required_capacity}"
 
                                             deals.append({
                                                 "name": name,
@@ -177,7 +239,7 @@ class AirbnbScraper:
                                             })
 
                                         except Exception as e:
-                                            # print(f"   Warning: Skipped item due to error: {e}")
+                                            print(f"   Warning: Skipped item due to error: {e}")
                                             continue
 
                                     return deals

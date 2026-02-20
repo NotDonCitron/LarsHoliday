@@ -1,5 +1,6 @@
-httpx==0.25.0
+httpx>=0.27.0
 python-dotenv==1.0.0
 beautifulsoup4==4.12.0
 curl-cffi
-fpdf2==2.7.9
+fpdf2
+patchright

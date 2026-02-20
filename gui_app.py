@@ -5,9 +5,12 @@ import threading
 import asyncio
 import webbrowser
 import os
-from holland_agent import VacationAgent
-from favorites_manager import FavoritesManager
-from report_generator import ReportGenerator
+from typing import Any
+from holland_agent import VacationAgent  # pyre-ignore[21]
+from favorites_manager import FavoritesManager  # pyre-ignore[21]
+from favorites_manager import FavoritesManager  # pyre-ignore[21]
+from report_generator import ReportGenerator  # pyre-ignore[21]
+from html_report_generator import HTMLReportGenerator  # pyre-ignore[21]
 
 class VacationApp:
     def __init__(self):
@@ -24,9 +27,35 @@ class VacationApp:
         self.agent = VacationAgent()
         self.favorites_manager = FavoritesManager()
         self.report_generator = ReportGenerator()
+        self.html_generator = HTMLReportGenerator()
         
         # Store last results
-        self.current_results = None
+        self.current_results: Any = None
+        
+        # Declare GUI attributes (assigned in helper methods below)
+        self.accent_color: str = ""
+        self.button_color: str = ""
+        self.container: Any = None
+        self.main_frame: Any = None
+        self.sidebar: Any = None
+        self.fav_listbox: Any = None
+        self.status_label: Any = None
+        self.results_container: Any = None
+        self.results_canvas: Any = None
+        self.scrollbar: Any = None
+        self.scrollable_frame: Any = None
+        self.bottom_frame: Any = None
+        self.open_report_btn: Any = None
+        self.export_pdf_btn: Any = None
+        self.log_text: Any = None
+        self.cities_var: Any = None
+        self.checkin_var: Any = None
+        self.checkout_var: Any = None
+        self.adults_var: Any = None
+        self.budget_var: Any = None
+        self.allow_dogs_var: Any = None
+        self.dogs_check: Any = None
+        self.search_btn: Any = None
         
         # Configure styles
         self.configure_styles()
@@ -128,6 +157,36 @@ class VacationApp:
 
         self.results_canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
+
+        # --- LOG WINDOW ---
+        ttk.Label(self.main_frame, text="📜 Activity Log:", style="Dark.TLabel").pack(pady=(10, 0), anchor="w")
+        self.log_text = tk.Text(
+            self.main_frame, 
+            height=6, 
+            bg="#1E1E1E", 
+            fg="#00FF00", # Matrix green
+            font=("Consolas", 9),
+            state=tk.DISABLED
+        )
+        self.log_text.pack(fill=tk.X, pady=(5, 10))
+        
+        # Redirect stdout
+        import sys
+        class RedirectStdout:
+            def __init__(self, text_widget, root):
+                self.text_widget = text_widget
+                self.root = root
+            def write(self, string):
+                self.root.after(0, self._write, string)
+            def _write(self, string):
+                self.text_widget.config(state=tk.NORMAL)
+                self.text_widget.insert(tk.END, string)
+                self.text_widget.see(tk.END)
+                self.text_widget.config(state=tk.DISABLED)
+            def flush(self):
+                pass
+        
+        sys.stdout = RedirectStdout(self.log_text, self.root)
         
         # Bottom Buttons Frame
         self.bottom_frame = ttk.Frame(self.main_frame, style="Dark.TFrame")
@@ -268,6 +327,9 @@ class VacationApp:
         self.status_label.config(text=f"Search complete. Found {count} deals.")
         self.search_btn.state(['!disabled'])
         
+        # Generate HTML Report automatically for the current search
+        self._generate_html_report(results)
+        
         # Show buttons
         self.open_report_btn.pack(side=tk.LEFT, padx=10)
         self.export_pdf_btn.pack(side=tk.LEFT, padx=10)
@@ -277,60 +339,24 @@ class VacationApp:
         for deal in top_deals:
             self.add_deal_card(deal)
 
-    def add_deal_card(self, deal):
-        card = ttk.Frame(self.scrollable_frame, style="Card.TFrame", padding=10)
-        card.pack(fill=tk.X, pady=5, padx=5)
+    def _generate_html_report(self, results):
+        """Generate a fresh HTML report using the improved generator"""
+        params = results.get('search_params', {})
+        deals = results.get('top_10_deals', [])
         
-        # Info
-        name = deal.get('name', 'Unknown')
-        price = deal.get('price_per_night', 0)
-        location = deal.get('location', 'Unknown')
-        rating = deal.get('rating', 0)
-        
-        info_text = f"{name}\n📍 {location} | €{price}/night | ⭐ {rating}/5"
-        ttk.Label(card, text=info_text, style="Dark.TLabel", justify=tk.LEFT).pack(side=tk.LEFT, padx=5)
-        
-        # Actions
-        btn_frame = ttk.Frame(card, style="Dark.TFrame")
-        btn_frame.pack(side=tk.RIGHT)
-        
-        ttk.Button(btn_frame, text="⭐", width=3, command=lambda d=deal: self.toggle_favorite(d)).pack(side=tk.RIGHT, padx=2)
-        ttk.Button(btn_frame, text="🔗", width=3, command=lambda u=deal.get('url'): webbrowser.open(u)).pack(side=tk.RIGHT, padx=2)
-
-    def toggle_favorite(self, deal):
-        success = self.favorites_manager.add_favorite(deal)
-        if success:
-            self.refresh_favorites()
-            messagebox.showinfo("Favorites", f"Added '{deal.get('name')}' to favorites!")
-        else:
-            messagebox.showinfo("Favorites", "Already in favorites.")
-
-    def refresh_favorites(self):
-        self.fav_listbox.delete(0, tk.END)
-        for fav in self.favorites_manager.get_all():
-            self.fav_listbox.insert(tk.END, f"{fav.get('name')} (€{fav.get('price_per_night')})")
-
-    def open_favorite(self, event):
-        selection = self.fav_listbox.curselection()
-        if selection:
-            index = selection[0]
-            fav = self.favorites_manager.get_all()[index]
-            webbrowser.open(fav.get('url'))
-
-    def remove_selected_favorite(self):
-        selection = self.fav_listbox.curselection()
-        if selection:
-            index = selection[0]
-            fav = self.favorites_manager.get_all()[index]
-            self.favorites_manager.remove_favorite(fav.get('url'))
-            self.refresh_favorites()
+        # Use new generator
+        self.html_generator.generate_report(
+            deals=deals,
+            search_params=params,
+            filename="last_search_report.html"
+        )
 
     def open_report(self):
-        report_path = os.path.abspath("holland_alle_optionen.html")
+        report_path = os.path.abspath("last_search_report.html")
         if os.path.exists(report_path):
             webbrowser.open(f"file://{report_path}")
         else:
-            messagebox.showerror("Error", "Report file not found.")
+            messagebox.showerror("Error", "Report file not found. Please run a search first.")
 
     def export_pdf(self):
         if not self.current_results:
@@ -354,6 +380,70 @@ class VacationApp:
                 webbrowser.open(f"file://{filename}")
             else:
                 messagebox.showerror("Error", "Failed to generate report.")
+
+    def refresh_favorites(self):
+        """Refresh the favorites listbox"""
+        self.fav_listbox.delete(0, tk.END)
+        favorites = self.favorites_manager.get_all()
+        for fav in favorites:
+            self.fav_listbox.insert(tk.END, fav.get('name', 'Unknown'))
+
+    def open_favorite(self, event):
+        """Open selected favorite in browser"""
+        selection = self.fav_listbox.curselection()
+        if selection:
+            index = selection[0]
+            favorites = self.favorites_manager.get_all()
+            if index < len(favorites):
+                url = favorites[index].get('url')
+                if url:
+                    webbrowser.open(url)
+
+    def remove_selected_favorite(self):
+        """Remove selected favorite from list"""
+        selection = self.fav_listbox.curselection()
+        if selection:
+            index = selection[0]
+            favorites = self.favorites_manager.get_all()
+            if index < len(favorites):
+                self.favorites_manager.remove(favorites[index].get('id'))
+                self.refresh_favorites()
+
+    def add_deal_card(self, deal):
+        """Add a deal card to the results area"""
+        card = ttk.Frame(self.scrollable_frame, style="Card.TFrame")
+        card.pack(fill=tk.X, pady=5, padx=5)
+        
+        # Deal name
+        name_label = ttk.Label(
+            card, 
+            text=deal.get('name', 'Unknown'), 
+            style="Dark.TLabel",
+            font=("Helvetica", 12, "bold")
+        )
+        name_label.pack(anchor="w", padx=10, pady=(10, 0))
+        
+        # Deal details
+        details = f"📍 {deal.get('location', 'N/A')} | ⭐ {deal.get('rating', 'N/A')}/5 | €{deal.get('price_per_night', 'N/A')}/night"
+        details_label = ttk.Label(card, text=details, style="Dark.TLabel")
+        details_label.pack(anchor="w", padx=10)
+        
+        # Recommendation
+        rec = deal.get('recommendation', '')
+        if rec:
+            rec_label = ttk.Label(card, text=rec, style="Dark.TLabel", foreground="#28a745")
+            rec_label.pack(anchor="w", padx=10, pady=(0, 10))
+        
+        # Open button
+        url = deal.get('url')
+        if url:
+            open_btn = ttk.Button(
+                card,
+                text="Open in Browser",
+                style="Dark.TButton",
+                command=lambda u=url: webbrowser.open(u)  # pyre-ignore[6]
+            )
+            open_btn.pack(anchor="e", padx=10, pady=(0, 10))
 
 if __name__ == "__main__":
     app = VacationApp()

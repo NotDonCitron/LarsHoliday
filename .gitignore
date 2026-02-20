@@ -22,3 +22,16 @@ Thumbs.db
 # Project specific
 *.log
 .env
+.search_cache.json
+scraper_metrics.json
+price_alerts.json
+last_search_report.html
+VacationDeals_*.html
+
+# Build & Release
+build/
+dist/
+*.spec
+VacationDealFinder.zip
+VacationDealFinder_Package/
+VacationDealFinder_Source/

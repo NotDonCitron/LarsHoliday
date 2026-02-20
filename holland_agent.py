@@ -2,18 +2,25 @@
 Vacation Deal Finder Agent - Main Orchestrator
 AI-powered vacation deal finder for any destination
 Finds budget-friendly, dog-friendly accommodations
+
+Key improvements:
+- Parallel cross-source scraping (Booking + Airbnb simultaneously)
+- Parallel cross-city scraping with staggered start times
+- Health reporting after search
 """
 
 import asyncio
 import json
+import random
 from datetime import datetime
 from typing import List, Dict, Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # pyre-ignore[21]
 
-from booking_scraper import BookingScraper
-from airbnb_scraper import AirbnbScraper
-from weather_integration import WeatherIntegration
-from deal_ranker import DealRanker
+from booking_scraper import BookingScraper  # pyre-ignore[21]
+from airbnb_scraper_enhanced import SmartAirbnbScraper  # pyre-ignore[21]
+from weather_integration import WeatherIntegration  # pyre-ignore[21]
+from deal_ranker import DealRanker  # pyre-ignore[21]
+from scraper_health import health_reporter  # pyre-ignore[21]
 
 load_dotenv()
 
@@ -27,7 +34,7 @@ class VacationAgent:
         self.budget_min = budget_min
         self.budget_max = budget_max
         self.booking_scraper = BookingScraper()
-        self.airbnb_scraper = AirbnbScraper()
+        self.airbnb_scraper = SmartAirbnbScraper()  # Enhanced with rate limit bypass
         self.weather = WeatherIntegration()
         self.ranker = DealRanker(budget_max=budget_max)
         self.all_deals = []
@@ -64,17 +71,29 @@ class VacationAgent:
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = (d2 - d1).days
 
-        # Start parallel search across all cities
+        # Start search across all cities with staggered parallel scraping
         print("🔍 Searching accommodations...")
-        tasks = []
-        for city in cities:
-            tasks.append(
-                self._search_single_city(
-                    city, checkin, checkout, nights, group_size, pets
-                )
+        
+        async def _search_with_delay(city: str, delay: float):
+            """Search a city with initial delay for stagger."""
+            if delay > 0:
+                await asyncio.sleep(delay)
+            return await self._search_single_city(
+                city, checkin, checkout, nights, group_size, pets
             )
-
-        results_per_city = await asyncio.gather(*tasks)
+        
+        # Stagger cities by 2s to avoid thundering herd
+        tasks = [
+            _search_with_delay(city, i * 2.0)
+            for i, city in enumerate(cities)
+        ]
+        results_per_city = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Handle any exceptions from individual city searches
+        results_per_city = [
+            r if isinstance(r, list) else []
+            for r in results_per_city
+        ]
 
         # Aggregate all deals
         self.all_deals = []
@@ -98,6 +117,9 @@ class VacationAgent:
 
         # Generate summary
         summary = self.ranker.generate_summary(ranked, nights)
+
+        # Print scraper health report
+        print(health_reporter.generate())
 
         return {
             "timestamp": datetime.now().isoformat(),
@@ -151,23 +173,32 @@ class VacationAgent:
         """
         deals = []
 
-        # Search Booking.com
-        try:
-            booking_deals = await self.booking_scraper.search_booking(
-                city, checkin, checkout, group_size
-            )
-            deals.extend(booking_deals)
-        except Exception as e:
-            print(f"   Warning: Booking.com search failed for {city}: {e}")
+        # Parallel search: Booking.com + Airbnb concurrently
+        async def _search_booking():
+            try:
+                return await self.booking_scraper.search_booking(
+                    city, checkin, checkout, group_size
+                )
+            except Exception as e:
+                print(f"   Warning: Booking.com search failed for {city}: {e}")
+                return []
 
-        # Search Airbnb
-        try:
-            airbnb_deals = await self.airbnb_scraper.search_airbnb(
-                city, checkin, checkout, group_size
-            )
-            deals.extend(airbnb_deals)
-        except Exception as e:
-            print(f"   Warning: Airbnb search failed for {city}: {e}")
+        async def _search_airbnb():
+            try:
+                return await self.airbnb_scraper.search_airbnb(
+                    city, checkin, checkout, group_size
+                )
+            except Exception as e:
+                print(f"   Warning: Airbnb search failed for {city}: {e}")
+                return []
+
+        booking_deals, airbnb_deals = await asyncio.gather(
+            _search_booking(),
+            _search_airbnb()
+        )
+        
+        deals.extend(booking_deals)  # pyre-ignore[6]
+        deals.extend(airbnb_deals)  # pyre-ignore[6]
 
         # Add Center Parcs data (if relevant for location)
         center_parcs_deals = self._get_center_parcs_data(city)
@@ -237,18 +268,23 @@ class VacationAgent:
         matching_parks = []
         for park in all_parks:
             # Check if city name is in park location or name
-            if city.lower() in park['location'].lower() or \
-               city.lower() in park['name'].lower() or \
-               ("holland" in city.lower() and "nederland" in park['url']): # Keep strict Holland check loose
+            if city.lower() in str(park['location']).lower() or \
+               city.lower() in str(park['name']).lower() or \
+               ("holland" in city.lower() and "nederland" in str(park['url'])): # Keep strict Holland check loose
                 matching_parks.append(park)
 
         return matching_parks
 
-    def cleanup(self):
+    async def cleanup(self):
         """Clean up browser sessions"""
         try:
-            self.booking_scraper.close_session()
-            self.airbnb_scraper.close_session()
+            if hasattr(self.airbnb_scraper, 'patchright_scraper') and self.airbnb_scraper.patchright_scraper:
+                await self.airbnb_scraper.patchright_scraper.close()
+        except Exception:
+            pass
+        try:
+            if hasattr(self.booking_scraper, 'close_session'):
+                self.booking_scraper.close_session()
         except Exception:
             pass
 
@@ -276,7 +312,7 @@ async def main():
         print(json.dumps(results, indent=2, ensure_ascii=False))
 
     finally:
-        agent.cleanup()
+        await agent.cleanup()
 
 
 if __name__ == "__main__":
