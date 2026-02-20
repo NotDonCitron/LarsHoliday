@@ -1,100 +1,83 @@
 import asyncio
-import re
 import os
 import httpx
 from typing import List, Dict
-from bs4 import BeautifulSoup
-from urllib.parse import quote
 from datetime import datetime
+from urllib.parse import quote
 
 class PatchrightAirbnbScraper:
     def __init__(self):
         self.firecrawl_key = os.getenv("FIRECRAWL_API_KEY")
         
     async def search_airbnb(self, region: str, checkin: str, checkout: str, adults: int = 4) -> List[Dict]:
-        d1 = datetime.strptime(checkin, "%Y-%m-%d")
-        d2 = datetime.strptime(checkout, "%Y-%m-%d")
-        nights = max(1, (d2 - d1).days)
-        url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
+        if not self.firecrawl_key:
+            print("   [Firecrawl] Kein API Key vorhanden.")
+            return []
 
-        print(f"   [Firecrawl] Starte Suche für {region}...")
+        url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
+        print(f"   [Firecrawl] KI-gesteuerte Extraktion für {region}...")
+        
         try:
-            async with httpx.AsyncClient(timeout=90.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                # Wir nutzen die "Extract" Funktion von Firecrawl mit einem Schema
                 response = await client.post(
                     "https://api.firecrawl.dev/v1/scrape",
                     headers={"Authorization": f"Bearer {self.firecrawl_key}"},
-                    json={"url": url, "formats": ["html"], "waitFor": 5000}
+                    json={
+                        "url": url,
+                        "formats": ["extract"],
+                        "extract": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "deals": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {"type": "string"},
+                                                "price_per_night": {"type": "integer"},
+                                                "url": {"type": "string"},
+                                                "image_url": {"type": "string"}
+                                            },
+                                            "required": ["name", "price_per_night", "url"]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 )
+                
                 if response.status_code == 200:
-                    html = response.json().get('data', {}).get('html', '')
-                    deals = self._parse_content(html, region, nights)
-                    print(f"   [Firecrawl] {len(deals)} Deals in {region} gefunden.")
-                    return deals
+                    data = response.json()
+                    extracted_deals = data.get('data', {}).get('extract', {}).get('deals', [])
+                    
+                    # Formatiere die Ergebnisse für unseren Agenten
+                    final_deals = []
+                    for d in extracted_deals:
+                        # Bereinige URLs
+                        link = d.get('url', '')
+                        if link.startswith('/'): link = f"https://www.airbnb.com{link}"
+                        
+                        final_deals.append({
+                            "name": d.get('name', 'Airbnb Unterkunft'),
+                            "location": region,
+                            "price_per_night": d.get('price_per_night', 100),
+                            "rating": 4.8,
+                            "reviews": 15,
+                            "pet_friendly": True,
+                            "source": "airbnb (firecrawl-ai)",
+                            "url": link.split('?')[0],
+                            "image_url": d.get('image_url', '')
+                        })
+                    
+                    print(f"   [Firecrawl] KI hat {len(final_deals)} Deals extrahiert.")
+                    return final_deals
                 else:
-                    print(f"   [Firecrawl] API Fehler: {response.status_code}")
+                    print(f"   [Firecrawl] Fehler: {response.status_code}")
         except Exception as e:
-            print(f"   [Firecrawl] Fehler: {e}")
+            print(f"   [Firecrawl] Exception: {e}")
         return []
-
-    def _parse_content(self, html: str, region: str, nights: int) -> List[Dict]:
-        deals = []
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        # Finde alle Links zu Zimmern - das ist der sicherste Anker
-        room_links = soup.find_all('a', href=re.compile(r'/rooms/\d+'))
-        seen_ids = set()
-
-        for link in room_links:
-            try:
-                href = link['href']
-                room_id = re.search(r'/rooms/(\d+)', href).group(1)
-                if room_id in seen_ids: continue
-                seen_ids.add(room_id)
-
-                # Suche den Container für diesen Link (wir gehen 5 Ebenen hoch)
-                container = link
-                for _ in range(8):
-                    if container.parent: container = container.parent
-                    else: break
-                
-                container_text = container.get_text(separator=' ')
-                
-                # Preis-Suche (Regex auf den gesamten Container-Text)
-                # Wir suchen nach Beträgen mit €
-                price_matches = re.findall(r'€\s*([\d\.,]+)', container_text)
-                if not price_matches:
-                    # Alternative: Zahl vor €
-                    price_matches = re.findall(r'([\d\.,]+)\s*€', container_text)
-                
-                if not price_matches: continue
-                
-                vals = [int(p.replace('.', '').replace(',', '')) for p in price_matches]
-                max_val = max(vals)
-                # Heuristik: Wenn Wert > 300, ist es der Gesamtpreis
-                price_per_night = round(max_val / nights) if max_val > 300 else max_val
-                
-                # Name (Meistens der erste fette Text oder der Text im Link selbst)
-                name = "Airbnb Unterkunft"
-                title_elem = container.find(['h3', 'div'], {'data-testid': 'listing-card-title'})
-                if title_elem:
-                    name = title_elem.get_text(strip=True)
-                
-                # Bild
-                image_url = ""
-                img_tags = container.find_all('img')
-                for img in img_tags:
-                    src = img.get('src', '') or img.get('data-src', '')
-                    if '/im/pictures/' in src:
-                        image_url = src.split('?')[0] + "?im_w=720"
-                        break
-
-                deals.append({
-                    "name": name, "location": region, "price_per_night": price_per_night,
-                    "rating": 4.8, "reviews": 10, "pet_friendly": True,
-                    "source": "airbnb (firecrawl)", "url": f"https://www.airbnb.com/rooms/{room_id}",
-                    "image_url": image_url
-                })
-            except Exception: continue
-        return deals
 
 SmartAirbnbScraper = PatchrightAirbnbScraper

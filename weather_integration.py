@@ -32,11 +32,19 @@ class APICache:
         self.cache[key] = (value, datetime.now())
 
 
+def get_env_robust(key_name):
+    val = os.getenv(key_name)
+    if val: return val
+    for k, v in os.environ.items():
+        if k.upper().strip() == key_name.upper():
+            return v
+    return None
+
 class WeatherIntegration:
     """Handles weather API calls and caching"""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("OPENWEATHER_API_KEY")
+        self.api_key = api_key or get_env_robust("OPENWEATHER_API_KEY")
         self.cache = APICache(ttl_minutes=10)
         self.base_url = "https://api.openweathermap.org/data/2.5/forecast"
 
