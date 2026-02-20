@@ -70,25 +70,15 @@ async def search_deals(
     )
     print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
     
-    # Vibe Polish: Ensure every deal has an image with high variety
-    fallback_images = [
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80"
-    ]
+    # DEBUG MODUS: Keine Fallbacks
+    final_deals = results.get("top_10_deals", [])
     
-    final_deals = []
-    for i, deal in enumerate(results.get("top_10_deals", [])):
-        # STRENGE VALIDIERUNG: Nur Deals mit Preis und Link
-        if deal.get("price_per_night", 0) > 0 and deal.get("url"):
-            if not deal.get("image_url") or len(deal["image_url"]) < 5:
-                image_idx = (hash(deal.get("name", "deal")) + i) % len(fallback_images)
-                deal["image_url"] = fallback_images[image_idx]
-            final_deals.append(deal)
+    # Optional: Markiere Deals ohne Bild für das Frontend
+    for deal in final_deals:
+        if not deal.get("image_url"):
+            deal["image_url"] = "https://via.placeholder.com/800x450.png?text=KEIN+BILD+GEFUNDEN"
+        if deal.get("price_per_night") == 0:
+            deal["name"] = f"[DEBUG: PREIS FEHLT] {deal.get('name')}"
     
     results["top_10_deals"] = final_deals
     return results

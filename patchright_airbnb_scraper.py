@@ -32,37 +32,67 @@ class PatchrightAirbnbScraper:
 
     def _parse_markdown(self, text: str, region: str, nights: int) -> List[Dict]:
         deals = []
-        room_links = re.findall(r'https://www\.airbnb\.com/rooms/(\d+)', text)
+        # Find all Airbnb room links and optional names
+        # Pattern 1: [Name](url)
+        markdown_links = re.findall(r'\[([^\]]+)\]\(https://www\.airbnb\.com/rooms/(\d+)', text)
+        # Pattern 2: Raw URLs
+        raw_urls = re.findall(r'https://www\.airbnb\.com/rooms/(\d+)', text)
+        
         seen_ids = set()
         
-        for room_id in room_links:
-            if room_id in seen_ids: continue
-            seen_ids.add(room_id)
-            
+        # Process markdown links first to get names
+        results = []
+        for name_hint, room_id in markdown_links:
+            if room_id not in seen_ids:
+                results.append((name_hint, room_id))
+                seen_ids.add(room_id)
+        
+        # Then add any missing raw URLs
+        for room_id in raw_urls:
+            if room_id not in seen_ids:
+                results.append(("Airbnb Unterkunft", room_id))
+                seen_ids.add(room_id)
+        
+        for name_hint, room_id in results:
             pos = text.find(room_id)
-            context = text[max(0, pos-1000):pos+1500]
+            context = text[max(0, pos-500):pos+1000]
             
-            # Preis-Parsing (Erkennt $ und €)
-            price_match = re.search(r'[\$€]\s*([\d\.,]+)', context)
-            price_per_night = 100
+            # Preis-Parsing (Verbessert für Airbnb Markdown)
+            price_per_night = 0
+            # Airbnb Markdown zeigt oft "Price: $123" oder "$123 per night"
+            price_match = re.search(r'[\$€£]\s*([\d\.,\s]+)', context)
             if price_match:
                 digits = "".join(re.findall(r'\d+', price_match.group(1)))
                 if digits:
                     val = int(digits)
-                    price_per_night = round(val / nights) if val > 300 else val
+                    # Wenn der Wert sehr groß ist (>300), ist es vermutlich der Gesamtpreis für den Aufenthalt
+                    if val > 300 or "total" in context.lower() or "gesamt" in context.lower():
+                        price_per_night = round(val / nights)
+                    else:
+                        price_per_night = val
             
-            # Bild finden
-            image_url = ""
-            img_match = re.search(r'https://a0\.muscache\.com/im/pictures/[^\s\)\?]+', context)
-            if img_match: image_url = img_match.group(0) + "?im_w=720"
+            if price_per_night == 0:
+                price_per_night = 0 # Debug-Modus: Kein Fallback auf 100
 
-            # Name extrahieren (Erste Zeile im Kontext, die wie ein Titel aussieht)
-            name = "Airbnb Unterkunft"
-            lines = [l.strip() for l in context.split('\n') if len(l.strip()) > 5]
-            for line in lines:
-                if any(kw in line.lower() for x in ['apartment', 'house', 'home', 'cottage', 'villa', 'studio', 'loft', 'suite']):
-                    name = line[:50]
-                    break
+            # Bild finden (Suche nach dem Bild-URL-Muster von Airbnb)
+            image_url = ""
+            img_match = re.search(r'https://a0\.muscache\.com/im/pictures/[^\s\)\?\!]+', context)
+            if img_match: 
+                image_url = img_match.group(0).split('?')[0] + "?im_w=720"
+
+            # Name extrahieren (Bevorzuge den Link-Namen falls sinnvoll)
+            name = name_hint if name_hint and len(name_hint) > 10 else "[DEBUG: NAME FEHLT]"
+            if name == "[DEBUG: NAME FEHLT]":
+                # Suche nach Überschriften im Kontext
+                heading_match = re.search(r'###?\s*(.*)', context)
+                if heading_match:
+                    name = heading_match.group(1)[:60].strip()
+                else:
+                    lines = [l.strip() for l in context.split('\n') if len(l.strip()) > 10]
+                    for line in lines:
+                        if any(kw in line.lower() for kw in ['apartment', 'house', 'home', 'cottage', 'villa', 'studio', 'loft', 'suite']):
+                            name = line[:60].strip('# ').strip('* ')
+                            break
 
             deals.append({
                 "name": name, "location": region, "price_per_night": price_per_night,

@@ -73,6 +73,7 @@ class DealRanker:
                 "pet_friendly": deal.get("pet_friendly", False),
                 "source": deal.get("source", "unknown"),
                 "url": deal.get("url", ""),
+                "image_url": deal.get("image_url", ""),
                 "weather_forecast": deal.get("weather_forecast"),
                 "recommendation": self._get_recommendation(score, total_cost)
             }

@@ -44,27 +44,42 @@ class BookingScraper:
                 if not name_elem: continue
                 name = name_elem.get_text(strip=True)
                 
-                # Preis-Parsing (Erkennt jetzt $ und € und ignoriert Tausender-Kommas)
-                price_text = card.get_text()
-                price_match = re.search(r'[\$€]\s*([\d\.,\s]+)', price_text)
-                price_per_night = 100
+                # Preis-Parsing (Verbesserte Logik für Booking.com)
+                price_per_night = 0
+                price_elem = card.find('span', {'data-testid': 'price-and-discounted-price'})
+                if not price_elem:
+                    # Fallback: Suche nach dem ersten Element mit Währungssymbol
+                    price_elem = card.find(string=re.compile(r'[\$€£]'))
+                
+                price_text = price_elem.get_text() if price_elem else card.get_text()
+                # Extrahiere alle Zahlen aus dem Preis-String (z.B. "€ 1.234" -> "1234")
+                price_match = re.search(r'[\$€£]\s*([\d\.,\s]+)', price_text)
                 if price_match:
                     digits = "".join(re.findall(r'\d+', price_match.group(1)))
                     total = int(digits) if digits else 0
                     if total > 0:
-                        # Falls der Wert sehr hoch ist, ist es der Gesamtpreis
-                        price_per_night = round(total / nights) if total > 350 else total
+                        # Booking zeigt oft den Gesamtpreis für den Aufenthalt
+                        # Wenn der Preis > 300 ist, ist es wahrscheinlich der Gesamtpreis
+                        if total > 350 or "total" in price_text.lower() or "gesamt" in price_text.lower():
+                            price_per_night = round(total / nights)
+                        else:
+                            price_per_night = total
                 
+                if price_per_night == 0:
+                    price_per_night = 0 # Debug-Modus: Kein Fallback auf 100
+
                 # Bild-Extraktion (Wir nehmen die echten Inseratsfotos)
-                img = card.find('img')
+                img = card.find('img', {'data-testid': 'image'}) or card.find('img')
                 image_url = ""
                 if img:
-                    # Booking.com nutzt oft src oder data-src
-                    image_url = img.get('src') or img.get('data-src') or ""
-                    # Qualität erhöhen: square240 -> max500
-                    image_url = image_url.replace('square240', 'max500')
+                    # Booking.com nutzt oft src, data-src oder srcset
+                    image_url = img.get('src') or img.get('data-src') or img.get('srcset', '').split(',')[0].split(' ')[0]
+                    # Qualität erhöhen: square240/square60 -> max500
+                    if image_url:
+                        image_url = re.sub(r'square\d+', 'max500', image_url)
+                        image_url = re.sub(r'max\d+', 'max500', image_url)
                 
-                if image_url.startswith('//'): image_url = f"https:{image_url}"
+                if image_url and image_url.startswith('//'): image_url = f"https:{image_url}"
 
                 link_elem = card.find('a', href=True)
                 href = link_elem['href'] if link_elem else ""
