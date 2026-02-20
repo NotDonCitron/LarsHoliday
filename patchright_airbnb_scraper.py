@@ -119,9 +119,22 @@ class PatchrightAirbnbScraper:
                         image_url = src.split('?')[0] + "?im_w=720"
                         break
                 
-                # 4. URL
-                link = card.find('a', href=True)
-                url = f"https://www.airbnb.com{link['href']}".split('?')[0] if link else ""
+                # 4. URL (High Precision)
+                link_elem = card.find('a', href=True)
+                url = ""
+                if link_elem and '/rooms/' in link_elem['href']:
+                    room_id = re.search(r'/rooms/(\d+)', link_elem['href'])
+                    if room_id:
+                        url = f"https://www.airbnb.com/rooms/{room_id.group(1)}"
+                    else:
+                        # Fallback to full href if regex fails but rooms is present
+                        href = link_elem['href'].split('?')[0]
+                        url = f"https://www.airbnb.com{href}" if href.startswith('/') else href
+                
+                if not url and link_elem:
+                    # Last resort fallback for URL
+                    href = link_elem['href'].split('?')[0]
+                    url = f"https://www.airbnb.com{href}" if href.startswith('/') else href
 
                 if price_per_night > 0:
                     deals.append({
@@ -143,7 +156,11 @@ if __name__ == "__main__":
     async def test():
         scraper = PatchrightAirbnbScraper()
         res = await scraper.search_airbnb("Zandvoort", "2026-03-15", "2026-03-22")
-        for d in res[:3]:
-            print(f"DEBUG: {d['name']} | {d['price_per_night']}€ | Img: {bool(d['image_url'])}")
+        print("\n--- MANUELLE LINK-VERIFIKATION ---")
+        for i, d in enumerate(res[:5], 1):
+            print(f"#{i} {d['name']}")
+            print(f"   Preis: {d['price_per_night']}€")
+            print(f"   Link: {d['url']}")
+            print(f"   Bild: {d['image_url'][:50]}...")
         await scraper.close()
     asyncio.run(test())

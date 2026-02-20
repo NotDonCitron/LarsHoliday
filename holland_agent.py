@@ -17,7 +17,7 @@ from typing import List, Dict, Optional
 from dotenv import load_dotenv  # pyre-ignore[21]
 
 from booking_scraper import BookingScraper  # pyre-ignore[21]
-from airbnb_scraper_enhanced import SmartAirbnbScraper  # pyre-ignore[21]
+from patchright_airbnb_scraper import PatchrightAirbnbScraper as SmartAirbnbScraper # Use verified version
 from weather_integration import WeatherIntegration  # pyre-ignore[21]
 from deal_ranker import DealRanker  # pyre-ignore[21]
 from scraper_health import health_reporter  # pyre-ignore[21]
