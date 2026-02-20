@@ -11,8 +11,8 @@ class BookingScraper:
     def __init__(self):
         self.firecrawl_key = os.getenv("FIRECRAWL_API_KEY") or os.getenv("firecrawl_api_key")
 
-    async def search_booking(self, city: str, checkin: str, checkout: str, adults: int = 4) -> List[Dict]:
-        url = self._build_booking_url(city, checkin, checkout, adults)
+    async def search_booking(self, city: str, checkin: str, checkout: str, adults: int = 4, children: int = 0) -> List[Dict]:
+        url = self._build_booking_url(city, checkin, checkout, adults, children)
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = max(1, (d2 - d1).days)
@@ -30,9 +30,23 @@ class BookingScraper:
         except Exception: pass
         return []
 
-    def _build_booking_url(self, city: str, checkin: str, checkout: str, adults: int):
+    def _build_booking_url(self, city: str, checkin: str, checkout: str, adults: int, children: int):
         base = "https://www.booking.com/searchresults.html"
-        params = [f"ss={quote(city)}", f"checkin={checkin}", f"checkout={checkout}", f"group_adults={adults}", "no_rooms=1", "selected_currency=EUR", "nflt=ht_id%3D220%3Bhotelfacility%3D14"]
+        params = [
+            f"ss={quote(city)}", 
+            f"checkin={checkin}", 
+            f"checkout={checkout}", 
+            f"group_adults={adults}",
+            f"group_children={children}",
+            "no_rooms=1", 
+            "selected_currency=EUR", 
+            "nflt=ht_id%3D220%3Bhotelfacility%3D14"
+        ]
+        # If children, we need to add their ages (defaulting to 5 for now)
+        if children > 0:
+            for _ in range(children):
+                params.append("req_children=5")
+        
         return f"{base}?{'&'.join(params)}"
 
     def _parse_html(self, soup, city, checkin, checkout, nights):

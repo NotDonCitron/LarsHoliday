@@ -54,7 +54,10 @@ async def search_deals(
     checkin: str = Query(..., description="Check-in date (YYYY-MM-DD)"),
     checkout: str = Query(..., description="Check-out date (YYYY-MM-DD)"),
     adults: int = 4,
-    pets: int = 1
+    children: int = 0,
+    pets: int = 1,
+    budget: int = 250,
+    budget_type: str = "night"
 ):
     print(f"\n--- [API Request] Suche gestartet: {cities} ---")
     city_list = [c.strip() for c in cities.split(",")]
@@ -66,7 +69,10 @@ async def search_deals(
         checkin=checkin,
         checkout=checkout,
         group_size=adults,
-        pets=pets
+        children=children,
+        pets=pets,
+        budget=budget,
+        budget_type=budget_type
     )
     print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
     

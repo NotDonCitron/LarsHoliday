@@ -48,32 +48,32 @@ class VacationAgent:
         checkin: str,
         checkout: str,
         group_size: int = 4,
-        pets: int = 1
+        children: int = 0,
+        pets: int = 1,
+        budget: int = 250,
+        budget_type: str = "night"
     ) -> Dict:
         """
         Main method - finds and ranks vacation deals
-
-        Args:
-            cities: List of city names or regions (e.g., ["Amsterdam", "Berlin"])
-            checkin: Check-in date (YYYY-MM-DD)
-            checkout: Check-out date (YYYY-MM-DD)
-            group_size: Number of adults
-            pets: Number of pets
-
-        Returns:
-            Dictionary with search results, ranked deals, and summary
         """
-        print(f"\n🤖 Vacation Deal Finder")
-        print(f"   Destinations: {', '.join(cities)}")
-        print(f"   Dates: {checkin} → {checkout}")
-        print(f"   Group: {group_size} adults + {pets} dog(s)")
-        print(f"   Budget: €{self.budget_min}-{self.budget_max}/night\n")
-
         # Calculate nights
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = max(1, (d2 - d1).days)
-        print(f"   Duration: {nights} night(s)")
+
+        # Budget calculation
+        if budget_type == "total":
+            self.budget_max = round(budget / nights)
+        else:
+            self.budget_max = budget
+        
+        self.ranker.budget_max = self.budget_max
+
+        print(f"\n🤖 Vacation Deal Finder")
+        print(f"   Destinations: {', '.join(cities)}")
+        print(f"   Dates: {checkin} → {checkout} ({nights} nights)")
+        print(f"   Group: {group_size} adults, {children} children, {pets} dog(s)")
+        print(f"   Budget: €{self.budget_max}/night (Calculated from {budget} {budget_type})\n")
 
         # Start search across all cities with staggered parallel scraping
         print("🔍 Searching accommodations...")
@@ -83,7 +83,7 @@ class VacationAgent:
             if delay > 0:
                 await asyncio.sleep(delay)
             return await self._search_single_city(
-                city, checkin, checkout, nights, group_size, pets
+                city, checkin, checkout, nights, group_size, children, pets
             )
         
         # Stagger cities by 2s to avoid thundering herd
@@ -159,29 +159,20 @@ class VacationAgent:
         checkout: str,
         nights: int,
         group_size: int,
+        children: int,
         pets: int
     ) -> List[Dict]:
         """
         Search all sources for a single city/region
-
-        Args:
-            city: City name or region
-            checkin: Check-in date
-            checkout: Check-out date
-            nights: Number of nights
-            group_size: Number of adults
-            pets: Number of pets
-
-        Returns:
-            List of deals from all sources
         """
         deals = []
 
         # Parallel search: Booking.com + Airbnb concurrently
         async def _search_booking():
             try:
+                # Passing budget_max to scraper if supported (will update scraper next)
                 return await self.booking_scraper.search_booking(
-                    city, checkin, checkout, group_size
+                    city, checkin, checkout, group_size, children
                 )
             except Exception as e:
                 print(f"   Warning: Booking.com search failed for {city}: {e}")
@@ -189,8 +180,9 @@ class VacationAgent:
 
         async def _search_airbnb():
             try:
+                # Passing budget_max and children to airbnb scraper
                 return await self.airbnb_scraper.search_airbnb(
-                    city, checkin, checkout, group_size
+                    city, checkin, checkout, group_size, children, pets, self.budget_max
                 )
             except Exception as e:
                 print(f"   Warning: Airbnb search failed for {city}: {e}")

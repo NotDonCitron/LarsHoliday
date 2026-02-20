@@ -53,12 +53,31 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Gäste</label>
-                    <select id="input-guests" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border">
-                        <option value="4">4 Personen + 1 Hund</option>
-                        <option value="2">2 Personen + 1 Hund</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Erwachsene</label>
+                        <input type="number" id="input-adults" value="4" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Kinder</label>
+                        <input type="number" id="input-children" value="0" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 py-2">
+                    <input type="checkbox" id="input-pets" checked class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                    <label for="input-pets" class="text-sm font-medium text-gray-700">Reisen mit Hund</label>
+                </div>
+
+                <div class="border-t pt-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm font-medium text-gray-700">Max. Budget (€)</label>
+                        <select id="input-budget-type" class="text-xs border-none bg-transparent text-emerald-600 font-bold focus:ring-0">
+                            <option value="night">pro Nacht</option>
+                            <option value="total">Gesamt</option>
+                        </select>
+                    </div>
+                    <input type="number" id="input-budget" value="250" step="10" class="block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border focus:ring-emerald-500 focus:border-emerald-500">
                 </div>
 
                 <button id="search-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition shadow-md mt-4">
@@ -91,7 +110,7 @@
     <!-- Footer -->
     <footer class="mt-12 bg-gray-800 text-gray-400 py-8">
         <div class="container mx-auto px-4 text-center">
-            <p>© 2026 Lars Urlaubs-Deals - Mit ❤️ für 4 Personen & 1 Hund gebaut.</p>
+            <p>© 2026 Lars Urlaubs-Deals - Mit ❤️ für Lars & seinen Hund gebaut.</p>
         </div>
     </footer>
 
@@ -104,7 +123,11 @@
             const cities = document.getElementById('input-cities').value;
             const checkin = document.getElementById('input-checkin').value;
             const checkout = document.getElementById('input-checkout').value;
-            const adults = document.getElementById('input-guests').value;
+            const adults = document.getElementById('input-adults').value;
+            const children = document.getElementById('input-children').value;
+            const pets = document.getElementById('input-pets').checked ? 1 : 0;
+            const budget = document.getElementById('input-budget').value;
+            const budgetType = document.getElementById('input-budget-type').value;
 
             if (!cities || !checkin || !checkout) {
                 alert("Bitte fülle alle Felder aus!");
@@ -117,7 +140,8 @@
             dealGrid.innerHTML = '<div class="col-span-2 text-center py-20"><i class="fa-solid fa-compass fa-spin fa-3x text-emerald-600 mb-4"></i><p class="text-lg font-bold">Live-Suche aktiv...</p><p class="text-gray-500">Wir durchsuchen Booking.com und Airbnb (ca. 60 Sek.)</p></div>';
 
             try {
-                const response = await fetch(`/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}&adults=${adults}`);
+                const url = `/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}&adults=${adults}&children=${children}&pets=${pets}&budget=${budget}&budget_type=${budgetType}`;
+                const response = await fetch(url);
                 const data = await response.json();
 
                 renderDeals(data.top_10_deals);

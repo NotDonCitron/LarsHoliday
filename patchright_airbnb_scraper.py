@@ -10,14 +10,13 @@ class PatchrightAirbnbScraper:
     def __init__(self):
         self.firecrawl_key = os.getenv("FIRECRAWL_API_KEY") or os.getenv("firecrawl_api_key")
         
-    async def search_airbnb(self, region: str, checkin: str, checkout: str, adults: int = 4) -> List[Dict]:
+    async def search_airbnb(self, region: str, checkin: str, checkout: str, adults: int = 4, children: int = 0, pets: int = 1, budget_max: int = 500) -> List[Dict]:
         if not self.firecrawl_key: return []
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = max(1, (d2 - d1).days)
         # Add price_max to filter out luxury villas and ensure better budget fit
-        # Assume a max budget per night of ~300 to be safe, or use the budget_max if passed (defaulting to 500 here to be safe)
-        url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}&price_max=600"
+        url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}&children={children}&pets={pets}&price_max={budget_max}"
         
         try:
             async with httpx.AsyncClient(timeout=90.0) as client:
