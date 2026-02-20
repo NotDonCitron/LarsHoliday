@@ -1,13 +1,16 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from typing import List, Optional
 from holland_agent import HollandVacationAgent
 import uvicorn
 import asyncio
+import os
 
 app = FastAPI(title="Lars Holiday Deal API")
 
-# Allow requests from our future React frontend
+# Allow requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,8 +22,8 @@ app.add_middleware(
 agent = HollandVacationAgent()
 
 @app.get("/")
-async def root():
-    return {"message": "Welcome to Lars Holiday Deal API", "status": "online"}
+async def serve_frontend():
+    return FileResponse("frontend_dashboard.html")
 
 @app.get("/search")
 async def search_deals(
@@ -40,6 +43,19 @@ async def search_deals(
         group_size=adults,
         pets=pets
     )
+    
+    # Vibe Polish: Ensure every deal has an image
+    fallback_images = [
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80"
+    ]
+    
+    for deal in results.get("top_10_deals", []):
+        if not deal.get("image_url") or len(deal["image_url"]) < 5:
+            # Use a random fallback image
+            deal["image_url"] = fallback_images[hash(deal["name"]) % len(fallback_images)]
     
     return results
 

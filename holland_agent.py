@@ -208,83 +208,21 @@ class VacationAgent:
 
     def _get_center_parcs_data(self, city: str) -> List[Dict]:
         """
-        Get static Center Parcs data if the city matches known locations.
+        TODO: Implement real Center Parcs scraping.
+        Returning empty list for now to ensure 100% real scraped data from other sources.
         """
-        all_parks = [
-            {
-                "name": "Center Parcs De Kempervennen",
-                "location": "Westerhoven, North Brabant",
-                "price_per_night": 45,
-                "rating": 4.2,
-                "reviews": 234,
-                "pet_friendly": True,
-                "source": "center-parcs",
-                "url": "https://www.centerparcs.nl/nl-nl/nederland/fp_VK_vakantiepark-de-kempervennen"
-            },
-            {
-                "name": "Center Parcs Zandvoort Beach",
-                "location": "Zandvoort aan Zee",
-                "price_per_night": 58,
-                "rating": 4.5,
-                "reviews": 512,
-                "pet_friendly": True,
-                "source": "center-parcs",
-                "url": "https://www.centerparcs.nl/nl-nl/nederland/fp_PZ_vakantiepark-zandvoort"
-            },
-            {
-                "name": "Center Parcs De Huttenheugte",
-                "location": "Dalen, Drenthe",
-                "price_per_night": 42,
-                "rating": 4.1,
-                "reviews": 189,
-                "pet_friendly": True,
-                "source": "center-parcs",
-                "url": "https://www.centerparcs.nl/nl-nl/nederland/fp_DH_vakantiepark-de-huttenheugte"
-            },
-            {
-                "name": "Center Parcs Port Zélande",
-                "location": "Ouddorp, Zeeland",
-                "price_per_night": 52,
-                "rating": 4.4,
-                "reviews": 423,
-                "pet_friendly": True,
-                "source": "center-parcs",
-                "url": "https://www.centerparcs.nl/nl-nl/nederland/fp_PZ_vakantiepark-port-zelande"
-            },
-            {
-                "name": "Center Parcs Het Heijderbos",
-                "location": "Heijen, Limburg",
-                "price_per_night": 48,
-                "rating": 4.3,
-                "reviews": 367,
-                "pet_friendly": True,
-                "source": "center-parcs",
-                "url": "https://www.centerparcs.nl/nl-nl/nederland/fp_HB_vakantiepark-het-heijderbos"
-            }
-        ]
-
-        # Filter parks that match the requested city/region
-        # This is a basic fuzzy match
-        matching_parks = []
-        for park in all_parks:
-            # Check if city name is in park location or name
-            if city.lower() in str(park['location']).lower() or \
-               city.lower() in str(park['name']).lower() or \
-               ("holland" in city.lower() and "nederland" in str(park['url'])): # Keep strict Holland check loose
-                matching_parks.append(park)
-
-        return matching_parks
+        return []
 
     async def cleanup(self):
         """Clean up browser sessions"""
         try:
-            if hasattr(self.airbnb_scraper, 'patchright_scraper') and self.airbnb_scraper.patchright_scraper:
-                await self.airbnb_scraper.patchright_scraper.close()
+            if hasattr(self.airbnb_scraper, 'close'):
+                await self.airbnb_scraper.close()
         except Exception:
             pass
         try:
-            if hasattr(self.booking_scraper, 'close_session'):
-                self.booking_scraper.close_session()
+            if hasattr(self.booking_scraper, 'close'):
+                await self.booking_scraper.close()
         except Exception:
             pass
 

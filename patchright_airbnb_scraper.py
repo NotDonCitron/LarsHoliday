@@ -92,10 +92,29 @@ class PatchrightAirbnbScraper:
         try:
             # Navigate - Airbnb uses heavy JS, so use domcontentloaded
             await page.goto(url, wait_until='domcontentloaded', timeout=45000)
-            print(f"   [Patchright] Page loaded, waiting for content...")
+            print(f"   [Patchright] Page loaded, scrolling to load images...")
             
-            # Wait for dynamic content
-            await asyncio.sleep(8)
+            # Auto-scroll to trigger lazy loading of images
+            await page.evaluate("""
+                async () => {
+                    await new Promise((resolve) => {
+                        let totalHeight = 0;
+                        let distance = 300;
+                        let timer = setInterval(() => {
+                            let scrollHeight = document.body.scrollHeight;
+                            window.scrollBy(0, distance);
+                            totalHeight += distance;
+                            if(totalHeight >= scrollHeight || totalHeight > 5000){
+                                clearInterval(timer);
+                                resolve();
+                            }
+                        }, 150);
+                    });
+                }
+            """)
+            
+            # Wait a bit for images to finalize
+            await asyncio.sleep(3)
             
             # Wait for cards to appear
             try:
@@ -188,6 +207,30 @@ class PatchrightAirbnbScraper:
                     href = link['href']
                     url = f"https://www.airbnb.com{href}" if href.startswith('/') else href
                 
+                # Extract Image URL
+                # Airbnb often uses 'img' inside a 'picture' tag within the card
+                img_elem = card.find('img')
+                image_url = ""
+                if img_elem:
+                    # Airbnb specifics: check data-original-uri and multiple src attributes
+                    image_url = img_elem.get('src', '')
+                    if not image_url.startswith('http') and img_elem.get('data-src'):
+                        image_url = img_elem.get('data-src')
+                    
+                    # If still no valid URL, check srcset
+                    if not image_url and img_elem.get('srcset'):
+                        image_url = img_elem['srcset'].split(',')[0].split(' ')[0]
+                    
+                # Clean up URL (sometimes it's a small thumbnail, but it's real)
+                if image_url and '?' in image_url:
+                    # Keep some basic params if needed, but remove session junk
+                    # For Airbnb, removing all params usually works for thumbnails
+                    image_url = image_url.split('?')[0] 
+                
+                # Double-check it starts with https
+                if image_url and image_url.startswith('//'):
+                    image_url = f"https:{image_url}"
+
                 deals.append({
                     "name": name,
                     "location": location if location else region,
@@ -196,7 +239,8 @@ class PatchrightAirbnbScraper:
                     "reviews": reviews,
                     "pet_friendly": True,  # Assume true for search results
                     "source": "airbnb (patchright)",
-                    "url": url
+                    "url": url,
+                    "image_url": image_url
                 })
                 
             except Exception as e:
@@ -211,80 +255,11 @@ class PatchrightAirbnbScraper:
         checkout: str,
         adults: int = 4
     ) -> List[Dict]:
-        """Return static fallback data"""
-        safe_region = quote(region)
-        search_url = f"https://www.airbnb.com/s/{safe_region}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
-        
-        # Calculate nights for price display
-        from datetime import datetime
-        try:
-            d1 = datetime.strptime(checkin, "%Y-%m-%d")
-            d2 = datetime.strptime(checkout, "%Y-%m-%d")
-            nights = (d2 - d1).days
-        except:
-            nights = 7
-        
-        fallback_properties = {
-            "Amsterdam": [
-                {
-                    "name": "City Center Apartment (Patchright Fallback)",
-                    "location": "Amsterdam",
-                    "price_per_night": 145,
-                    "rating": 4.5,
-                    "reviews": 120,
-                    "pet_friendly": True,
-                    "source": "airbnb (fallback)",
-                    "url": search_url
-                },
-                {
-                    "name": "Modern Loft near Vondelpark",
-                    "location": "Amsterdam Oud-West",
-                    "price_per_night": 180,
-                    "rating": 4.8,
-                    "reviews": 89,
-                    "pet_friendly": True,
-                    "source": "airbnb (fallback)",
-                    "url": search_url
-                }
-            ],
-            "Berlin": [
-                {
-                    "name": "Trendy Mitte Apartment",
-                    "location": "Berlin Mitte",
-                    "price_per_night": 95,
-                    "rating": 4.6,
-                    "reviews": 156,
-                    "pet_friendly": True,
-                    "source": "airbnb (fallback)",
-                    "url": search_url
-                }
-            ],
-            "Rotterdam": [
-                {
-                    "name": "Wikkelboat Unique Stay",
-                    "location": "Rotterdam Centrum",
-                    "price_per_night": 135,
-                    "rating": 4.8,
-                    "reviews": 156,
-                    "pet_friendly": True,
-                    "source": "airbnb (fallback)",
-                    "url": search_url
-                }
-            ]
-        }
-        
-        return fallback_properties.get(region, [
-            {
-                "name": f"Cozy {region} Stay (Patchright Fallback)",
-                "location": region,
-                "price_per_night": 85,
-                "rating": 4.5,
-                "reviews": 25,
-                "pet_friendly": True,
-                "source": "airbnb (fallback)",
-                "url": search_url
-            }
-        ])
+        """
+        No more static mock properties. 
+        Returns an empty list to ensure 100% real data visibility.
+        """
+        return []
 
 
 async def test_patchright():

@@ -111,7 +111,7 @@
             dealGrid.innerHTML = '<div class="col-span-2 text-center py-20"><i class="fa-solid fa-compass fa-spin fa-3x text-emerald-600 mb-4"></i><p class="text-lg">Wir durchsuchen Booking.com, Airbnb und Center Parcs...</p></div>';
 
             try {
-                const response = await fetch(`http://localhost:8000/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}`);
+                const response = await fetch(`/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}`);
                 const data = await response.json();
 
                 renderDeals(data.top_10_deals);
@@ -134,7 +134,10 @@
             dealGrid.innerHTML = deals.map(deal => `
                 <div class="deal-card bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 flex flex-col">
                     <div class="relative h-48 bg-emerald-100">
-                        <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80" alt="Ferienhaus" class="object-cover w-full h-full">
+                        <img src="${deal.image_url}" 
+                             onerror="this.src='https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80'"
+                             alt="${deal.name}" 
+                             class="object-cover w-full h-full">
                         <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-emerald-700 flex items-center">
                             <i class="fa-solid fa-sun mr-1"></i> Wetter Bonus aktiv
                         </div>
