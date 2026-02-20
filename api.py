@@ -21,6 +21,18 @@ app.add_middleware(
 
 agent = HollandVacationAgent()
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "online",
+        "keys_found": {
+            "OPENWEATHER_API_KEY": bool(os.getenv("OPENWEATHER_API_KEY")),
+            "FIRECRAWL_API_KEY": bool(os.getenv("FIRECRAWL_API_KEY")),
+            "AGENT_BROWSER_SESSION": bool(os.getenv("AGENT_BROWSER_SESSION"))
+        },
+        "python_version": os.sys.version
+    }
+
 @app.get("/")
 async def serve_frontend():
     return FileResponse("frontend_dashboard.html")

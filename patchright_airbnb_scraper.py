@@ -1,6 +1,7 @@
 import asyncio
 import re
 import os
+import httpx
 from typing import List, Dict
 from bs4 import BeautifulSoup
 from urllib.parse import quote
@@ -11,12 +12,6 @@ try:
     PATCHRIGHT_AVAILABLE = True
 except ImportError:
     PATCHRIGHT_AVAILABLE = False
-
-try:
-    from firecrawl import FirecrawlApp
-    FIRECRAWL_AVAILABLE = True
-except ImportError:
-    FIRECRAWL_AVAILABLE = False
 
 class PatchrightAirbnbScraper:
     def __init__(self):
@@ -37,21 +32,28 @@ class PatchrightAirbnbScraper:
         if self.playwright: await self.playwright.stop()
     
     async def _search_via_firecrawl(self, url: str, region: str, nights: int) -> List[Dict]:
-        if not (FIRECRAWL_AVAILABLE and self.firecrawl_key):
-            print("   [Firecrawl] Key oder Library fehlt.")
+        """Direct REST API call to Firecrawl (bypass library issues)"""
+        if not self.firecrawl_key:
+            print("   [Firecrawl] Kein API Key vorhanden.")
             return []
         
-        print(f"   [Firecrawl] API-Scraping für: {region}")
+        print(f"   [Firecrawl] Suche für {region}...")
         try:
-            app = FirecrawlApp(api_key=self.firecrawl_key)
-            # Die korrekte Methode ist app.scrape_url
-            response = app.scrape_url(url, params={'formats': ['html']})
-            # Falls Firecrawl ein Dict zurückgibt
-            html_content = response.get('html') if isinstance(response, dict) else getattr(response, 'html', None)
-            if html_content:
-                return self._parse_content(html_content, region, nights)
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    "https://api.firecrawl.dev/v1/scrape",
+                    headers={"Authorization": f"Bearer {self.firecrawl_key}", "Content-Type": "application/json"},
+                    json={"url": url, "formats": ["html"], "waitFor": 5000}
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    html_content = data.get('data', {}).get('html')
+                    if html_content:
+                        return self._parse_content(html_content, region, nights)
+                else:
+                    print(f"   [Firecrawl] API Fehler: {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"   [Firecrawl] API Fehler: {e}")
+            print(f"   [Firecrawl] Fehler: {e}")
         return []
 
     async def search_airbnb(self, region: str, checkin: str, checkout: str, adults: int = 4) -> List[Dict]:
@@ -60,34 +62,24 @@ class PatchrightAirbnbScraper:
         nights = max(1, (d2 - d1).days)
         url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
 
-        # 1. VERSUCH: Patchright
         deals = await self._run_patchright(url, region, nights)
-        
-        # 2. VERSUCH: Firecrawl Fallback
         if not deals:
-            print(f"   [Hybrid] Patchright leer. Nutze Firecrawl für {region}...")
+            print(f"   [Hybrid] Airbnb Patchright leer. Nutze Firecrawl...")
             deals = await self._search_via_firecrawl(url, region, nights)
-            
         return deals
 
     async def _run_patchright(self, url: str, region: str, nights: int) -> List[Dict]:
         if not PATCHRIGHT_AVAILABLE: return []
         try:
             if not self.browser: await self.launch()
-            context = await self.browser.new_context(
-                viewport={'width': 1280, 'height': 800},
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            )
+            context = await self.browser.new_context(viewport={'width': 1280, 'height': 800}, user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
             page = await context.new_page()
             await page.goto(url, wait_until='domcontentloaded', timeout=40000)
-            try:
-                await page.wait_for_selector('[data-testid="card-container"]', timeout=15000)
+            try: await page.wait_for_selector('[data-testid="card-container"]', timeout=15000)
             except: pass
-            
             for _ in range(2):
                 await page.mouse.wheel(0, 800)
                 await asyncio.sleep(1)
-                
             content = await page.content()
             deals = self._parse_content(content, region, nights)
             await context.close()
@@ -102,28 +94,13 @@ class PatchrightAirbnbScraper:
         cards = soup.find_all('div', {'data-testid': 'card-container'})
         for card in cards:
             try:
-                name_elem = card.find('div', {'data-testid': 'listing-card-title'})
-                name = name_elem.get_text(strip=True) if name_elem else "Airbnb"
-                
+                name = (card.find('div', {'data-testid': 'listing-card-title'}) or soup.new_tag('div')).get_text(strip=True)
                 card_text = card.get_text(separator=' ')
-                price_matches = re.findall(r'(?:€\s*([\d\.,]+)|([\d\.,]+)\s*€)', card_text)
-                extracted_vals = []
-                for m in price_matches:
-                    val_str = m[0] or m[1]
-                    val = int(val_str.replace('.', '').replace(',', ''))
-                    extracted_vals.append(val)
+                prices = [int(p.replace('.', '').replace(',', '')) for p in re.findall(r'€\s*([\d\.,]+)', card_text)]
+                if not prices: continue
+                max_val = max(prices)
+                price_per_night = round(max_val / nights) if max_val > 250 else max_val
                 
-                price_per_night = 0
-                if extracted_vals:
-                    min_val = min(extracted_vals)
-                    max_val = max(extracted_vals)
-                    if len(extracted_vals) > 1 and max_val > min_val * 2:
-                        price_per_night = min_val
-                    else:
-                        price_per_night = round(max_val / nights) if max_val > 250 else max_val
-                
-                if price_per_night <= 0: continue
-
                 image_url = ""
                 for img in card.find_all('img'):
                     src = img.get('src', '') or img.get('data-src', '')
@@ -132,11 +109,7 @@ class PatchrightAirbnbScraper:
                         break
                 
                 link = card.find('a', href=True)
-                url = ""
-                if link and '/rooms/' in link['href']:
-                    room_id = re.search(r'/rooms/(\d+)', link['href'])
-                    if room_id: url = f"https://www.airbnb.com/rooms/{room_id.group(1)}"
-                
+                url = f"https://www.airbnb.com{link['href']}".split('?')[0] if link and '/rooms/' in link['href'] else ""
                 if not url: continue
 
                 deals.append({
