@@ -2,6 +2,7 @@ import asyncio
 import re
 import os
 import httpx
+from typing import List, Dict
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import quote
