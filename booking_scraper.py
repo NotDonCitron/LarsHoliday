@@ -93,7 +93,11 @@ class BookingScraper:
                 price_per_night = round(total / nights) if total > 0 else 0
                 
                 link = card.find('a', {'data-testid': 'title-link'})
-                final_url = f"https://www.booking.com{link['href'].split('?')[0]}?checkin={checkin}&checkout={checkout}"
+                href = link['href'] if link else ""
+                if href.startswith('/'):
+                    final_url = f"https://www.booking.com{href.split('?')[0]}?checkin={checkin}&checkout={checkout}"
+                else:
+                    final_url = f"{href.split('?')[0]}?checkin={checkin}&checkout={checkout}"
                 img = card.find('img')
                 image_url = img.get('src') or img.get('data-src') or ""
 
