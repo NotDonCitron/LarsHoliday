@@ -33,23 +33,47 @@ class PatchrightAirbnbScraper:
         nights = max(1, (d2 - d1).days)
 
         if not self.browser: await self.launch()
-        page = await self.context.new_page()
+        # Create context with realistic referer
+        context = await self.browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            extra_http_headers={
+                "Referer": "https://www.google.com/",
+                "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7"
+            }
+        )
+        page = await context.new_page()
+        
+        # Build search URL
         url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
         
         try:
-            # Erhöhter Timeout für Cloud
-            await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+            # Human behavior: first go to google (optional) or just set referer
+            await page.goto("https://www.airbnb.com", wait_until='domcontentloaded', timeout=30000)
+            await asyncio.sleep(2)
+            
+            print(f"   [Stealth] Navigiere zu Ziel: {region}")
+            await page.goto(url, wait_until='domcontentloaded', timeout=50000)
+            
+            # Simulate human mouse wiggle
+            await page.mouse.move(100, 100)
+            await page.mouse.move(200, 300)
+            
             await page.wait_for_selector('[data-testid="card-container"]', timeout=30000)
-            for _ in range(3):
-                await page.mouse.wheel(0, 800)
-                await asyncio.sleep(2)
+            
+            # Gradual scroll
+            for _ in range(4):
+                await page.mouse.wheel(0, 600)
+                await asyncio.sleep(1.5)
+            
             content = await page.content()
             return self._parse_content(content, region, nights)
         except Exception as e:
-            print(f"   [Patchright] Cloud Error: {e}")
+            print(f"   [Patchright] Stealth-Run fehlgeschlagen: {e}")
             return []
         finally:
             await page.close()
+            await context.close()
     
     def _parse_content(self, html: str, region: str, nights: int) -> List[Dict]:
         deals = []
