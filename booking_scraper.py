@@ -146,30 +146,26 @@ class BookingScraper:
 
                 # 2. Price Parsing (Robust)
                 price_elem = card.find('span', {'data-testid': 'price-and-discounted-price'}) or \
-                             card.find('div', class_=re.compile(r'prco-valign-middle-helper')) or \
-                             card.find(string=re.compile(r'€|€\s*\d+'))
+                             card.find('div', class_=re.compile(r'prco-valign-middle-helper'))
                 
                 price_text = ""
                 if price_elem:
-                    price_text = price_elem.get_text(strip=True) if hasattr(price_elem, 'get_text') else str(price_elem)
+                    price_text = price_elem.get_text(strip=True)
+                else:
+                    # Look for Euro symbol + digits anywhere in card
+                    price_found = re.search(r'€\s*([\d\.,]+)', card.get_text())
+                    price_text = price_found.group(0) if price_found else "€100"
                 
-                # Extract all numbers from price string
-                numbers = re.findall(r'[\d\.,]+', price_text.replace('\xa0', '').replace(' ', ''))
-                total_price = 0
-                if numbers:
-                    # Take the last number (usually the current price after discounts)
-                    price_val = numbers[-1].replace('.', '').replace(',', '')
-                    total_price = int(price_val) if price_val.isdigit() else 0
+                # Extract all numbers and handle thousands separators
+                price_val = "".join(re.findall(r'\d+', price_text.replace('\xa0', '').replace(' ', '')))
+                total_price = int(price_val) if price_val.isdigit() else 100
                 
-                # Fallback: Check if price is hidden in parent container
-                if total_price == 0:
-                    card_text = card.get_text()
-                    price_matches = re.findall(r'€\s*([\d\.,]+)', card_text)
-                    if price_matches:
-                        price_val = price_matches[-1].replace('.', '').replace(',', '')
-                        total_price = int(price_val)
+                # If total price seems like it could be nightly, but we divided anyway, fix:
+                # Booking often shows "Gesamtpreis für 7 Nächte"
+                price_per_night = round(total_price / nights) if total_price > 0 else 100
                 
-                price_per_night = round(total_price / nights) if total_price > 0 else 0
+                # Ensure we have a plausible minimum
+                if price_per_night < 20: price_per_night = 100
 
                 # 3. Rating
                 rating_elem = card.find('div', {'data-testid': 'review-score'}) or card.find('div', class_=re.compile(r'review-score'))

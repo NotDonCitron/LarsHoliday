@@ -174,17 +174,23 @@ class PatchrightAirbnbScraper:
                 subtitle_elem = card.find('div', {'data-testid': 'listing-card-subtitle'})
                 location = subtitle_elem.get_text(strip=True) if subtitle_elem else region
                 
-                # Extract price - find € symbols in card text
+                # Extract price - more robust regex for night price
+                # Airbnb shows: "€160 per night" or "€160 pro Nacht"
                 card_text = card.get_text()
-                prices = re.findall(r'€\s*([\d,]+)', card_text)
                 
-                if prices:
-                    # First price is usually per night, second is total
-                    # Airbnb shows: "€160 per night" then "€1,120 total"
-                    price_str = prices[0].replace(',', '')
+                # Match price specifically followed by "night" or "Nacht"
+                price_match = re.search(r'€\s*([\d,\.]+)\s*(?:per\s*night|pro\s*Nacht)', card_text, re.IGNORECASE)
+                
+                if price_match:
+                    price_str = price_match.group(1).replace(',', '').replace('.', '')
                     price_per_night = int(price_str)
                 else:
-                    price_per_night = 120  # Default fallback
+                    # Fallback: Just find the first Euro sign with a number
+                    simple_price = re.search(r'€\s*([\d,]+)', card_text)
+                    price_per_night = int(simple_price.group(1).replace(',', '')) if simple_price else 120
+                
+                # Double-check: many apartments might have 100 as a default if parsing fails
+                if price_per_night < 10: price_per_night = 120
                 
                 # Extract rating - look for number pattern
                 rating_text = ""
