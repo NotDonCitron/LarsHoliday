@@ -27,6 +27,7 @@ scraper_metrics.json
 price_alerts.json
 last_search_report.html
 VacationDeals_*.html
+debug_content.md
 
 # Build & Release
 build/

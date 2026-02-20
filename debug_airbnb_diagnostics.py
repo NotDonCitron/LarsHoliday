@@ -1,53 +1,51 @@
 import asyncio
-import re
-from patchright.async_api import async_playwright
-from bs4 import BeautifulSoup
+import os
+import httpx
+from urllib.parse import quote
+from patchright_airbnb_scraper import PatchrightAirbnbScraper
 
-async def debug_airbnb():
-    print("Starte Airbnb-Deep-Diagnosis...")
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-        page = await context.new_page()
-        
-        url = "https://www.airbnb.com/s/Zandvoort/homes?checkin=2026-03-15&checkout=2026-03-22"
-        print(f"Navigiere zu: {url}")
+async def main():
+    print("Starting Debug Search...")
+    scraper = PatchrightAirbnbScraper()
+    
+    region = "Hamburg"
+    checkin = "2026-02-15"
+    checkout = "2026-02-22"
+    adults = 4
+    
+    # Adding price_max to URL to verify it helps
+    url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}&price_max=500"
+    print(f"Scraping URL: {url}")
+    
+    headers = {"Authorization": f"Bearer {scraper.firecrawl_key}"}
+    
+    print(f"Using Firecrawl Key: {scraper.firecrawl_key[:5]}...")
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-            await asyncio.sleep(10)
-            await page.mouse.wheel(0, 1500)
-            await asyncio.sleep(5)
+            response = await client.post(
+                "https://api.firecrawl.dev/v1/scrape",
+                headers=headers,
+                json={"url": url, "formats": ["markdown"], "waitFor": 5000}
+            )
             
-            content = await page.content()
-            soup = BeautifulSoup(content, 'html.parser')
-            cards = soup.find_all('div', {'data-testid': 'card-container'})
-            
-            print(f"Gefundene Karten: {len(cards)}")
-            
-            for i, card in enumerate(cards[:3]):
-                name_elem = card.find('div', {'data-testid': 'listing-card-title'})
-                name = name_elem.get_text(strip=True) if name_elem else "Unknown"
+            if response.status_code == 200:
+                markdown = response.json().get('data', {}).get('markdown', '')
+                print(f"Received {len(markdown)} chars of markdown.")
                 
-                # Check all image tags
-                images = card.find_all('img')
-                image_urls = [img.get('src', '') for img in images if img.get('src')]
+                with open("debug_content.md", "w", encoding="utf-8") as f:
+                    f.write(markdown)
+                print("Saved raw markdown to debug_content.md")
                 
-                # Check price specifically
-                price_text = card.get_text(separator=' ')
-                # Find € then a number
-                price_match = re.search(r'€\s*(\d+)', price_text)
+                # Print snippet
+                print("\n--- SNIPPET START ---")
+                print(markdown[:1000])
+                print("--- SNIPPET END ---\n")
                 
-                print(f"--- CARD {i+1} ---")
-                print(f"Name: {name}")
-                print(f"Price Match: {price_match.group(1) if price_match else 'NONE'}")
-                print(f"Images: {len(image_urls)} found")
-                for img in image_urls[:2]:
-                    print(f"  Img: {img[:60]}...")
-                    
+            else:
+                print(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"Error: {e}")
-        finally:
-            await browser.close()
+            print(f"Exception: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(debug_airbnb())
+    asyncio.run(main())

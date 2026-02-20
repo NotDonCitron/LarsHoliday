@@ -17,13 +17,17 @@ Ein AI-gesteuerter Urlaubs-Planer für Holland (und international), optimiert f�
 - [x] Cloud-Blockade durch Firecrawl-Integration durchbrochen.
 - [x] Links führen direkt zum Angebot (Referrer-anonymisiert).
 - [x] Preise sind variabel und erkennen Dollar/Euro inkl. Tausender-Trenner.
-- [x] **Bilder-Optimierung**: Echte Inserats-Fotos werden jetzt extrahiert und im Dashboard angezeigt (Fix in Scrapern + Ranker).
-- [x] **Preis-Präzision**: Preis-Parsing für Booking & Airbnb massiv verbessert (Erkennung von Gesamt- vs. Nachtpreis).
+- [x] **Bilder-Optimierung**: Echte Inserats-Fotos werden extrahiert und im Dashboard angezeigt.
+- [x] **Preis-Präzision**: Intelligente Umrechnung von Gesamt- in Nachtpreise (Airbnb & Booking).
+- [x] **Erweiterte Suche**: Filter für Erwachsene, Kinder, Hunde und dynamisches Budget (pro Nacht/Gesamt).
+- [x] **Robustes Airbnb-Parsing**: Umstellung auf Block-Parsing zur Vermeidung von Daten-Mischmasch.
+
+## Aktueller Status (Debug-Modus)
+Die App läuft aktuell im **Debug-Modus** (Keine Fallbacks für Bilder/Preise). Dies dient dazu, die Scraper-Qualität live zu validieren. Fehlerhafte Extraktionen werden mit `€0` oder `BILD-LADE-FEHLER` markiert.
 
 ## Offene Punkte für den nächsten Chat
-1. **Validierung**: Überprüfen, ob in der HF-Umgebung alle Preise korrekt ankommen (keine Default-100€ mehr).
-2. **Wetter-Integration**: Sicherstellen, dass der `OPENWEATHER_API_KEY` in den HF Settings hinterlegt wird (aktuell fehlt er).
-3. **Feinschliff**: Airbnb-Namen im Markdown noch präziser extrahieren (Erste Ansätze implementiert).
+1. **Wetter-Integration**: Hinterlegung des `OPENWEATHER_API_KEY` in HF Settings.
+2. **Finale Politur**: Zurückkehren zu "schönen" Fallbacks, sobald die Scraper-Logik als 100% stabil bestätigt wurde.
 
 ## Wichtige Dateien
 - `api.py`: Haupteinstiegspunkt Cloud.
