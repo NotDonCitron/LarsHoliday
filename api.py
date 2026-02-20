@@ -47,18 +47,22 @@ async def search_deals(
     )
     print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
     
-    # Vibe Polish: Ensure every deal has an image
+    # Vibe Polish: Ensure every deal has an image with high variety
     fallback_images = [
         "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=800&q=80"
     ]
     
-    for deal in results.get("top_10_deals", []):
+    for i, deal in enumerate(results.get("top_10_deals", [])):
         if not deal.get("image_url") or len(deal["image_url"]) < 5:
-            # Use a random fallback image
-            deal["image_url"] = fallback_images[hash(deal["name"]) % len(fallback_images)]
+            # Better hash with index to avoid duplicates
+            image_idx = (hash(deal.get("name", "deal")) + i) % len(fallback_images)
+            deal["image_url"] = fallback_images[image_idx]
     
     return results
 
