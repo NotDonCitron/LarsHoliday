@@ -15,7 +15,9 @@ class PatchrightAirbnbScraper:
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = max(1, (d2 - d1).days)
-        url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}"
+        # Add price_max to filter out luxury villas and ensure better budget fit
+        # Assume a max budget per night of ~300 to be safe, or use the budget_max if passed (defaulting to 500 here to be safe)
+        url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}&price_max=600"
         
         try:
             async with httpx.AsyncClient(timeout=90.0) as client:
@@ -30,81 +32,132 @@ class PatchrightAirbnbScraper:
         except Exception: pass
         return []
 
-    def _parse_markdown(self, text: str, region: str, nights: int) -> List[Dict]:
+    def _parse_markdown(self, text: str, region: str, searched_nights: int) -> List[Dict]:
         deals = []
-        # Airbnb links are often structured as [Name](url) or just raw URL
-        room_links = re.findall(r'https://www\.airbnb\.com/rooms/(\d+)', text)
-        seen_ids = set()
+        # 1. Identify all Room IDs and their positions
+        # format: https://www.airbnb.com/rooms/123456...
+        id_pattern = re.compile(r'rooms/(\d+)')
+        matches = [(m.group(1), m.start()) for m in id_pattern.finditer(text)]
         
-        for room_id in room_links:
-            if room_id in seen_ids: continue
-            seen_ids.add(room_id)
+        # Deduplicate while preserving order of first appearance
+        seen = set()
+        unique_matches = []
+        for rid, pos in matches:
+            if rid not in seen:
+                seen.add(rid)
+                unique_matches.append((rid, pos))
+        
+        for i, (room_id, start_pos) in enumerate(unique_matches):
+            # Define the text block for this listing
+            # Start: from the first mention of this ID
+            # End: until the start of the next ID (or reasonable limit)
+            end_pos = unique_matches[i+1][1] if i + 1 < len(unique_matches) else len(text)
             
-            pos = text.find(room_id)
-            context = text[max(0, pos-600):pos+600]
+            # Limit block size to avoid processing huge chunks if IDs are far apart
+            # But typically the text follows the images
+            block_len = min(end_pos - start_pos, 4000) 
+            block = text[start_pos:start_pos + block_len]
             
-            # 1. Rating & Reviews
-            rating = 4.8
-            reviews = 20
-            rate_match = re.search(r'([\d\.,]+)\s*star|Rating\s*([\d\.,]+)', context, re.I)
-            if rate_match:
-                r_val = rate_match.group(1) or rate_match.group(2)
-                try: rating = float(r_val.replace(',', '.'))
-                except: pass
+            # --- PARSING LOGIC ---
             
-            rev_match = re.search(r'(\d+)\s*reviews|(\d+)\s*Bewertungen', context, re.I)
-            if rev_match:
-                try: reviews = int(rev_match.group(1) or rev_match.group(2))
-                except: pass
+            # 1. Image
+            image_url = ""
+            # Look for the image associated with this ID in the block (or just before)
+            # Actually, the block starts at the URL in the markdown link: [![]()]...
+            # We want the image *inside* the markdown link that contains the room_id
+            # Re-scan the original text slightly before the start_pos to catch the image bracket
+            # But simpler: scan the block for image syntax
+            img_match = re.search(r'!\[.*?\]\((https://[^)]+)\)', text[max(0, start_pos-300):start_pos+300])
+            if img_match:
+                image_url = img_match.group(1).split('?')[0] + "?im_w=720"
 
-            # 2. Name / Titel (Suche nach Fettschrift oder Überschriften vor dem Link)
+            # 2. Name
+            # Strategy: Look for "Apartment in...", "Home in..." and take the next line
             name = "[DEBUG: NAME FEHLT]"
-            name_match = re.search(r'[\*\#]{2,}\s*([^\*\n\#]{10,60})', context)
-            if name_match:
-                name = name_match.group(1).strip()
-            else:
-                # Fallback: Link-Text
-                link_text_match = re.search(r'\[([^\]]{10,60})\]\(https://www\.airbnb\.com/rooms/' + room_id, text)
-                if link_text_match:
-                    name = link_text_match.group(1).strip()
+            
+            # Common prefixes in Airbnb listings
+            type_match = re.search(r'(Apartment|Home|Condo|Villa|House|Guest suite|Cottage|Loft) in [A-Za-z\s]+', block)
+            if type_match:
+                # The title is usually the line AFTER the type description
+                # Split block by lines and find the index
+                lines = block.split('\n')
+                for idx, line in enumerate(lines):
+                    if type_match.group(0) in line:
+                        # Check next non-empty line
+                        if idx + 1 < len(lines):
+                            potential_name = lines[idx+1].strip()
+                            if potential_name and len(potential_name) > 3:
+                                name = potential_name
+                                break
+                        # Sometimes it's the same line?
+                        if name == "[DEBUG: NAME FEHLT]":
+                             name = line.replace(type_match.group(0), "").strip()
 
-            # 3. Preis-Präzision
+            if name == "[DEBUG: NAME FEHLT]" or len(name) < 5:
+                 # Fallback: Look for "Guest favorite" and take line after?
+                 # Or use the first generic text line
+                 lines = [l.strip() for l in block.split('\n') if len(l.strip()) > 10 and "rooms/" not in l and "Review" not in l]
+                 if lines: name = lines[0] # Very rough fallback
+
+            # 3. Price
             price_per_night = 0
-            # Wir suchen nach Preisen im Kontext
-            price_candidates = re.findall(r'[\$€£]\s*([\d\.,]+)', context)
-            if price_candidates:
-                # Wir nehmen den kleinsten Wert als Nachtpreis (oder berechnen ihn aus dem Gesamtpreis)
-                numeric_prices = []
-                for p in price_candidates:
-                    try:
-                        val = int("".join(re.findall(r'\d+', p)))
-                        if val > 10: numeric_prices.append(val)
+            # Search for "$1,350 ... for 5 nights" pattern
+            # Matches: $1,234 or €1.234
+            price_block_match = re.search(r'([\$\€\£])\s*([\d,\.]+).*?for\s+(\d+)\s+nights', block, re.DOTALL | re.IGNORECASE)
+            
+            if price_block_match:
+                currency, amount_str, nights_found = price_block_match.groups()
+                amount = int(re.sub(r'[^\d]', '', amount_str))
+                nights_found = int(nights_found)
+                if nights_found > 0:
+                    price_per_night = round(amount / nights_found)
+            else:
+                # Fallback: Find any price and assume it is nightly if low, or total if high
+                prices = re.findall(r'[\$\€\£]\s*([\d,\.]+)', block)
+                valid_prices = []
+                for p in prices:
+                    try: 
+                        v = int(re.sub(r'[^\d]', '', p))
+                        valid_prices.append(v)
                     except: pass
                 
-                if numeric_prices:
-                    # Wenn "total" oder "Gesamt" im Kontext steht, ist der größte Preis vermutlich der Gesamtpreis
-                    is_total = any(kw in context.lower() for kw in ["total", "gesamt", "summe"])
-                    if is_total:
-                        total_val = max(numeric_prices)
-                        price_per_night = round(total_val / nights)
+                if valid_prices:
+                    # Sort logic
+                    best_guess = min(valid_prices)
+                    # If the best guess is super high (e.g. > 1000), treat as total
+                    if best_guess > 1000:
+                        price_per_night = round(best_guess / searched_nights)
                     else:
-                        # Sonst nehmen wir den plausibelsten Wert (unter 300)
-                        small_prices = [p for p in numeric_prices if p < 500]
-                        price_per_night = min(small_prices) if small_prices else min(numeric_prices)
+                        price_per_night = best_guess
+
+            # 4. Rating / Reviews
+            rating = 4.8
+            reviews = 20
+            # "4.32 out of 5 average rating, 141 reviews"
+            rating_match = re.search(r'([\d\.]+)\s*out of 5', block)
+            if rating_match:
+                try: rating = float(rating_match.group(1))
+                except: pass
             
-            if price_per_night == 0: price_per_night = 0 # Markierung für Debug
+            rev_match = re.search(r'(\d+)\s*reviews', block)
+            if rev_match:
+                try: reviews = int(rev_match.group(1))
+                except: pass
 
-            # 4. Bild-URL
-            image_url = ""
-            img_match = re.search(r'https://a0\.muscache\.com/im/pictures/[^\s\)\?\!]+', context)
-            if img_match: image_url = img_match.group(0).split('?')[0] + "?im_w=720"
-
-            deals.append({
-                "name": name, "location": region, "price_per_night": price_per_night,
-                "rating": rating, "reviews": reviews, "pet_friendly": True,
-                "source": "airbnb (cloud)", "url": f"https://www.airbnb.com/rooms/{room_id}",
-                "image_url": image_url
-            })
+            # Add to list
+            if price_per_night > 0:
+                deals.append({
+                    "name": name, 
+                    "location": region, 
+                    "price_per_night": price_per_night,
+                    "rating": rating, 
+                    "reviews": reviews, 
+                    "pet_friendly": True,
+                    "source": "airbnb (cloud)", 
+                    "url": f"https://www.airbnb.com/rooms/{room_id}",
+                    "image_url": image_url
+                })
+                
         return deals
 
 SmartAirbnbScraper = PatchrightAirbnbScraper
