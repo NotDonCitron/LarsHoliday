@@ -104,10 +104,10 @@ class VacationAgent:
         for deals_list in results_per_city:
             self.all_deals.extend(deals_list)
 
-        # Validate deals (e.g., pet-friendly enforcement)
+        # Validate deals (e.g., price and pet-friendly enforcement)
         self._validate_deals(pets)
 
-        print(f"   Found {len(self.all_deals)} properties\n")
+        print(f"   Found {len(self.all_deals)} valid properties\n")
 
         # Enrich with weather data
         print("🌤️  Fetching weather forecasts...")
@@ -145,6 +145,13 @@ class VacationAgent:
         """
         Validate and filter aggregated deals based on requirements
         """
+        # 1. Basic Availability Check: Must have a price
+        self.all_deals = [
+            deal for deal in self.all_deals 
+            if deal.get('price_per_night', 0) > 0
+        ]
+
+        # 2. Requirement Check: Pets
         if pets > 0:
             # Filter only pet-friendly properties
             self.all_deals = [

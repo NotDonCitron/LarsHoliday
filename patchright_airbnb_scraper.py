@@ -33,10 +33,25 @@ class PatchrightAirbnbScraper:
 
     def _parse_markdown(self, text: str, region: str, searched_nights: int) -> List[Dict]:
         deals = []
-        # 1. Identify all Room IDs and their positions
-        # format: https://www.airbnb.com/rooms/123456...
+        
+        # 0. Check for "No results" or "Other dates" sections
+        # If we see "Results for other dates", we should truncate the text to avoid parsing them
+        other_dates_patterns = [
+            "Results for other dates", "Ergebnisse für andere Daten",
+            "Suggested results", "Vorgeschlagene Ergebnisse",
+            "Try adjusting your search", "Versuche es mit anderen Filtern"
+        ]
+        
+        clean_text = text
+        for p in other_dates_patterns:
+            if p in text:
+                # Truncate text at the first occurrence of such a section
+                clean_text = text.split(p)[0]
+                break
+        
+        # 1. Identify all Room IDs and their positions in the CLEAN text
         id_pattern = re.compile(r'rooms/(\d+)')
-        matches = [(m.group(1), m.start()) for m in id_pattern.finditer(text)]
+        matches = [(m.group(1), m.start()) for m in id_pattern.finditer(clean_text)]
         
         # Deduplicate while preserving order of first appearance
         seen = set()
@@ -50,23 +65,20 @@ class PatchrightAirbnbScraper:
             # Define the text block for this listing
             # Start: from the first mention of this ID
             # End: until the start of the next ID (or reasonable limit)
-            end_pos = unique_matches[i+1][1] if i + 1 < len(unique_matches) else len(text)
+            end_pos = unique_matches[i+1][1] if i + 1 < len(unique_matches) else len(clean_text)
             
             # Limit block size to avoid processing huge chunks if IDs are far apart
             # But typically the text follows the images
             block_len = min(end_pos - start_pos, 4000) 
-            block = text[start_pos:start_pos + block_len]
+            block = clean_text[start_pos:start_pos + block_len]
             
             # --- PARSING LOGIC ---
             
             # 1. Image
             image_url = ""
             # Look for the image associated with this ID in the block (or just before)
-            # Actually, the block starts at the URL in the markdown link: [![]()]...
-            # We want the image *inside* the markdown link that contains the room_id
             # Re-scan the original text slightly before the start_pos to catch the image bracket
-            # But simpler: scan the block for image syntax
-            img_match = re.search(r'!\[.*?\]\((https://[^)]+)\)', text[max(0, start_pos-300):start_pos+300])
+            img_match = re.search(r'!\[.*?\]\((https://[^)]+)\)', clean_text[max(0, start_pos-300):start_pos+300])
             if img_match:
                 image_url = img_match.group(1).split('?')[0] + "?im_w=720"
 
@@ -112,22 +124,25 @@ class PatchrightAirbnbScraper:
                     price_per_night = round(amount / nights_found)
             else:
                 # Fallback: Find any price and assume it is nightly if low, or total if high
-                prices = re.findall(r'[\$\€\£]\s*([\d,\.]+)', block)
-                valid_prices = []
-                for p in prices:
-                    try: 
-                        v = int(re.sub(r'[^\d]', '', p))
-                        valid_prices.append(v)
-                    except: pass
-                
-                if valid_prices:
-                    # Sort logic
-                    best_guess = min(valid_prices)
-                    # If the best guess is super high (e.g. > 1000), treat as total
-                    if best_guess > 1000:
-                        price_per_night = round(best_guess / searched_nights)
-                    else:
-                        price_per_night = best_guess
+                # Check for "per night" or "Nacht" nearby
+                nightly_match = re.search(r'([\$\€\£])\s*([\d,\.]+)\s*(per night|night|Nacht)', block, re.IGNORECASE)
+                if nightly_match:
+                    price_per_night = int(re.sub(r'[^\d]', '', nightly_match.group(2)))
+                else:
+                    prices = re.findall(r'[\$\€\£]\s*([\d,\.]+)', block)
+                    valid_prices = []
+                    for p in prices:
+                        try: 
+                            v = int(re.sub(r'[^\d]', '', p))
+                            valid_prices.append(v)
+                        except: pass
+                    
+                    if valid_prices:
+                        best_guess = min(valid_prices)
+                        if best_guess > 1000:
+                            price_per_night = round(best_guess / searched_nights)
+                        else:
+                            price_per_night = best_guess
 
             # 4. Rating / Reviews
             rating = 4.8
@@ -144,6 +159,7 @@ class PatchrightAirbnbScraper:
                 except: pass
 
             # Add to list
+            # Availability logic: If no price could be determined, it's not a valid deal for these dates
             if price_per_night > 0:
                 deals.append({
                     "name": name, 

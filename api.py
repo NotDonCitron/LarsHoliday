@@ -76,15 +76,11 @@ async def search_deals(
     )
     print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
     
-    # DEBUG MODUS: Keine Fallbacks
+    # Optional: Ensure image_url has a fallback for the frontend
     final_deals = results.get("top_10_deals", [])
-    
-    # Optional: Markiere Deals ohne Bild für das Frontend
     for deal in final_deals:
         if not deal.get("image_url"):
             deal["image_url"] = "https://via.placeholder.com/800x450.png?text=KEIN+BILD+GEFUNDEN"
-        if deal.get("price_per_night") == 0:
-            deal["name"] = f"[DEBUG: PREIS FEHLT] {deal.get('name')}"
     
     results["top_10_deals"] = final_deals
     return results

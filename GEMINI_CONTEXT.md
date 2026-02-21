@@ -21,13 +21,14 @@ Ein AI-gesteuerter Urlaubs-Planer für Holland (und international), optimiert f�
 - [x] **Preis-Präzision**: Intelligente Umrechnung von Gesamt- in Nachtpreise (Airbnb & Booking).
 - [x] **Erweiterte Suche**: Filter für Erwachsene, Kinder, Hunde und dynamisches Budget (pro Nacht/Gesamt).
 - [x] **Robustes Airbnb-Parsing**: Umstellung auf Block-Parsing zur Vermeidung von Daten-Mischmasch.
+- [x] **Verfügbarkeits-Fix (Incident 0001563/2026)**: Ergebnisse werden nun strikt auf Verfügbarkeit geprüft (Preis-Check + "Sold out" Erkennung).
 
-## Aktueller Status (Debug-Modus)
-Die App läuft aktuell im **Debug-Modus** (Keine Fallbacks für Bilder/Preise). Dies dient dazu, die Scraper-Qualität live zu validieren. Fehlerhafte Extraktionen werden mit `€0` oder `BILD-LADE-FEHLER` markiert.
+## Aktueller Status
+Die App wurde nach Lars' Feedback stabilisiert. Der Debug-Modus (Anzeige von Objekten ohne Preis) wurde deaktiviert. Es werden nur noch echte, verfügbare Deals für den gewählten Zeitraum angezeigt. 
 
 ## Offene Punkte für den nächsten Chat
 1. **Wetter-Integration**: Hinterlegung des `OPENWEATHER_API_KEY` in HF Settings.
-2. **Finale Politur**: Zurückkehren zu "schönen" Fallbacks, sobald die Scraper-Logik als 100% stabil bestätigt wurde.
+2. **Performance**: Prüfung, ob Firecrawl-Scraping durch Parallelisierung noch beschleunigt werden kann (aktuell bereits city-parallel).
 
 ## Wichtige Dateien
 - `api.py`: Haupteinstiegspunkt Cloud.

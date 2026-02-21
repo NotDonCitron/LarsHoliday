@@ -54,6 +54,20 @@ class BookingScraper:
         cards = soup.find_all('div', {'data-testid': 'property-card'})
         for card in cards[:15]:
             try:
+                # 1. Verfügbarkeits-Prüfung (Neu: Überspringe ausgebuchte Objekte)
+                card_text = card.get_text().lower()
+                availability_indicators = [
+                    "sold out", "ausgebucht", "no longer available", 
+                    "no rooms left", "nicht mehr verfügbar", "verfügbarkeit prüfen"
+                ]
+                # "verfügbarkeit prüfen" often appears on sold out items in some languages/views
+                # but sometimes also on available ones. More reliable: price absence.
+                
+                # Check for explicit "Sold out" badges
+                sold_out_elem = card.find('span', string=re.compile(r'Sold out|Ausgebucht|Nicht mehr verfügbar', re.I))
+                if sold_out_elem:
+                    continue
+
                 name_elem = card.find('div', {'data-testid': 'title'}) or card.find('h3')
                 if not name_elem: continue
                 name = name_elem.get_text(strip=True)
@@ -65,7 +79,11 @@ class BookingScraper:
                     # Fallback: Suche nach dem ersten Element mit Währungssymbol
                     price_elem = card.find(string=re.compile(r'[\$€£]'))
                 
-                price_text = price_elem.get_text() if price_elem else card.get_text()
+                if not price_elem:
+                    # Wenn kein Preis gefunden wurde, ist es wahrscheinlich nicht verfügbar
+                    continue
+
+                price_text = price_elem.get_text() if hasattr(price_elem, 'get_text') else str(price_elem)
                 # Extrahiere alle Zahlen aus dem Preis-String (z.B. "€ 1.234" -> "1234")
                 price_match = re.search(r'[\$€£]\s*([\d\.,\s]+)', price_text)
                 if price_match:
@@ -80,7 +98,7 @@ class BookingScraper:
                             price_per_night = total
                 
                 if price_per_night == 0:
-                    price_per_night = 0 # Debug-Modus: Kein Fallback auf 100
+                    continue # Überspringe Deals ohne Preis (nicht verfügbar)
 
                 # Bild-Extraktion (Wir nehmen die echten Inseratsfotos)
                 img = card.find('img', {'data-testid': 'image'}) or card.find('img')
