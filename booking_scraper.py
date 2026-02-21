@@ -18,16 +18,22 @@ class BookingScraper:
         nights = max(1, (d2 - d1).days)
 
         try:
-            async with httpx.AsyncClient(timeout=90.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     "https://api.firecrawl.dev/v1/scrape",
                     headers={"Authorization": f"Bearer {self.firecrawl_key}"},
-                    json={"url": url, "formats": ["html"], "waitFor": 5000}
+                    json={"url": url, "formats": ["html"], "waitFor": 10000}
                 )
                 if response.status_code == 200:
                     html = response.json().get('data', {}).get('html', '')
+                    if not html or "security check" in html.lower():
+                        print(f"   ⚠️ Booking.com hat die Anfrage blockiert oder Bot-Check gezeigt.")
+                        return []
                     return self._parse_html(BeautifulSoup(html, 'html.parser'), city, checkin, checkout, nights)
-        except Exception: pass
+                else:
+                    print(f"   ⚠️ Booking Firecrawl Fehler: {response.status_code}")
+        except Exception as e: 
+            print(f"   ⚠️ Booking Scraper Fehler: {e}")
         return []
 
     def _build_booking_url(self, city: str, checkin: str, checkout: str, adults: int, children: int):

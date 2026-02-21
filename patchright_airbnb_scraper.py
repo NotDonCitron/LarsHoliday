@@ -15,20 +15,40 @@ class PatchrightAirbnbScraper:
         d1 = datetime.strptime(checkin, "%Y-%m-%d")
         d2 = datetime.strptime(checkout, "%Y-%m-%d")
         nights = max(1, (d2 - d1).days)
-        # Add price_max to filter out luxury villas and ensure better budget fit
+        # Advanced search URL
         url = f"https://www.airbnb.com/s/{quote(region)}/homes?checkin={checkin}&checkout={checkout}&adults={adults}&children={children}&pets={pets}&price_max={budget_max}"
         
         try:
-            async with httpx.AsyncClient(timeout=90.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                # Add actions to simulate human behavior (scrolling) to bypass 503
+                payload = {
+                    "url": url, 
+                    "formats": ["markdown"], 
+                    "waitFor": 8000,
+                    "actions": [
+                        {"type": "scroll", "direction": "down", "amount": 500},
+                        {"type": "wait", "milliseconds": 2000}
+                    ]
+                }
                 response = await client.post(
                     "https://api.firecrawl.dev/v1/scrape",
                     headers={"Authorization": f"Bearer {self.firecrawl_key}"},
-                    json={"url": url, "formats": ["markdown"], "waitFor": 5000}
+                    json=payload
                 )
                 if response.status_code == 200:
-                    markdown = response.json().get('data', {}).get('markdown', '')
+                    data = response.json().get('data', {})
+                    markdown = data.get('markdown', '')
+                    
+                    # Check for Airbnb Error Page (Ice Cream Girl / 503)
+                    if "dropped her ice cream" in markdown or "temporarily unavailable" in markdown:
+                        print(f"   ⚠️ Airbnb hat die Anfrage blockiert (503 - Ice Cream Girl).")
+                        return []
+                        
                     return self._parse_markdown(markdown, region, nights)
-        except Exception: pass
+                else:
+                    print(f"   ⚠️ Firecrawl API Fehler: {response.status_code}")
+        except Exception as e: 
+            print(f"   ⚠️ Airbnb Scraper Fehler: {e}")
         return []
 
     def _parse_markdown(self, text: str, region: str, searched_nights: int) -> List[Dict]:
