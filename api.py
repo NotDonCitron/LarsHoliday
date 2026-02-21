@@ -76,13 +76,14 @@ async def search_deals(
     )
     print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
     
-    # Optional: Ensure image_url has a fallback for the frontend
-    final_deals = results.get("top_10_deals", [])
-    for deal in final_deals:
-        if not deal.get("image_url"):
-            deal["image_url"] = "https://via.placeholder.com/800x450.png?text=KEIN+BILD+GEFUNDEN"
-    
-    results["top_10_deals"] = final_deals
+    # Process all deal lists for image fallbacks
+    for key in ["top_10_deals", "top_airbnb_deals", "top_booking_deals"]:
+        deals = results.get(key, [])
+        for deal in deals:
+            if not deal.get("image_url"):
+                deal["image_url"] = "https://via.placeholder.com/800x450.png?text=KEIN+BILD+GEFUNDEN"
+        results[key] = deals
+        
     return results
 
 if __name__ == "__main__":

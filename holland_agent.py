@@ -119,6 +119,10 @@ class VacationAgent:
         print("📊 Ranking deals...\n")
         ranked = self.ranker.rank_deals(self.all_deals, nights)
 
+        # Separate deals by source
+        airbnb_deals = [d for d in ranked if "airbnb" in d.get("source", "").lower()]
+        booking_deals = [d for d in ranked if "booking" in d.get("source", "").lower()]
+
         # Generate summary
         summary = self.ranker.generate_summary(ranked, nights)
 
@@ -137,7 +141,9 @@ class VacationAgent:
                 "budget_range": f"€{self.budget_min}-{self.budget_max}"
             },
             "total_deals_found": len(self.all_deals),
-            "top_10_deals": ranked[:10],
+            "top_airbnb_deals": airbnb_deals[:15],
+            "top_booking_deals": booking_deals[:15],
+            "top_10_deals": ranked[:10], # Keep for backward compatibility
             "summary": summary
         }
 
