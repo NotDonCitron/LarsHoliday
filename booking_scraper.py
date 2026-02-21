@@ -78,33 +78,66 @@ class BookingScraper:
                 if not name_elem: continue
                 name = name_elem.get_text(strip=True)
                 
-                # Preis-Parsing (Verbesserte Logik für Booking.com)
+                # Preis-Parsing (Präzisere Logik gegen Rabatt-Mischmasch)
                 price_per_night = 0
-                price_elem = card.find('span', {'data-testid': 'price-and-discounted-price'})
-                if not price_elem:
-                    # Fallback: Suche nach dem ersten Element mit Währungssymbol
-                    price_elem = card.find(string=re.compile(r'[\$€£]'))
+                price_container = card.find('div', {'data-testid': 'price-and-discounted-price'}) or \
+                                  card.find('span', {'data-testid': 'price-and-discounted-price'})
                 
-                if not price_elem:
-                    # Wenn kein Preis gefunden wurde, ist es wahrscheinlich nicht verfügbar
+                if price_container:
+                    # Wir suchen nur nach Preisen, die NICHT durchgestrichen sind (keine alten Preise)
+                    # Und wir ignorieren Texte wie "Sparen Sie" oder "Rabatt"
+                    price_spans = price_container.find_all('span')
+                    valid_prices = []
+                    
+                    for span in price_spans:
+                        txt = span.get_text().strip()
+                        # Ignoriere durchgestrichene Preise (S-Tag) oder spezifische Klassen
+                        parent = span.parent
+                        is_old_price = span.name == 's' or (parent and parent.name == 's')
+                        
+                        if not is_old_price and re.search(r'[\$€£]\s*[\d\.,]+', txt):
+                            # Extrahiere Zahl
+                            val_match = re.search(r'[\$€£]\s*([\d\.,\s]+)', txt)
+                            if val_match:
+                                digits = "".join(re.findall(r'\d+', val_match.group(1)))
+                                v = int(digits) if digits else 0
+                                if v > 10: # Ignoriere Kleinstbeträge (oft Steuern)
+                                    valid_prices.append(v)
+                    
+                    if valid_prices:
+                        # Der letzte "valide" Preis im Block ist meist der Endpreis
+                        # (Zuerst kommt oft der Originalpreis, dann der Endpreis)
+                        # Aber Vorsicht: Wenn "Sparen" im Text steht, ist der kleinste Wert oft der Rabatt
+                        if "sparen" in price_container.get_text().lower() or "save" in price_container.get_text().lower():
+                            total = max(valid_prices) # Nimm den höheren Wert, der Rabatt ist meist kleiner
+                        else:
+                            total = valid_prices[-1]
+                    else:
+                        total = 0
+                else:
+                    # Fallback
+                    price_elem = card.find(string=re.compile(r'[\$€£]'))
+                    price_text = price_elem.get_text() if hasattr(price_elem, 'get_text') else str(price_elem)
+                    price_match = re.search(r'[\$€£]\s*([\d\.,\s]+)', price_text)
+                    digits = "".join(re.findall(r'\d+', price_match.group(1))) if price_match else ""
+                    total = int(digits) if digits else 0
+
+                if total > 0:
+                    if total > 350 or "total" in card.get_text().lower() or "gesamt" in card.get_text().lower() or nights > 1:
+                        price_per_night = round(total / nights)
+                    else:
+                        price_per_night = total
+
+                if price_per_night == 0:
                     continue
 
-                price_text = price_elem.get_text() if hasattr(price_elem, 'get_text') else str(price_elem)
-                # Extrahiere alle Zahlen aus dem Preis-String (z.B. "€ 1.234" -> "1234")
-                price_match = re.search(r'[\$€£]\s*([\d\.,\s]+)', price_text)
-                if price_match:
-                    digits = "".join(re.findall(r'\d+', price_match.group(1)))
-                    total = int(digits) if digits else 0
-                    if total > 0:
-                        # Booking zeigt oft den Gesamtpreis für den Aufenthalt
-                        # Wenn der Preis > 300 ist, ist es wahrscheinlich der Gesamtpreis
-                        if total > 350 or "total" in price_text.lower() or "gesamt" in price_text.lower():
-                            price_per_night = round(total / nights)
-                        else:
-                            price_per_night = total
-                
-                if price_per_night == 0:
-                    continue # Überspringe Deals ohne Preis (nicht verfügbar)
+                # Kapazitäts-Check (Warnung wenn Personenanzahl stark abweicht)
+                capacity_text = card.get_text()
+                guest_match = re.search(r'(\d+)\s*(Personen|adults|Erwachsene)', capacity_text)
+                if guest_match:
+                    found_guests = int(guest_match.group(1))
+                    if found_guests > adults + 2:
+                        name = f"{name} (für {found_guests} Pers.)"
 
                 # Bild-Extraktion (Wir nehmen die echten Inseratsfotos)
                 img = card.find('img', {'data-testid': 'image'}) or card.find('img')
