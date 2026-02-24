@@ -119,12 +119,23 @@ class PatchrightAirbnbScraper:
         
         if response.status_code == 200:
             data = response.json().get('data', {})
+            html = data.get('html', '')
             markdown = data.get('markdown', '')
             
-            if "dropped her ice cream" in markdown or "temporarily unavailable" in markdown:
-                raise Exception("Airbnb blocked Firecrawl (503)")
+            deals = []
+            # Check for Airbnb Error Page (Ice Cream Girl / 503)
+            if html and "dropped her ice cream" not in html and "temporarily unavailable" not in html:
+                # Airbnb HTML parsing is complex, we mainly use markdown, 
+                # but we can try to find properties in markdown here
+                deals = self._parse_markdown(markdown, region, nights)
+            
+            if not deals and markdown:
+                deals = self._parse_markdown(markdown, region, nights)
                 
-            return self._parse_markdown(markdown, region, nights)
+            if not deals:
+                raise Exception("Airbnb blocked or no results found")
+                    
+            return deals
         else:
             raise Exception(f"Firecrawl API Error: {response.status_code}")
 
