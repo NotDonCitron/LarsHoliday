@@ -192,30 +192,46 @@ class BookingScraper:
                 if not name_elem: continue
                 name = name_elem.get_text(strip=True)
                 
-                # Improved Price Parsing: Only capture the number immediately following the Euro symbol
-                # This prevents picking up "1" from "1 night" or "1 room"
-                price_matches = re.findall(r'€\s*([\d\.,]+)', card_text)
+                # Highly targeted Price Parsing
+                # Targeted elements: 'price-and-discounted-price' or 'price-per-night'
+                price_elem = card.find(attrs={'data-testid': 'price-and-discounted-price'}) or \
+                             card.find(attrs={'data-testid': 'price-per-night'}) or \
+                             card.find('span', string=re.compile(r'€'))
+                
+                if not price_elem:
+                    continue
+                    
+                price_text = price_elem.get_text()
+                # Find all numbers in the price element specifically
+                price_matches = re.findall(r'€\s*([\d\.,]+)', price_text)
+                if not price_matches:
+                    # Fallback to any number in that element
+                    price_matches = re.findall(r'([\d\.,]+)', price_text)
+                
                 valid_prices = []
                 for p in price_matches:
-                    # Remove dots/commas and convert to int
                     clean_p = p.replace('.', '').replace(',', '').strip()
                     if clean_p.isdigit():
                         val = int(clean_p)
-                        # Filter out numbers that are too small (taxes) or too large (obvious parsing errors)
                         if 10 < val < 50000: 
                             valid_prices.append(val)
                 
                 if not valid_prices: continue
                 
-                # The total price is usually the highest value in the block (before taxes/fees)
-                # But if we find multiple prices, the one closest to (budget * nights) might be better
-                # For now, max() is standard for "total price" on Booking
-                total = max(valid_prices)
+                # On Booking.com, if we look AT THE PRICE ELEMENT:
+                # - If it's a small number, it might be the nightly rate
+                # - If it's a large number, it's the total
+                raw_val = max(valid_prices)
                 
-                # Double check: if total is suspiciously high compared to typical Amsterdam prices, 
-                # maybe it already IS the nightly price? 
-                # But calculating from total is generally safer for Booking.
-                price_per_night = round(total / nights) if nights > 0 else total
+                # Logic: If the value is very low (e.g. < 1/3 of expected total), 
+                # it's likely already the nightly rate.
+                # If it's higher, it's the total for the trip.
+                if raw_val < (self.budget_max * 0.5) and nights > 1:
+                    # Likely already nightly
+                    price_per_night = raw_val
+                else:
+                    # Likely total
+                    price_per_night = round(raw_val / nights) if nights > 0 else raw_val
 
                 # Image
                 img = card.find('img', {'data-testid': 'image'}) or card.find('img')
