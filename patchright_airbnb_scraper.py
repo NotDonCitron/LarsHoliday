@@ -186,26 +186,31 @@ class PatchrightAirbnbScraper:
                 seen.add(rid)
                 unique_matches.append((rid, pos))
         
-        for i, (room_id, start_pos) in enumerate(unique_matches):
+        for i, (room_id, pos) in enumerate(unique_matches):
             # Define the text block for this listing
-            # Start: from the first mention of this ID
-            # End: until the start of the next ID (or reasonable limit)
-            end_pos = unique_matches[i+1][1] if i + 1 < len(unique_matches) else len(clean_text)
+            # Instead of starting at pos, we look at the range between IDs
+            # or a generous buffer before the current ID
+            prev_pos = unique_matches[i-1][1] if i > 0 else 0
             
-            # Limit block size to avoid processing huge chunks if IDs are far apart
-            # But typically the text follows the images
-            block_len = min(end_pos - start_pos, 4000) 
-            block = clean_text[start_pos:start_pos + block_len]
+            # The block should start after the previous deal or at a reasonable offset
+            start_search = max(prev_pos, pos - 2000)
+            end_search = unique_matches[i+1][1] if i + 1 < len(unique_matches) else len(clean_text)
+            
+            block = clean_text[start_search:end_search]
             
             # --- PARSING LOGIC ---
             
-            # 1. Image
-            image_url = ""
-            # Look for the image associated with this ID in the block (or just before)
-            # Re-scan the original text slightly before the start_pos to catch the image bracket
-            img_match = re.search(r'!\[.*?\]\((https://[^)]+)\)', clean_text[max(0, start_pos-300):start_pos+300])
-            if img_match:
-                image_url = img_match.group(1).split('?')[0] + "?im_w=720"
+            # 1. Images (capture up to 5)
+            images = []
+            # Look for all images in this block
+            img_matches = re.findall(r'!\[.*?\]\((https://[^)]+)\)', block)
+            for img_url in img_matches:
+                full_url = img_url.split('?')[0] + "?im_w=720"
+                if full_url not in images:
+                    images.append(full_url)
+                if len(images) >= 5: break
+            
+            image_url = images[0] if images else ""
 
             # 2. Name
             # Strategy: Look for the title which is often a bold line or a line following the "Apartment in..."
@@ -304,7 +309,8 @@ class PatchrightAirbnbScraper:
                     "pet_friendly": True,
                     "source": "airbnb (cloud)", 
                     "url": f"https://www.airbnb.com/rooms/{room_id}",
-                    "image_url": image_url
+                    "image_url": image_url,
+                    "images": images
                 })
                 
         return deals

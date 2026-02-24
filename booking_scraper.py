@@ -235,15 +235,32 @@ class BookingScraper:
                 else:
                     price_per_night = round(raw_val / nights) if nights > 0 else raw_val
 
-                # Image
-                img = card.find('img', {'data-testid': 'image'}) or card.find('img')
-                image_url = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=720"
-                if img:
-                    image_url = img.get('src') or img.get('data-src') or \
-                                (img.get('srcset', '').split(',')[0].split(' ')[0] if img.get('srcset') else "") or \
-                                image_url
-                    if image_url.startswith('//'): image_url = f"https:{image_url}"
+                # Images (capture up to 5)
+                images = []
+                # Strategy 1: Look for all images in the card
+                img_elements = card.find_all('img')
+                for img in img_elements:
+                    src = img.get('src') or img.get('data-src') or \
+                          (img.get('srcset', '').split(',')[0].split(' ')[0] if img.get('srcset') else "")
+                    if src and "bstatic.com" in src:
+                        if src.startswith('//'): src = f"https:{src}"
+                        # Increase quality and variety
+                        src = re.sub(r'square\d+', 'max500', src)
+                        if src not in images:
+                            images.append(src)
                 
+                # Strategy 2: If we still have only 1 image, look for hidden thumbnails in data-attributes
+                if len(images) < 2:
+                    # Sometimes Booking hides extra URLs in string attributes
+                    card_str = str(card)
+                    extra_imgs = re.findall(r'https://cf\.bstatic\.com/xdata/images/hotel/max500/[^"\']+', card_str)
+                    for img in extra_imgs:
+                        if img not in images:
+                            images.append(img)
+                        if len(images) >= 5: break
+
+                image_url = images[0] if images else "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=720"
+
                 link_elem = card.find('a', href=True)
                 href = link_elem['href'] if link_elem else ""
                 final_url = href if href.startswith('http') else f"https://www.booking.com{href}"
@@ -251,7 +268,9 @@ class BookingScraper:
                 deals.append({
                     "name": name, "location": city, "price_per_night": price_per_night,
                     "rating": 4.7, "reviews": 80, "pet_friendly": True,
-                    "source": "booking (html)", "url": final_url, "image_url": image_url
+                    "source": "booking (html)", "url": final_url, 
+                    "image_url": image_url,
+                    "images": images
                 })
             except Exception: continue
         return deals

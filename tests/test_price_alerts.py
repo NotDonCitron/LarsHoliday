@@ -6,6 +6,7 @@ from holland_agent import VacationAgent
 @pytest.mark.asyncio
 async def test_price_alert_integration():
     agent = VacationAgent()
+    agent.cache.clear()
     
     # Mock the scrapers to return a specific deal
     deal = {

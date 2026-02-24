@@ -2,13 +2,23 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from typing import List, Optional
+from typing import List, Optional, Dict
+from pydantic import BaseModel
+from fastapi.responses import FileResponse, StreamingResponse
 from holland_agent import HollandVacationAgent
+from report_generator import ReportGenerator
 import uvicorn
 import asyncio
 import os
+import io
+
+class ExportRequest(BaseModel):
+    deals: List[Dict]
+    search_params: Dict
 
 app = FastAPI(title="Lars Holiday Deal API")
+report_gen = ReportGenerator()
+agent = HollandVacationAgent()
 
 # Allow requests
 app.add_middleware(
@@ -85,6 +95,30 @@ async def search_deals(
         results[key] = deals
         
     return results
+
+@app.post("/export-pdf")
+async def export_pdf(request: ExportRequest):
+    print(f"--- [API Request] PDF Export gestartet für {len(request.deals)} Deals ---")
+    
+    # Create temp filename
+    import tempfile
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        filename = tmp.name
+    
+    success = report_gen.generate_report(
+        deals=request.deals,
+        search_params=request.search_params,
+        filename=filename
+    )
+    
+    if success:
+        return FileResponse(
+            filename, 
+            media_type="application/pdf", 
+            filename="UrlaubsDeals.pdf",
+            background=None # FileResponse handles cleanup if we use a background task but let's keep it simple
+        )
+    return {"error": "PDF generation failed"}
 
 if __name__ == "__main__":
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)

@@ -74,6 +74,7 @@ class DealRanker:
                 "source": deal.get("source", "unknown"),
                 "url": deal.get("url", ""),
                 "image_url": deal.get("image_url", ""),
+                "images": deal.get("images", []),
                 "weather_forecast": deal.get("weather_forecast"),
                 "recommendation": self._get_recommendation(score, total_cost)
             }

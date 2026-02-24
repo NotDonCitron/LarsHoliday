@@ -363,15 +363,41 @@
 
         /* Card image */
         .deal-img-wrap { position: relative; height: 195px; overflow: hidden; flex-shrink: 0; }
-        .deal-img-wrap img {
+        .deal-img-container {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            height: 100%;
+            scrollbar-width: none; /* Firefox */
+        }
+        .deal-img-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .deal-img-container img {
             width: 100%; height: 100%; object-fit: cover;
+            flex-shrink: 0;
+            scroll-snap-align: start;
             transition: transform .35s ease;
         }
-        .deal-card:hover .deal-img-wrap img { transform: scale(1.04); }
+        .deal-card:hover .deal-img-container img { transform: scale(1.04); }
         .deal-img-overlay {
             position: absolute; inset: 0;
             background: linear-gradient(to top, rgba(0,0,0,.52) 0%, rgba(0,0,0,.08) 55%, transparent 100%);
+            pointer-events: none;
         }
+        
+        /* Carousel arrows */
+        .carousel-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            border: none; cursor: pointer; z-index: 10;
+            opacity: 0; transition: opacity 0.2s;
+            color: var(--text-primary); font-size: 0.8rem;
+        }
+        .deal-card:hover .carousel-btn { opacity: 1; }
+        .carousel-btn.prev { left: 8px; }
+        .carousel-btn.next { right: 8px; }
+        .carousel-btn:hover { background: #fff; }
 
         /* Badges on image */
         .img-badge-rating {
@@ -655,9 +681,26 @@
         <!-- ── Main ────────────────────────────────────────────── -->
         <main class="main-content" id="main-content">
 
-            <div class="page-header">
-                <h1 class="page-title">Deine Urlaubs-Deals 🏖️</h1>
-                <p id="status-text" class="page-subtitle" aria-live="polite">Finde die besten Angebote für Holland mit Hund.</p>
+            <div class="page-header flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="page-title">Deine Urlaubs-Deals 🏖️</h1>
+                    <p id="status-text" class="page-subtitle" aria-live="polite">Finde die besten Angebote für Holland mit Hund.</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button id="export-pdf-btn" class="hidden bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-emerald-700 outline-none hover:bg-emerald-50 transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        PDF Export
+                    </button>
+                    
+                    <label for="sort-select" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sortieren:</label>
+                    <select id="sort-select" class="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 outline-none focus:border-emerald-500 transition-colors">
+                        <option value="rank">Beste Empfehlung</option>
+                        <option value="price_asc">Günstigster Preis</option>
+                        <option value="rating_desc">Beste Bewertung</option>
+                        <option value="weather">Bestes Wetter</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Status bar (shown after search) -->
@@ -758,6 +801,14 @@
         el.value  = Math.min(max, Math.max(min, parseInt(el.value || 0) + delta));
     }
 
+    // ── Carousel Scroll ────────────────────────────────────────
+    function scrollCarousel(id, direction) {
+        const container = document.getElementById('carousel-' + id);
+        if (!container) return;
+        const width = container.offsetWidth;
+        container.scrollBy({ left: direction * width, behavior: 'smooth' });
+    }
+
     // ── Inline validation ──────────────────────────────────────
     function showError(el, errEl, msg) {
         el.classList.add('invalid');
@@ -829,7 +880,10 @@
         countBadge.style.display = 'inline-block';
 
         const sourceName = source === 'airbnb' ? 'Airbnb' : 'Booking.com';
-        grid.innerHTML = deals.map(deal => {
+        grid.innerHTML = deals.map((deal, idx) => {
+            // Generate a truly unique and safe ID for the carousel
+            const safeId = `${source}-${idx}`;
+            
             // Determine source badge color
             const sourceLabel = deal.source || 'unbekannt';
             let sourceColor = 'bg-gray-100 text-gray-600';
@@ -840,11 +894,25 @@
             return `
             <article class="deal-card">
                 <div class="deal-img-wrap">
-                    <img src="${deal.image_url}"
-                         onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'"
-                         alt="${deal.name} — ${deal.location}"
-                         loading="lazy" width="800" height="450">
+                    <div class="deal-img-container" id="carousel-${safeId}">
+                        ${(deal.images && deal.images.length > 0 ? deal.images : [deal.image_url]).map(img => `
+                            <img src="${img}" 
+                                 onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'"
+                                 alt="${deal.name}" 
+                                 loading="lazy">
+                        `).join('')}
+                    </div>
                     <div class="deal-img-overlay" aria-hidden="true"></div>
+                    
+                    ${deal.images && deal.images.length > 1 ? `
+                        <button class="carousel-btn prev" onclick="scrollCarousel('${safeId}', -1)" aria-label="Vorheriges Bild">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-btn next" onclick="scrollCarousel('${safeId}', 1)" aria-label="Nächstes Bild">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    ` : ''}
+
                     <div class="img-badge-rating" aria-label="Bewertung ${deal.rating}">
                         <i class="fa-solid fa-star" aria-hidden="true"></i> ${deal.rating}
                     </div>
@@ -937,6 +1005,72 @@
     const searchBtn = document.getElementById('search-btn');
     const statusBar = document.getElementById('status-bar');
     const statusBarText = document.getElementById('status-bar-text');
+    const sortSelect = document.getElementById('sort-select');
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    
+    let lastSearchResults = { airbnb: [], booking: [], search_params: {} };
+
+    exportPdfBtn.addEventListener('click', async () => {
+        try {
+            exportPdfBtn.disabled = true;
+            exportPdfBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Exportiert...';
+            
+            const payload = {
+                deals: [...lastSearchResults.airbnb, ...lastSearchResults.booking],
+                search_params: lastSearchResults.search_params
+            };
+            
+            const res = await fetch('/export-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `UrlaubsDeals_${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                alert('PDF Export fehlgeschlagen.');
+            }
+        } catch (err) {
+            console.error('PDF Error:', err);
+            alert('Fehler beim PDF Export.');
+        } finally {
+            exportPdfBtn.disabled = false;
+            exportPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF Export';
+        }
+    });
+
+    sortSelect.addEventListener('change', () => {
+        sortAndRender();
+    });
+
+    function sortAndRender() {
+        const criteria = sortSelect.value;
+        const sortFn = (a, b) => {
+            if (criteria === 'price_asc') return a.price_per_night - b.price_per_night;
+            if (criteria === 'rating_desc') return b.rating - a.rating;
+            if (criteria === 'rank') return b.rank_score - a.rank_score;
+            if (criteria === 'weather') {
+                const tempA = a.weather?.temp || 0;
+                const tempB = b.weather?.temp || 0;
+                return tempB - tempA;
+            }
+            return 0;
+        };
+
+        const sortedAirbnb = [...lastSearchResults.airbnb].sort(sortFn);
+        const sortedBooking = [...lastSearchResults.booking].sort(sortFn);
+
+        renderDeals(sortedAirbnb, 'airbnb');
+        renderDeals(sortedBooking, 'booking');
+    }
 
     searchBtn.addEventListener('click', async () => {
         if (!validateInputs()) return;
@@ -966,10 +1100,14 @@
             const res  = await fetch(url);
             const data = await res.json();
 
-            renderDeals(data.top_airbnb_deals,  'airbnb');
-            renderDeals(data.top_booking_deals, 'booking');
-            renderWeather([...data.top_airbnb_deals, ...data.top_booking_deals]);
+            lastSearchResults.airbnb = data.top_airbnb_deals || [];
+            lastSearchResults.booking = data.top_booking_deals || [];
+            lastSearchResults.search_params = data.search_params || {};
+            
+            sortAndRender();
+            renderWeather([...lastSearchResults.airbnb, ...lastSearchResults.booking]);
             renderAlerts(data.price_alerts);
+            exportPdfBtn.classList.remove('hidden');
 
             const nights = data.search_params?.nights ?? '?';
             statusBarText.textContent = `${data.total_deals_found} Deals gefunden · ${nights} Nächte · ${adults} Erw.${pets ? ' · 🐕' : ''}`;
