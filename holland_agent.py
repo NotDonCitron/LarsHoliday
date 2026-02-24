@@ -196,12 +196,13 @@ class VacationAgent:
         Validate and filter aggregated deals based on requirements
         """
         # 1. Basic Availability Check: Must have a price
+        # 2. Budget Check: Filter out anything above budget_max
         self.all_deals = [
             deal for deal in self.all_deals 
-            if deal.get('price_per_night', 0) > 0
+            if 0 < deal.get('price_per_night', 0) <= self.budget_max
         ]
 
-        # 2. Requirement Check: Pets
+        # 3. Requirement Check: Pets
         if pets > 0:
             # Filter only pet-friendly properties
             self.all_deals = [
