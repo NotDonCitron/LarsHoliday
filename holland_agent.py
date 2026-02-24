@@ -117,14 +117,18 @@ class VacationAgent:
         results_per_city = await asyncio.gather(*tasks, return_exceptions=True)
         
         # Handle any exceptions from individual city searches
-        results_per_city = [
-            r if isinstance(r, list) else []
-            for r in results_per_city
-        ]
+        final_results = []
+        for i, r in enumerate(results_per_city):
+            if isinstance(r, list):
+                final_results.append(r)
+            else:
+                city = cities[i]
+                print(f"   ⚠️ Error searching {city}: {str(r)[:100]}")
+                final_results.append([])
 
         # Aggregate all deals
         self.all_deals = []
-        for deals_list in results_per_city:
+        for deals_list in final_results:
             self.all_deals.extend(deals_list)
 
         # Validate deals (e.g., price and pet-friendly enforcement)
