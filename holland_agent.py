@@ -13,6 +13,7 @@ import asyncio
 import json
 import random
 import os
+import hashlib
 from datetime import datetime
 from typing import List, Dict, Optional
 from dotenv import load_dotenv  # pyre-ignore[21]
@@ -22,6 +23,7 @@ from patchright_airbnb_scraper import PatchrightAirbnbScraper as SmartAirbnbScra
 from weather_integration import WeatherIntegration  # pyre-ignore[21]
 from deal_ranker import DealRanker  # pyre-ignore[21]
 from scraper_health import health_reporter  # pyre-ignore[21]
+from rate_limit_bypass import price_alerts, cache # Import alert system and cache
 
 load_dotenv()
 
@@ -41,6 +43,7 @@ class VacationAgent:
              print("   ⚠️ WARNUNG: OPENWEATHER_API_KEY fehlt in Umgebungsvariablen!")
         self.ranker = DealRanker(budget_max=budget_max)
         self.all_deals = []
+        self.cache = cache
 
     async def find_best_deals(
         self,
@@ -79,12 +82,32 @@ class VacationAgent:
         print("🔍 Searching accommodations...")
         
         async def _search_with_delay(city: str, delay: float):
-            """Search a city with initial delay for stagger."""
+            """Search a city with initial delay for stagger and cache check."""
+            cache_key = self.cache.make_key(
+                "agent_search", 
+                city=city, checkin=checkin, checkout=checkout, 
+                group_size=group_size, pets=pets, budget_max=self.budget_max
+            )
+            
+            cached = self.cache.get(cache_key)
+            if cached:
+                print(f"   [Agent] ⚡ Using cached results for {city}")
+                # Mark as cached
+                for d in cached:
+                    if " (cache)" not in d.get("source", ""):
+                        d["source"] = d.get("source", "unknown") + " (cache)"
+                return cached
+                
             if delay > 0:
                 await asyncio.sleep(delay)
-            return await self._search_single_city(
+            
+            deals = await self._search_single_city(
                 city, checkin, checkout, nights, group_size, children, pets
             )
+            
+            if deals:
+                self.cache.set(cache_key, deals)
+            return deals
         
         # Stagger cities by 2s to avoid thundering herd
         tasks = [
@@ -108,6 +131,26 @@ class VacationAgent:
         self._validate_deals(pets)
 
         print(f"   Found {len(self.all_deals)} valid properties\n")
+        
+        # --- PRICE ALERT SYSTEM ---
+        print("🔔 Checking for price drops...")
+        alert_msgs = []
+        for deal in self.all_deals:
+            # Use URL or Name as ID for tracking
+            prop_id = hashlib.md5(deal.get('url', deal.get('name', '')).encode()).hexdigest()[:12]
+            triggered, msg = price_alerts.track_property(
+                property_id=prop_id,
+                name=deal.get('name', 'Unknown'),
+                price=float(deal.get('price_per_night', 0)),
+                url=deal.get('url', ''),
+                source=deal.get('source', 'unknown')
+            )
+            if triggered:
+                alert_msgs.append(msg)
+                print(msg)
+        
+        if not alert_msgs:
+            print("   No significant price drops detected since last search.")
 
         # Enrich with weather data
         print("🌤️  Fetching weather forecasts...")
@@ -141,6 +184,7 @@ class VacationAgent:
                 "budget_range": f"€{self.budget_min}-{self.budget_max}"
             },
             "total_deals_found": len(self.all_deals),
+            "price_alerts": alert_msgs,
             "top_airbnb_deals": airbnb_deals[:15],
             "top_booking_deals": booking_deals[:15],
             "top_10_deals": ranked[:10], # Keep for backward compatibility

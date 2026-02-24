@@ -425,6 +425,8 @@ class VacationApp:
         
         # Deal details
         details = f"📍 {deal.get('location', 'N/A')} | ⭐ {deal.get('rating', 'N/A')}/5 | €{deal.get('price_per_night', 'N/A')}/night"
+        source = deal.get('source', 'unknown')
+        details += f" | 🔍 {source}"
         details_label = ttk.Label(card, text=details, style="Dark.TLabel")
         details_label.pack(anchor="w", padx=10)
         
