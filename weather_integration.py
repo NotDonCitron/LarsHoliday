@@ -56,7 +56,7 @@ class WeatherIntegration:
             city: City or region name (e.g., "Amsterdam", "Berlin")
 
         Returns:
-            Dict with city, forecast data, and average temperature
+            Dict with city, forecast data, and detailed weather information
         """
         cache_key = f"weather_{city}"
         cached = self.cache.get(cache_key)
@@ -82,11 +82,48 @@ class WeatherIntegration:
                 response.raise_for_status()
                 weather_data = response.json()
 
+            # Extract detailed forecast data
+            forecast_list = weather_data.get("list", [])
+            
+            # Process daily forecasts (every 8th entry = 1 day)
+            daily_forecasts = []
+            for i in range(0, min(40, len(forecast_list)), 8):
+                if i < len(forecast_list):
+                    item = forecast_list[i]
+                    daily_forecasts.append({
+                        "date": item.get("dt_txt", "").split(" ")[0],
+                        "temp": round(item["main"]["temp"], 1),
+                        "temp_min": round(item["main"]["temp_min"], 1),
+                        "temp_max": round(item["main"]["temp_max"], 1),
+                        "humidity": item["main"]["humidity"],
+                        "weather": item["weather"][0]["main"] if item.get("weather") else "Unknown",
+                        "weather_description": item["weather"][0]["description"] if item.get("weather") else "",
+                        "weather_icon": item["weather"][0]["icon"] if item.get("weather") else "01d",
+                        "wind_speed": round(item["wind"]["speed"] * 3.6, 1) if item.get("wind") else 0,  # m/s to km/h
+                        "rain_probability": round(item.get("pop", 0) * 100),  # Probability of precipitation %
+                        "rain_mm": round(item.get("rain", {}).get("3h", 0), 1),
+                        "uv_index": self._estimate_uv_index(item),
+                    })
+
+            # Calculate detailed averages
+            avg_temp = self._calculate_avg_temp(weather_data)
+            avg_humidity = sum(f["humidity"] for f in daily_forecasts) / len(daily_forecasts) if daily_forecasts else 0
+            avg_wind = sum(f["wind_speed"] for f in daily_forecasts) / len(daily_forecasts) if daily_forecasts else 0
+            max_rain_prob = max((f["rain_probability"] for f in daily_forecasts), default=0)
+            
+            # Calculate activity scores
+            activity_scores = self._calculate_activity_scores(daily_forecasts, avg_temp)
+
             result = {
                 "city": city,
-                "forecast": weather_data.get("list", [])[:8],  # Next 5 days
-                "avg_temp": self._calculate_avg_temp(weather_data),
-                "conditions": self._get_weather_summary(weather_data)
+                "forecast": daily_forecasts,
+                "avg_temp": avg_temp,
+                "avg_humidity": round(avg_humidity, 1),
+                "avg_wind_speed": round(avg_wind, 1),
+                "max_rain_probability": max_rain_prob,
+                "conditions": self._get_weather_summary(weather_data),
+                "activity_scores": activity_scores,
+                "weather_alert": self._check_weather_alert(daily_forecasts),
             }
 
             self.cache.set(cache_key, result)
@@ -98,7 +135,17 @@ class WeatherIntegration:
                 "city": city,
                 "forecast": [],
                 "avg_temp": None,
-                "conditions": "unavailable"
+                "avg_humidity": None,
+                "avg_wind_speed": None,
+                "max_rain_probability": 0,
+                "conditions": "unavailable",
+                "activity_scores": {
+                    "beach": 0,
+                    "hiking": 0,
+                    "dog_walk": 0,
+                    "cycling": 0
+                },
+                "weather_alert": None
             }
 
     def _calculate_avg_temp(self, data: Dict) -> Optional[float]:
@@ -115,6 +162,224 @@ class WeatherIntegration:
         # Most common condition
         most_common = max(set(conditions), key=conditions.count)
         return most_common.lower()
+
+    def _estimate_uv_index(self, item: Dict) -> int:
+        """
+        Estimate UV index based on weather conditions and time
+        This is an approximation as OpenWeather free API doesn't provide UV
+        """
+        weather = item.get("weather", [{}])[0].get("main", "").lower()
+        dt_txt = item.get("dt_txt", "")
+        
+        # Extract hour from dt_txt
+        hour = 12  # Default to midday
+        if " " in dt_txt:
+            time_part = dt_txt.split(" ")[1]
+            if ":" in time_part:
+                hour = int(time_part.split(":")[0])
+        
+        # Base UV by time of day (simplified)
+        if 6 <= hour <= 8:
+            base_uv = 2
+        elif 9 <= hour <= 11:
+            base_uv = 5
+        elif 12 <= hour <= 14:
+            base_uv = 8
+        elif 15 <= hour <= 17:
+            base_uv = 5
+        elif 18 <= hour <= 20:
+            base_uv = 2
+        else:
+            base_uv = 0
+        
+        # Reduce UV for cloudy/rainy weather
+        if "cloud" in weather:
+            base_uv = max(1, base_uv - 3)
+        elif "rain" in weather or "thunderstorm" in weather:
+            base_uv = max(0, base_uv - 5)
+        elif "snow" in weather:
+            base_uv = max(1, base_uv - 2)  # Snow reflects UV
+        
+        return base_uv
+
+    def _calculate_activity_scores(self, daily_forecasts: List[Dict], avg_temp: Optional[float]) -> Dict[str, int]:
+        """
+        Calculate activity scores (0-100) based on weather conditions
+        
+        Returns:
+            Dict with scores for beach, hiking, dog_walk, cycling
+        """
+        if not daily_forecasts or not avg_temp:
+            return {"beach": 0, "hiking": 0, "dog_walk": 0, "cycling": 0}
+        
+        scores = {}
+        
+        # Calculate average conditions
+        avg_rain_prob = sum(f["rain_probability"] for f in daily_forecasts) / len(daily_forecasts)
+        avg_wind = sum(f["wind_speed"] for f in daily_forecasts) / len(daily_forecasts)
+        max_rain_prob = max(f["rain_probability"] for f in daily_forecasts)
+        
+        # Beach score: warm, sunny, low wind, low rain
+        beach_score = 0
+        if avg_temp >= 20 and avg_temp <= 30:
+            beach_score += 50
+        elif avg_temp >= 15 and avg_temp < 20:
+            beach_score += 25
+        elif avg_temp > 30:
+            beach_score += 30  # Too hot
+        
+        # Check for sunny/cloudy conditions
+        sunny_days = sum(1 for f in daily_forecasts if "Clear" in f.get("weather", ""))
+        beach_score += (sunny_days / len(daily_forecasts)) * 30
+        
+        if avg_wind < 20:
+            beach_score += 20
+        elif avg_wind < 35:
+            beach_score += 10
+        
+        if avg_rain_prob < 20:
+            beach_score += 10
+        
+        scores["beach"] = min(100, int(beach_score))
+        
+        # Hiking score: moderate temp, not too rainy, not too hot
+        hiking_score = 0
+        if avg_temp >= 10 and avg_temp <= 22:
+            hiking_score += 50
+        elif avg_temp >= 5 and avg_temp < 10:
+            hiking_score += 30
+        elif avg_temp > 22 and avg_temp <= 28:
+            hiking_score += 25
+        
+        if max_rain_prob < 30:
+            hiking_score += 30
+        elif max_rain_prob < 50:
+            hiking_score += 15
+        
+        if avg_wind < 30:
+            hiking_score += 20
+        
+        scores["hiking"] = min(100, int(hiking_score))
+        
+        # Dog walk score: comfortable temp, any weather OK
+        dog_walk_score = 50  # Base score
+        
+        if avg_temp >= 5 and avg_temp <= 25:
+            dog_walk_score += 30
+        elif avg_temp >= 0 and avg_temp < 5:
+            dog_walk_score += 15
+        elif avg_temp > 25 and avg_temp <= 30:
+            dog_walk_score += 15  # Warm but OK
+        elif avg_temp > 30:
+            dog_walk_score -= 10  # Too hot for dog
+        elif avg_temp < 0:
+            dog_walk_score -= 10  # Too cold
+        
+        # Rain is OK for dog walks
+        if avg_rain_prob < 50:
+            dog_walk_score += 20
+        
+        scores["dog_walk"] = max(0, min(100, int(dog_walk_score)))
+        
+        # Cycling score: dry, moderate temp, not too windy
+        cycling_score = 0
+        if avg_temp >= 12 and avg_temp <= 25:
+            cycling_score += 40
+        elif avg_temp >= 8 and avg_temp < 12:
+            cycling_score += 25
+        elif avg_temp > 25 and avg_temp <= 30:
+            cycling_score += 20
+        
+        if avg_rain_prob < 30:
+            cycling_score += 35
+        elif avg_rain_prob < 50:
+            cycling_score += 15
+        
+        if avg_wind < 20:
+            cycling_score += 25
+        elif avg_wind < 35:
+            cycling_score += 10
+        else:
+            cycling_score -= 15  # Too windy
+        
+        scores["cycling"] = max(0, min(100, int(cycling_score)))
+        
+        return scores
+
+    def _check_weather_alert(self, daily_forecasts: List[Dict]) -> Optional[Dict]:
+        """
+        Check for adverse weather conditions that might affect travel
+        
+        Returns:
+            Dict with alert info or None if no alerts
+        """
+        if not daily_forecasts:
+            return None
+        
+        alerts = []
+        
+        # Check for heavy rain
+        heavy_rain_days = [f for f in daily_forecasts if f.get("rain_probability", 0) >= 70]
+        if heavy_rain_days:
+            dates = [f["date"] for f in heavy_rain_days]
+            alerts.append({
+                "type": "heavy_rain",
+                "severity": "warning",
+                "message": f"Heavy rain expected on {', '.join(dates[-2:])}",
+                "affected_dates": dates
+            })
+        
+        # Check for extreme heat
+        hot_days = [f for f in daily_forecasts if f.get("temp_max", 0) > 32]
+        if hot_days:
+            dates = [f["date"] for f in hot_days]
+            alerts.append({
+                "type": "extreme_heat",
+                "severity": "warning",
+                "message": f"High temperatures expected ({max(f['temp_max'] for f in hot_days)}°C)",
+                "affected_dates": dates
+            })
+        
+        # Check for extreme cold
+        cold_days = [f for f in daily_forecasts if f.get("temp_min", 0) < 0]
+        if cold_days:
+            dates = [f["date"] for f in cold_days]
+            alerts.append({
+                "type": "extreme_cold",
+                "severity": "info",
+                "message": f"Below freezing temperatures expected",
+                "affected_dates": dates
+            })
+        
+        # Check for high wind
+        windy_days = [f for f in daily_forecasts if f.get("wind_speed", 0) > 50]
+        if windy_days:
+            dates = [f["date"] for f in windy_days]
+            alerts.append({
+                "type": "high_wind",
+                "severity": "warning",
+                "message": f"Strong winds expected (up to {max(f['wind_speed'] for f in windy_days)} km/h)",
+                "affected_dates": dates
+            })
+        
+        # Check for thunderstorms
+        storm_days = [f for f in daily_forecasts if "Thunderstorm" in f.get("weather", "")]
+        if storm_days:
+            dates = [f["date"] for f in storm_days]
+            alerts.append({
+                "type": "thunderstorm",
+                "severity": "severe",
+                "message": f"Thunderstorms expected - consider rescheduling",
+                "affected_dates": dates
+            })
+        
+        if alerts:
+            # Return the most severe alert
+            severity_order = {"severe": 3, "warning": 2, "info": 1}
+            most_severe = max(alerts, key=lambda a: severity_order.get(a["severity"], 0))
+            return most_severe
+        
+        return None
 
     async def enrich_deals_with_weather(self, deals: List[Dict], cities: List[str]) -> List[Dict]:
         """

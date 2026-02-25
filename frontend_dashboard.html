@@ -1,45 +1,63 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lars Urlaubs-Deals | Holland mit Hund 🐾</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         /* ── Design Tokens ─────────────────────────────────────── */
         :root {
-            --primary:        #047857;  /* emerald-700 */
-            --primary-dark:   #065f46;  /* emerald-800 */
-            --primary-hover:  #059669;  /* emerald-600 */
-            --primary-pale:   #d1fae5;  /* emerald-100 */
-            --primary-subtle: #ecfdf5;  /* emerald-50  */
-            --accent:         #f59e0b;  /* amber-400   */
-            --accent-dark:    #d97706;  /* amber-500   */
-            --surface:        #ffffff;
-            --bg:             #f0fdf4;
-            --bg-alt:         #f9fafb;
-            --text-primary:   #111827;
+            --primary: #047857;
+            /* emerald-700 */
+            --primary-dark: #065f46;
+            /* emerald-800 */
+            --primary-hover: #059669;
+            /* emerald-600 */
+            --primary-pale: #d1fae5;
+            /* emerald-100 */
+            --primary-subtle: #ecfdf5;
+            /* emerald-50  */
+            --accent: #f59e0b;
+            /* amber-400   */
+            --accent-dark: #d97706;
+            /* amber-500   */
+            --surface: #ffffff;
+            --bg: #f0fdf4;
+            --bg-alt: #f9fafb;
+            --text-primary: #111827;
             --text-secondary: #374151;
-            --text-muted:     #6b7280;
-            --text-faint:     #9ca3af;
-            --border:         #e5e7eb;
-            --border-light:   #f3f4f6;
-            --shadow-sm:      0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-            --shadow-md:      0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.05);
-            --shadow-card:    0 2px 8px rgba(4,120,87,.08), 0 1px 3px rgba(0,0,0,.06);
-            --shadow-hover:   0 20px 48px rgba(0,0,0,.14), 0 8px 16px rgba(0,0,0,.08);
-            --radius-sm:      0.5rem;
-            --radius-md:      0.875rem;
-            --radius-lg:      1.25rem;
-            --radius-xl:      1.5rem;
+            --text-muted: #6b7280;
+            --text-faint: #9ca3af;
+            --border: #e5e7eb;
+            --border-light: #f3f4f6;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, .08), 0 2px 4px rgba(0, 0, 0, .05);
+            --shadow-card: 0 2px 8px rgba(4, 120, 87, .08), 0 1px 3px rgba(0, 0, 0, .06);
+            --shadow-hover: 0 20px 48px rgba(0, 0, 0, .14), 0 8px 16px rgba(0, 0, 0, .08);
+            --radius-sm: 0.5rem;
+            --radius-md: 0.875rem;
+            --radius-lg: 1.25rem;
+            --radius-xl: 1.5rem;
         }
 
         /* ── Base ──────────────────────────────────────────────── */
-        *, *::before, *::after { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
@@ -61,11 +79,21 @@
 
         /* ── Skip link ─────────────────────────────────────────── */
         .skip-link {
-            position: absolute; left: -9999px; top: 4px; z-index: 9999;
-            background: var(--primary-dark); color: #fff;
-            padding: 8px 16px; border-radius: 6px; font-size: 14px; text-decoration: none;
+            position: absolute;
+            left: -9999px;
+            top: 4px;
+            z-index: 9999;
+            background: var(--primary-dark);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
         }
-        .skip-link:focus { left: 4px; }
+
+        .skip-link:focus {
+            left: 4px;
+        }
 
         /* ── Navbar ────────────────────────────────────────────── */
         .navbar {
@@ -73,75 +101,136 @@
             top: 0;
             z-index: 100;
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-            border-bottom: 1px solid rgba(255,255,255,.08);
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
             padding: 0 1.5rem;
             height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 24px rgba(4,95,70,.25);
+            box-shadow: 0 4px 24px rgba(4, 95, 70, .25);
             transition: box-shadow .3s;
         }
+
         .navbar.scrolled {
-            box-shadow: 0 4px 32px rgba(4,95,70,.35);
+            box-shadow: 0 4px 32px rgba(4, 95, 70, .35);
             backdrop-filter: blur(12px);
         }
+
         .navbar-brand {
-            display: flex; align-items: center; gap: .625rem;
-            font-size: 1.2rem; font-weight: 700; color: #fff; letter-spacing: -.01em;
+            display: flex;
+            align-items: center;
+            gap: .625rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -.01em;
         }
+
         .navbar-brand-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            background: rgba(255,255,255,.15);
-            display: flex; align-items: center; justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.1rem;
-            border: 1.5px solid rgba(255,255,255,.2);
+            border: 1.5px solid rgba(255, 255, 255, .2);
         }
-        .navbar-links { display: flex; align-items: center; gap: .25rem; }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: .25rem;
+        }
+
         .navbar-link {
-            color: rgba(255,255,255,.82);
-            font-size: .875rem; font-weight: 500;
+            color: rgba(255, 255, 255, .82);
+            font-size: .875rem;
+            font-weight: 500;
             padding: .4rem .85rem;
             border-radius: 8px;
             text-decoration: none;
             transition: background .18s, color .18s;
         }
-        .navbar-link:hover { background: rgba(255,255,255,.12); color: #fff; }
-        .navbar-link:focus-visible { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
+
+        .navbar-link:hover {
+            background: rgba(255, 255, 255, .12);
+            color: #fff;
+        }
+
+        .navbar-link:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, .7);
+            outline-offset: 2px;
+        }
+
         .hamburger-btn {
             display: none;
-            flex-direction: column; gap: 5px;
-            padding: .4rem; border-radius: 8px;
-            background: none; border: none; cursor: pointer;
+            flex-direction: column;
+            gap: 5px;
+            padding: .4rem;
+            border-radius: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
             transition: background .18s;
         }
-        .hamburger-btn:hover { background: rgba(255,255,255,.12); }
-        .hamburger-btn span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: .2s; }
-        .hamburger-btn:focus-visible { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
+
+        .hamburger-btn:hover {
+            background: rgba(255, 255, 255, .12);
+        }
+
+        .hamburger-btn span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: .2s;
+        }
+
+        .hamburger-btn:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, .7);
+            outline-offset: 2px;
+        }
 
         /* Mobile menu */
         #mobile-menu {
             display: none;
             flex-direction: column;
             background: var(--primary-dark);
-            border-top: 1px solid rgba(255,255,255,.08);
+            border-top: 1px solid rgba(255, 255, 255, .08);
             padding: .5rem 1rem .75rem;
         }
-        #mobile-menu.open { display: flex; }
+
+        #mobile-menu.open {
+            display: flex;
+        }
+
         #mobile-menu a {
-            color: rgba(255,255,255,.85); font-size: .9rem; font-weight: 500;
-            padding: .6rem .75rem; border-radius: 8px; text-decoration: none;
+            color: rgba(255, 255, 255, .85);
+            font-size: .9rem;
+            font-weight: 500;
+            padding: .6rem .75rem;
+            border-radius: 8px;
+            text-decoration: none;
             transition: background .15s, color .15s;
         }
-        #mobile-menu a:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+        #mobile-menu a:hover {
+            background: rgba(255, 255, 255, .1);
+            color: #fff;
+        }
 
         /* ── Page wrapper ──────────────────────────────────────── */
         .page-wrapper {
-            position: relative; z-index: 1;
+            position: relative;
+            z-index: 1;
             max-width: 1320px;
             margin: 0 auto;
             padding: 2rem 1.25rem 3rem;
         }
+
         .page-layout {
             display: flex;
             gap: 1.75rem;
@@ -160,135 +249,286 @@
             position: sticky;
             top: 80px;
         }
+
         .sidebar-header {
-            font-size: 1rem; font-weight: 700; color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-bottom: 1.375rem;
-            display: flex; align-items: center; gap: .5rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
         }
+
         .sidebar-header-icon {
-            width: 30px; height: 30px; border-radius: 8px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
             background: var(--primary-subtle);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--primary); font-size: .875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: .875rem;
         }
 
         /* Form section */
-        .form-section { margin-bottom: 1.125rem; }
-        .form-section + .form-section { padding-top: 1rem; border-top: 1px solid var(--border-light); }
+        .form-section {
+            margin-bottom: 1.125rem;
+        }
+
+        .form-section+.form-section {
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
         .form-label {
             display: block;
-            font-size: .75rem; font-weight: 600; letter-spacing: .04em;
-            text-transform: uppercase; color: var(--text-muted);
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
             margin-bottom: .375rem;
         }
+
         .form-input {
             width: 100%;
             padding: .55rem .75rem;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
             background: var(--bg-alt);
-            font-size: .9rem; font-family: 'Inter', sans-serif;
+            font-size: .9rem;
+            font-family: 'Inter', sans-serif;
             color: var(--text-primary);
             transition: border-color .2s, box-shadow .2s, background .2s;
             outline: none;
         }
-        .form-input:hover { border-color: #a7f3d0; background: #fff; }
-        .form-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(4,120,87,.1);
+
+        .form-input:hover {
+            border-color: #a7f3d0;
             background: #fff;
         }
-        .form-input.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
-        .form-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .625rem; }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(4, 120, 87, .1);
+            background: #fff;
+        }
+
+        .form-input.invalid {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, .1);
+        }
+
+        .form-input-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .625rem;
+        }
 
         /* Number stepper */
-        .stepper { display: flex; align-items: center; gap: .5rem; }
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
         .stepper-input {
-            width: 3rem; text-align: center;
+            width: 3rem;
+            text-align: center;
             padding: .55rem .5rem;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
             background: var(--bg-alt);
-            font-size: .9rem; font-family: 'Inter', sans-serif;
-            outline: none; -moz-appearance: textfield;
+            font-size: .9rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            -moz-appearance: textfield;
         }
+
         .stepper-input::-webkit-outer-spin-button,
-        .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-        .stepper-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(4,120,87,.1); }
+        .stepper-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .stepper-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(4, 120, 87, .1);
+        }
+
         .stepper-btn {
-            width: 28px; height: 28px; border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             border: 1.5px solid var(--border);
             background: var(--surface);
             color: var(--text-muted);
-            font-size: .9rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background .15s, border-color .15s, color .15s;
             flex-shrink: 0;
         }
-        .stepper-btn:hover { background: var(--primary-subtle); border-color: var(--primary); color: var(--primary); }
-        .stepper-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-        .stepper-label { font-size: .8rem; color: var(--text-muted); white-space: nowrap; }
+
+        .stepper-btn:hover {
+            background: var(--primary-subtle);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .stepper-btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 1px;
+        }
+
+        .stepper-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
 
         /* Toggle checkbox */
         .toggle-row {
-            display: flex; align-items: center; gap: .75rem;
-            padding: .75rem; border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .75rem;
+            border-radius: var(--radius-sm);
             background: var(--primary-subtle);
             border: 1.5px solid var(--primary-pale);
-            cursor: pointer; transition: background .15s;
+            cursor: pointer;
+            transition: background .15s;
         }
-        .toggle-row:hover { background: #bbf7d0; }
-        .toggle-row label { cursor: pointer; }
+
+        .toggle-row:hover {
+            background: #bbf7d0;
+        }
+
+        .toggle-row label {
+            cursor: pointer;
+        }
+
         .toggle-checkbox {
-            appearance: none; -webkit-appearance: none;
-            width: 18px; height: 18px;
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
             border: 2px solid var(--primary);
             border-radius: 5px;
             background: #fff;
-            position: relative; cursor: pointer; flex-shrink: 0;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
             transition: background .15s;
         }
-        .toggle-checkbox:checked { background: var(--primary); }
-        .toggle-checkbox:checked::after {
-            content: '✓'; position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%,-50%);
-            color: #fff; font-size: 11px; font-weight: 700; line-height: 1;
+
+        .toggle-checkbox:checked {
+            background: var(--primary);
         }
-        .toggle-checkbox:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-        .toggle-label { font-size: .875rem; font-weight: 600; color: var(--primary-dark); flex: 1; }
+
+        .toggle-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .toggle-checkbox:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .toggle-label {
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            flex: 1;
+        }
 
         /* Budget row */
-        .budget-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .375rem; }
-        .budget-label { font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); flex: 1; }
+        .budget-row {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: .375rem;
+        }
+
+        .budget-label {
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            flex: 1;
+        }
+
         .budget-select {
-            font-size: .75rem; font-weight: 600; color: var(--primary);
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--primary);
             border: 1.5px solid var(--primary-pale);
-            border-radius: 20px; padding: .2rem .6rem;
-            background: var(--primary-subtle); cursor: pointer; outline: none;
+            border-radius: 20px;
+            padding: .2rem .6rem;
+            background: var(--primary-subtle);
+            cursor: pointer;
+            outline: none;
             font-family: 'Inter', sans-serif;
             transition: border-color .15s;
         }
-        .budget-select:focus { border-color: var(--primary); }
+
+        .budget-select:focus {
+            border-color: var(--primary);
+        }
 
         /* Search button */
         .search-btn {
-            width: 100%; margin-top: 1.25rem;
+            width: 100%;
+            margin-top: 1.25rem;
             padding: .8rem 1rem;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: #fff; font-size: .95rem; font-weight: 700;
-            border: none; border-radius: var(--radius-md);
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem;
-            box-shadow: 0 4px 14px rgba(4,120,87,.35);
+            color: #fff;
+            font-size: .95rem;
+            font-weight: 700;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            box-shadow: 0 4px 14px rgba(4, 120, 87, .35);
             transition: opacity .2s, transform .15s, box-shadow .2s;
             font-family: 'Inter', sans-serif;
         }
+
         .search-btn:hover:not(:disabled) {
-            opacity: .92; transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(4,120,87,.45);
+            opacity: .92;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(4, 120, 87, .45);
         }
-        .search-btn:active:not(:disabled) { transform: translateY(0); }
-        .search-btn:disabled { opacity: .65; cursor: not-allowed; transform: none; }
-        .search-btn:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+
+        .search-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: .65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-btn:focus-visible {
+            outline: 3px solid var(--primary);
+            outline-offset: 3px;
+        }
 
         /* Inline validation */
         .field-error {
@@ -299,40 +539,85 @@
             font-size: .75rem;
             margin-top: .3rem;
         }
-        .field-error.show { display: flex; }
+
+        .field-error.show {
+            display: flex;
+        }
 
         /* ── Main content ──────────────────────────────────────── */
-        .main-content { flex: 1; min-width: 0; }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
 
         /* Page header */
-        .page-header { margin-bottom: 1.75rem; }
-        .page-title {
-            font-size: 1.875rem; font-weight: 800; color: var(--text-primary);
-            letter-spacing: -.03em; line-height: 1.15;
+        .page-header {
+            margin-bottom: 1.75rem;
         }
-        .page-subtitle { font-size: .9rem; color: var(--text-muted); margin-top: .25rem; }
+
+        .page-title {
+            font-size: 1.875rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -.03em;
+            line-height: 1.15;
+        }
+
+        .page-subtitle {
+            font-size: .9rem;
+            color: var(--text-muted);
+            margin-top: .25rem;
+        }
 
         /* ── Section ───────────────────────────────────────────── */
-        .section { margin-bottom: 2.5rem; }
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
         .section-header {
-            display: flex; align-items: center; gap: .75rem;
-            margin-bottom: 1.25rem; padding-bottom: .75rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: .75rem;
             border-bottom: 1.5px solid var(--border-light);
         }
+
         .section-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
         }
-        .section-icon.airbnb { background: #fff0f0; }
-        .section-icon.booking { background: #f0f5ff; }
+
+        .section-icon.airbnb {
+            background: #fff0f0;
+        }
+
+        .section-icon.booking {
+            background: #f0f5ff;
+        }
+
         .section-title {
-            font-size: 1.25rem; font-weight: 700; color: var(--text-primary); flex: 1;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex: 1;
         }
+
         .result-badge {
-            font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-            padding: .2rem .7rem; border-radius: 20px;
-            background: var(--primary-pale); color: var(--primary-dark);
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: .2rem .7rem;
+            border-radius: 20px;
+            background: var(--primary-pale);
+            color: var(--primary-dark);
         }
 
         /* ── Deal cards grid ───────────────────────────────────── */
@@ -349,123 +634,276 @@
             box-shadow: var(--shadow-card);
             border: 1px solid var(--border-light);
             overflow: hidden;
-            display: flex; flex-direction: column;
-            transition: transform .25s cubic-bezier(.22,.61,.36,1), box-shadow .25s;
+            display: flex;
+            flex-direction: column;
+            transition: transform .25s cubic-bezier(.22, .61, .36, 1), box-shadow .25s;
             will-change: transform;
         }
+
         .deal-card:hover {
             transform: translateY(-6px);
             box-shadow: var(--shadow-hover);
         }
+
         .deal-card:focus-within {
-            outline: 2px solid var(--primary); outline-offset: 2px;
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         /* Card image */
-        .deal-img-wrap { position: relative; height: 195px; overflow: hidden; flex-shrink: 0; }
+        .deal-img-wrap {
+            position: relative;
+            height: 195px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
         .deal-img-container {
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             height: 100%;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
+            /* Firefox */
         }
-        .deal-img-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+        .deal-img-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Chrome/Safari */
         .deal-img-container img {
-            width: 100%; height: 100%; object-fit: cover;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             flex-shrink: 0;
             scroll-snap-align: start;
             transition: transform .35s ease;
         }
-        .deal-card:hover .deal-img-container img { transform: scale(1.04); }
+
+        .deal-card:hover .deal-img-container img {
+            transform: scale(1.04);
+        }
+
         .deal-img-overlay {
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,.52) 0%, rgba(0,0,0,.08) 55%, transparent 100%);
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, .52) 0%, rgba(0, 0, 0, .08) 55%, transparent 100%);
             pointer-events: none;
         }
-        
+
         /* Carousel arrows */
         .carousel-btn {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            width: 28px; height: 28px; border-radius: 50%;
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
-            border: none; cursor: pointer; z-index: 10;
-            opacity: 0; transition: opacity 0.2s;
-            color: var(--text-primary); font-size: 0.8rem;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: var(--text-primary);
+            font-size: 0.8rem;
         }
-        .deal-card:hover .carousel-btn { opacity: 1; }
-        .carousel-btn.prev { left: 8px; }
-        .carousel-btn.next { right: 8px; }
-        .carousel-btn:hover { background: #fff; }
+
+        .deal-card:hover .carousel-btn {
+            opacity: 1;
+        }
+
+        .carousel-btn.prev {
+            left: 8px;
+        }
+
+        .carousel-btn.next {
+            right: 8px;
+        }
+
+        .carousel-btn:hover {
+            background: #fff;
+        }
 
         /* Badges on image */
         .img-badge-rating {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(255,255,255,.95); backdrop-filter: blur(4px);
-            border-radius: 20px; padding: .2rem .6rem;
-            font-size: .75rem; font-weight: 700; color: var(--text-primary);
-            display: flex; align-items: center; gap: .3rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,.12);
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, .95);
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            padding: .2rem .6rem;
+            font-size: .75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
         }
-        .img-badge-rating i { color: var(--accent); font-size: .7rem; }
+
+        .img-badge-rating i {
+            color: var(--accent);
+            font-size: .7rem;
+        }
+
         .img-badge-score {
-            position: absolute; top: 10px; right: 10px;
-            background: var(--primary); color: #fff;
-            border-radius: 20px; padding: .2rem .65rem;
-            font-size: .72rem; font-weight: 700;
-            box-shadow: 0 2px 8px rgba(4,120,87,.35);
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 20px;
+            padding: .2rem .65rem;
+            font-size: .72rem;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(4, 120, 87, .35);
         }
+
         .img-badge-pet {
-            position: absolute; bottom: 10px; right: 10px;
-            background: rgba(255,255,255,.9); backdrop-filter: blur(4px);
-            border-radius: 20px; padding: .2rem .55rem;
-            font-size: .72rem; font-weight: 700; color: var(--primary-dark);
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, .9);
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            padding: .2rem .55rem;
+            font-size: .72rem;
+            font-weight: 700;
+            color: var(--primary-dark);
         }
 
         /* Card body */
-        .deal-body { padding: 1rem 1.1rem 1.1rem; display: flex; flex-direction: column; flex: 1; }
+        .deal-body {
+            padding: 1rem 1.1rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
         .deal-name {
-            font-size: .925rem; font-weight: 700; color: var(--text-primary);
-            line-height: 1.4; margin-bottom: .3rem;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            font-size: .925rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.4;
+            margin-bottom: .3rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
+
         .deal-location {
-            display: flex; align-items: center; gap: .3rem;
-            font-size: .78rem; color: var(--text-muted); margin-bottom: .875rem;
+            display: flex;
+            align-items: center;
+            gap: .3rem;
+            font-size: .78rem;
+            color: var(--text-muted);
+            margin-bottom: .875rem;
         }
-        .deal-location i { font-size: .68rem; color: var(--primary-hover); flex-shrink: 0; }
+
+        .deal-location i {
+            font-size: .68rem;
+            color: var(--primary-hover);
+            flex-shrink: 0;
+        }
 
         /* Pricing */
         .deal-pricing {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            border-top: 1px solid var(--border-light); padding-top: .75rem; margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid var(--border-light);
+            padding-top: .75rem;
+            margin-top: auto;
         }
+
         .price-block {}
+
         .price-label {
-            font-size: .62rem; font-weight: 700; letter-spacing: .07em;
-            text-transform: uppercase; color: var(--text-faint); margin-bottom: .1rem;
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            margin-bottom: .1rem;
         }
-        .price-main { font-size: 1.35rem; font-weight: 800; color: var(--primary-dark); line-height: 1; }
-        .price-total { font-size: .88rem; font-weight: 600; color: var(--text-secondary); }
+
+        .price-main {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            line-height: 1;
+        }
+
+        .price-total {
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .price-trend {
+            margin-top: .4rem;
+            font-size: .68rem;
+            font-weight: 700;
+            padding: .2rem .45rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+        }
+
+        .price-trend.down {
+            background: #ecfdf3;
+            color: #047857;
+        }
+
+        .price-trend.up {
+            background: #fff1f2;
+            color: #be123c;
+        }
+
+        .price-trend.stable {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
 
         /* CTA button */
         .deal-cta {
-            display: flex; align-items: center; justify-content: center; gap: .4rem;
-            width: 100%; margin-top: .75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            width: 100%;
+            margin-top: .75rem;
             padding: .6rem .875rem;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
-            background: var(--surface); color: var(--text-secondary);
-            font-size: .8rem; font-weight: 600;
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-size: .8rem;
+            font-weight: 600;
             text-decoration: none;
             transition: background .18s, border-color .18s, color .18s, box-shadow .18s;
         }
+
         .deal-cta:hover {
-            background: var(--primary-subtle); border-color: var(--primary);
-            color: var(--primary-dark); box-shadow: 0 2px 8px rgba(4,120,87,.12);
+            background: var(--primary-subtle);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            box-shadow: 0 2px 8px rgba(4, 120, 87, .12);
         }
-        .deal-cta:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+        .deal-cta:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
 
         /* ── Empty state ───────────────────────────────────────── */
         .empty-state {
@@ -476,21 +914,46 @@
             border-radius: var(--radius-lg);
             border: 1.5px dashed var(--border);
         }
-        .empty-icon { font-size: 3rem; margin-bottom: .75rem; line-height: 1; }
-        .empty-title { font-size: 1rem; font-weight: 700; color: var(--text-secondary); margin-bottom: .35rem; }
-        .empty-desc { font-size: .85rem; color: var(--text-muted); line-height: 1.6; max-width: 320px; margin: 0 auto; }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: .75rem;
+            line-height: 1;
+        }
+
+        .empty-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: .35rem;
+        }
+
+        .empty-desc {
+            font-size: .85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            max-width: 320px;
+            margin: 0 auto;
+        }
 
         /* ── Skeleton loading ──────────────────────────────────── */
         @keyframes shimmer {
-            0%   { background-position: -600px 0; }
-            100% { background-position: 600px 0; }
+            0% {
+                background-position: -600px 0;
+            }
+
+            100% {
+                background-position: 600px 0;
+            }
         }
+
         .skeleton {
             background: linear-gradient(90deg, #e8f5ef 25%, #d1fae5 50%, #e8f5ef 75%);
             background-size: 1200px 100%;
             animation: shimmer 1.4s ease-in-out infinite;
             border-radius: 6px;
         }
+
         .skeleton-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
@@ -498,359 +961,457 @@
             overflow: hidden;
             box-shadow: var(--shadow-card);
         }
-        .skeleton-img { height: 195px; }
-        .skeleton-body { padding: 1rem 1.1rem 1.1rem; }
-        .skeleton-line { height: 12px; margin-bottom: 10px; }
-        .skeleton-line.sm { width: 60%; height: 10px; }
-        .skeleton-line.xs { width: 40%; height: 10px; }
-        .skeleton-price { height: 24px; width: 80px; margin-top: 8px; }
+
+        .skeleton-img {
+            height: 195px;
+        }
+
+        .skeleton-body {
+            padding: 1rem 1.1rem 1.1rem;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            margin-bottom: 10px;
+        }
+
+        .skeleton-line.sm {
+            width: 60%;
+            height: 10px;
+        }
+
+        .skeleton-line.xs {
+            width: 40%;
+            height: 10px;
+        }
+
+        .skeleton-price {
+            height: 24px;
+            width: 80px;
+            margin-top: 8px;
+        }
 
         /* ── Status bar ────────────────────────────────────────── */
         .status-bar {
-            display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            flex-wrap: wrap;
             padding: .6rem .875rem;
             background: var(--primary-subtle);
             border: 1px solid var(--primary-pale);
             border-radius: var(--radius-md);
             margin-bottom: 1.5rem;
-            font-size: .8rem; color: var(--primary-dark);
+            font-size: .8rem;
+            color: var(--primary-dark);
             font-weight: 500;
         }
-        .status-bar i { color: var(--primary); }
-        .status-bar.hidden { display: none; }
+
+        .status-bar i {
+            color: var(--primary);
+        }
+
+        .status-bar.hidden {
+            display: none;
+        }
 
         /* ── Footer ────────────────────────────────────────────── */
         .footer {
             margin-top: 4rem;
             background: #1a2e26;
-            border-top: 1px solid rgba(255,255,255,.05);
+            border-top: 1px solid rgba(255, 255, 255, .05);
             padding: 2rem 1.5rem;
             text-align: center;
-            position: relative; z-index: 1;
+            position: relative;
+            z-index: 1;
         }
-        .footer-text { color: #6b8f7a; font-size: .82rem; }
-        .footer-heart { color: #f87171; }
+
+        .footer-text {
+            color: #6b8f7a;
+            font-size: .82rem;
+        }
+
+        .footer-heart {
+            color: #f87171;
+        }
 
         /* ── Focus visible global ──────────────────────────────── */
-        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+        :focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
 
         /* ── Responsive ────────────────────────────────────────── */
         @media (max-width: 1023px) {
-            .page-layout { flex-direction: column; }
-            .sidebar { width: 100%; min-width: 0; position: static; }
+            .page-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+                position: static;
+            }
         }
+
         @media (max-width: 767px) {
-            .navbar-links { display: none !important; }
-            .hamburger-btn { display: flex; }
-            .page-wrapper { padding: 1.25rem .875rem 2.5rem; }
-            .page-title { font-size: 1.5rem; }
-            .deals-grid { grid-template-columns: 1fr; }
+            .navbar-links {
+                display: none !important;
+            }
+
+            .hamburger-btn {
+                display: flex;
+            }
+
+            .page-wrapper {
+                padding: 1.25rem .875rem 2.5rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .deals-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<!-- Skip to main content -->
-<a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
 
-<!-- ── Navbar ──────────────────────────────────────────────────── -->
-<header>
-    <nav class="navbar" id="navbar" role="navigation" aria-label="Hauptnavigation">
-        <div class="navbar-brand">
-            <div class="navbar-brand-icon" aria-hidden="true">🐾</div>
-            Lars Urlaubs-Deals
-        </div>
-        <div class="navbar-links" role="list">
-            <a href="#search-section" class="navbar-link" role="listitem">Suche</a>
-            <a href="#favorites-section" class="navbar-link" role="listitem">Favoriten</a>
-            <a href="#weather-section" class="navbar-link" role="listitem">Wetter</a>
-        </div>
-        <button id="hamburger-btn" class="hamburger-btn"
-            aria-label="Navigation öffnen" aria-expanded="false" aria-controls="mobile-menu">
-            <span></span><span></span><span></span>
-        </button>
-    </nav>
-    <div id="mobile-menu" role="list" aria-label="Mobile Navigation">
-        <a href="#search-section" role="listitem">Suche</a>
-        <a href="#favorites-section" role="listitem">Favoriten</a>
-        <a href="#weather-section" role="listitem">Wetter</a>
-    </div>
-</header>
-
-<!-- ── Page ────────────────────────────────────────────────────── -->
-<div class="page-wrapper">
-    <div class="page-layout">
-
-        <!-- ── Sidebar ─────────────────────────────────────────── -->
-        <aside class="sidebar" aria-label="Suchfilter" id="search-section">
-            <div class="sidebar-header">
-                <div class="sidebar-header-icon" aria-hidden="true">
-                    <i class="fa-solid fa-sliders"></i>
-                </div>
-                Suche anpassen
+    <!-- ── Navbar ──────────────────────────────────────────────────── -->
+    <header>
+        <nav class="navbar" id="navbar" role="navigation" aria-label="Hauptnavigation">
+            <div class="navbar-brand">
+                <div class="navbar-brand-icon" aria-hidden="true">🐾</div>
+                Lars Urlaubs-Deals
             </div>
-
-            <!-- Reiseziele -->
-            <div class="form-section">
-                <label for="input-cities" class="form-label">Reiseziele</label>
-                <input type="text" id="input-cities"
-                    value="Amsterdam, Zandvoort, Rotterdam"
-                    title="Amsterdam, Zandvoort, Rotterdam"
-                    class="form-input" aria-required="true"
-                    placeholder="z.B. Amsterdam, Rotterdam">
-                <p class="field-error" id="error-cities" role="alert">
-                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-                    Bitte mindestens ein Reiseziel eingeben.
-                </p>
+            <div class="navbar-links" role="list">
+                <a href="#search-section" class="navbar-link" role="listitem">Suche</a>
+                <a href="#favorites-section" class="navbar-link" role="listitem">Favoriten</a>
+                <a href="#weather-section" class="navbar-link" role="listitem">Wetter</a>
             </div>
-
-            <!-- Dates -->
-            <div class="form-section">
-                <div class="form-input-pair">
-                    <div>
-                        <label for="input-checkin" class="form-label">Check-In</label>
-                        <input type="date" id="input-checkin" value="2026-03-08"
-                            class="form-input" aria-required="true">
-                        <p class="field-error" id="error-checkin" role="alert">
-                            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-                            Datum wählen.
-                        </p>
-                    </div>
-                    <div>
-                        <label for="input-checkout" class="form-label">Check-Out</label>
-                        <input type="date" id="input-checkout" value="2026-03-15"
-                            class="form-input" aria-required="true">
-                        <p class="field-error" id="error-checkout" role="alert">
-                            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-                            Muss nach Check-In sein.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Adults / Children steppers -->
-            <div class="form-section">
-                <div class="form-input-pair">
-                    <div>
-                        <label for="input-adults" class="form-label">Erwachsene</label>
-                        <div class="stepper">
-                            <button type="button" class="stepper-btn" aria-label="Erwachsene verringern" onclick="stepNum('input-adults',-1)">−</button>
-                            <input type="number" id="input-adults" value="2" min="1" max="20" class="stepper-input" aria-label="Anzahl Erwachsene">
-                            <button type="button" class="stepper-btn" aria-label="Erwachsene erhöhen" onclick="stepNum('input-adults',1)">+</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="input-children" class="form-label">Kinder</label>
-                        <div class="stepper">
-                            <button type="button" class="stepper-btn" aria-label="Kinder verringern" onclick="stepNum('input-children',-1)">−</button>
-                            <input type="number" id="input-children" value="0" min="0" max="20" class="stepper-input" aria-label="Anzahl Kinder">
-                            <button type="button" class="stepper-btn" aria-label="Kinder erhöhen" onclick="stepNum('input-children',1)">+</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pet toggle -->
-            <div class="form-section">
-                <div class="toggle-row">
-                    <input type="checkbox" id="input-pets" checked class="toggle-checkbox">
-                    <label for="input-pets" class="toggle-label">🐕 Reisen mit Hund</label>
-                </div>
-            </div>
-
-            <!-- Budget -->
-            <div class="form-section">
-                <div class="budget-row">
-                    <label for="input-budget" class="budget-label">Max. Budget (€)</label>
-                    <select id="input-budget-type" class="budget-select" aria-label="Budget-Typ">
-                        <option value="night">pro Nacht</option>
-                        <option value="total">Gesamt</option>
-                    </select>
-                </div>
-                <input type="number" id="input-budget" value="250" step="10" min="0"
-                    class="form-input" aria-label="Maximales Budget in Euro">
-            </div>
-
-            <button id="search-btn" type="button" class="search-btn"
-                aria-label="Urlaubs-Angebote finden" aria-busy="false">
-                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                Angebote finden
+            <button id="hamburger-btn" class="hamburger-btn" aria-label="Navigation öffnen" aria-expanded="false"
+                aria-controls="mobile-menu">
+                <span></span><span></span><span></span>
             </button>
-        </aside>
+        </nav>
+        <div id="mobile-menu" role="list" aria-label="Mobile Navigation">
+            <a href="#search-section" role="listitem">Suche</a>
+            <a href="#favorites-section" role="listitem">Favoriten</a>
+            <a href="#weather-section" role="listitem">Wetter</a>
+        </div>
+    </header>
 
-        <!-- ── Main ────────────────────────────────────────────── -->
-        <main class="main-content" id="main-content">
+    <!-- ── Page ────────────────────────────────────────────────────── -->
+    <div class="page-wrapper">
+        <div class="page-layout">
 
-            <div class="page-header flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 class="page-title">Deine Urlaubs-Deals 🏖️</h1>
-                    <p id="status-text" class="page-subtitle" aria-live="polite">Finde die besten Angebote für Holland mit Hund.</p>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                    <button id="export-pdf-btn" class="hidden bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-emerald-700 outline-none hover:bg-emerald-50 transition-colors flex items-center gap-2">
-                        <i class="fa-solid fa-file-pdf"></i>
-                        PDF Export
-                    </button>
-                    
-                    <label for="sort-select" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sortieren:</label>
-                    <select id="sort-select" class="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 outline-none focus:border-emerald-500 transition-colors">
-                        <option value="rank">Beste Empfehlung</option>
-                        <option value="price_asc">Günstigster Preis</option>
-                        <option value="rating_desc">Beste Bewertung</option>
-                        <option value="weather">Bestes Wetter</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Status bar (shown after search) -->
-            <div class="status-bar hidden" id="status-bar" aria-live="polite">
-                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
-                <span id="status-bar-text"></span>
-            </div>
-
-            <!-- Price Alerts Section -->
-            <div id="alerts-container" class="mb-6 space-y-2 hidden">
-                <div class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm font-semibold">
-                    <i class="fa-solid fa-bell animate-bounce"></i>
-                    <span>Preisalarme für dich!</span>
-                </div>
-                <div id="alerts-list" class="space-y-2"></div>
-            </div>
-
-            <!-- Weather Section -->
-            <div id="weather-display" class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
-                <!-- Weather cards will be injected here -->
-            </div>
-
-            <!-- Airbnb Section -->
-            <section class="section" aria-labelledby="airbnb-heading">
-                <div class="section-header">
-                    <div class="section-icon airbnb" aria-hidden="true">
-                        <i class="fa-brands fa-airbnb" style="color:#ff385c;font-size:1.15rem;"></i>
+            <!-- ── Sidebar ─────────────────────────────────────────── -->
+            <aside class="sidebar" aria-label="Suchfilter" id="search-section">
+                <div class="sidebar-header">
+                    <div class="sidebar-header-icon" aria-hidden="true">
+                        <i class="fa-solid fa-sliders"></i>
                     </div>
-                    <h2 id="airbnb-heading" class="section-title">Airbnb Empfehlungen</h2>
-                    <span id="airbnb-count" class="result-badge" style="display:none;"></span>
+                    Suche anpassen
                 </div>
-                <div id="airbnb-grid" class="deals-grid">
-                    <div class="empty-state">
-                        <div class="empty-icon">🏠</div>
-                        <div class="empty-title">Noch keine Suche gestartet</div>
-                        <div class="empty-desc">Trage links deine Reisedaten ein und klicke auf „Angebote finden".</div>
+
+                <!-- Reiseziele -->
+                <div class="form-section">
+                    <label for="input-cities" class="form-label">Reiseziele</label>
+                    <input type="text" id="input-cities" value="Amsterdam, Zandvoort, Rotterdam"
+                        title="Amsterdam, Zandvoort, Rotterdam" class="form-input" aria-required="true"
+                        placeholder="z.B. Amsterdam, Rotterdam">
+                    <p class="field-error" id="error-cities" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                        Bitte mindestens ein Reiseziel eingeben.
+                    </p>
+                </div>
+
+                <!-- Dates -->
+                <div class="form-section">
+                    <div class="form-input-pair">
+                        <div>
+                            <label for="input-checkin" class="form-label">Check-In</label>
+                            <input type="date" id="input-checkin" value="2026-03-08" class="form-input"
+                                aria-required="true">
+                            <p class="field-error" id="error-checkin" role="alert">
+                                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                                Datum wählen.
+                            </p>
+                        </div>
+                        <div>
+                            <label for="input-checkout" class="form-label">Check-Out</label>
+                            <input type="date" id="input-checkout" value="2026-03-15" class="form-input"
+                                aria-required="true">
+                            <p class="field-error" id="error-checkout" role="alert">
+                                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                                Muss nach Check-In sein.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- Booking.com Section -->
-            <section class="section" aria-labelledby="booking-heading" id="favorites-section">
-                <div class="section-header">
-                    <div class="section-icon booking" aria-hidden="true">
-                        <i class="fa-solid fa-hotel" style="color:#003580;font-size:1rem;"></i>
+                <!-- Adults / Children steppers -->
+                <div class="form-section">
+                    <div class="form-input-pair">
+                        <div>
+                            <label for="input-adults" class="form-label">Erwachsene</label>
+                            <div class="stepper">
+                                <button type="button" class="stepper-btn" aria-label="Erwachsene verringern"
+                                    onclick="stepNum('input-adults',-1)">−</button>
+                                <input type="number" id="input-adults" value="2" min="1" max="20" class="stepper-input"
+                                    aria-label="Anzahl Erwachsene">
+                                <button type="button" class="stepper-btn" aria-label="Erwachsene erhöhen"
+                                    onclick="stepNum('input-adults',1)">+</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="input-children" class="form-label">Kinder</label>
+                            <div class="stepper">
+                                <button type="button" class="stepper-btn" aria-label="Kinder verringern"
+                                    onclick="stepNum('input-children',-1)">−</button>
+                                <input type="number" id="input-children" value="0" min="0" max="20"
+                                    class="stepper-input" aria-label="Anzahl Kinder">
+                                <button type="button" class="stepper-btn" aria-label="Kinder erhöhen"
+                                    onclick="stepNum('input-children',1)">+</button>
+                            </div>
+                        </div>
                     </div>
-                    <h2 id="booking-heading" class="section-title">Booking.com Favoriten</h2>
-                    <span id="booking-count" class="result-badge" style="display:none;"></span>
                 </div>
-                <div id="booking-grid" class="deals-grid">
-                    <div class="empty-state">
-                        <div class="empty-icon">🏨</div>
-                        <div class="empty-title">Noch keine Suche gestartet</div>
-                        <div class="empty-desc">Trage links deine Reisedaten ein und klicke auf „Angebote finden".</div>
-                    </div>
-                </div>
-            </section>
 
-            <div id="weather-section"></div>
-        </main>
+                <!-- Pet toggle -->
+                <div class="form-section">
+                    <div class="toggle-row">
+                        <input type="checkbox" id="input-pets" checked class="toggle-checkbox">
+                        <label for="input-pets" class="toggle-label">🐕 Reisen mit Hund</label>
+                    </div>
+                </div>
+
+                <!-- Budget -->
+                <div class="form-section">
+                    <div class="budget-row">
+                        <label for="input-budget" class="budget-label">Max. Budget (€)</label>
+                        <select id="input-budget-type" class="budget-select" aria-label="Budget-Typ">
+                            <option value="night">pro Nacht</option>
+                            <option value="total">Gesamt</option>
+                        </select>
+                    </div>
+                    <input type="number" id="input-budget" value="250" step="10" min="0" class="form-input"
+                        aria-label="Maximales Budget in Euro">
+                </div>
+
+                <button id="search-btn" type="button" class="search-btn" aria-label="Urlaubs-Angebote finden"
+                    aria-busy="false">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    Angebote finden
+                </button>
+            </aside>
+
+            <!-- ── Main ────────────────────────────────────────────── -->
+            <main class="main-content" id="main-content">
+
+                <div class="page-header flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 class="page-title">Deine Urlaubs-Deals 🏖️</h1>
+                        <p id="status-text" class="page-subtitle" aria-live="polite">Finde die besten Angebote für
+                            Holland mit Hund.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button id="export-pdf-btn"
+                            class="hidden bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-emerald-700 outline-none hover:bg-emerald-50 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            PDF Export
+                        </button>
+
+                        <label for="sort-select"
+                            class="text-xs font-bold text-gray-500 uppercase tracking-wider">Sortieren:</label>
+                        <select id="sort-select"
+                            class="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 outline-none focus:border-emerald-500 transition-colors">
+                            <option value="rank">Beste Empfehlung</option>
+                            <option value="price_asc">Günstigster Preis</option>
+                            <option value="rating_desc">Beste Bewertung</option>
+                            <option value="weather">Bestes Wetter</option>
+                        </select>
+
+                        <label for="min-rating-select"
+                            class="text-xs font-bold text-gray-500 uppercase tracking-wider">Min. Rating:</label>
+                        <select id="min-rating-select"
+                            class="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 outline-none focus:border-emerald-500 transition-colors">
+                            <option value="0">Alle</option>
+                            <option value="3.5">3.5+</option>
+                            <option value="4.0">4.0+</option>
+                            <option value="4.5">4.5+</option>
+                        </select>
+
+                        <label for="max-price-input"
+                            class="text-xs font-bold text-gray-500 uppercase tracking-wider">Max €/Nacht:</label>
+                        <input id="max-price-input" type="number" min="0" step="10" placeholder="∞"
+                            class="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-700 outline-none focus:border-emerald-500 transition-colors w-24">
+
+                        <label for="pet-only-toggle" class="text-xs font-bold text-gray-500 uppercase tracking-wider">🐕
+                            Nur hundefreundlich</label>
+                        <input id="pet-only-toggle" type="checkbox" class="h-4 w-4 accent-emerald-600">
+                    </div>
+                </div>
+
+                <!-- Status bar (shown after search) -->
+                <div class="status-bar hidden" id="status-bar" aria-live="polite">
+                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                    <span id="status-bar-text"></span>
+                </div>
+
+                <!-- Price Alerts Section -->
+                <div id="alerts-container" class="mb-6 space-y-2 hidden">
+                    <div
+                        class="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm font-semibold">
+                        <i class="fa-solid fa-bell animate-bounce"></i>
+                        <span>Preisalarme für dich!</span>
+                    </div>
+                    <div id="alerts-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Weather Section -->
+                <div id="weather-display" class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
+                    <!-- Weather cards will be injected here -->
+                </div>
+
+                <!-- Airbnb Section -->
+                <section class="section" aria-labelledby="airbnb-heading">
+                    <div class="section-header">
+                        <div class="section-icon airbnb" aria-hidden="true">
+                            <i class="fa-brands fa-airbnb" style="color:#ff385c;font-size:1.15rem;"></i>
+                        </div>
+                        <h2 id="airbnb-heading" class="section-title">Airbnb Empfehlungen</h2>
+                        <span id="airbnb-count" class="result-badge" style="display:none;"></span>
+                    </div>
+                    <div id="airbnb-grid" class="deals-grid">
+                        <div class="empty-state">
+                            <div class="empty-icon">🏠</div>
+                            <div class="empty-title">Noch keine Suche gestartet</div>
+                            <div class="empty-desc">Trage links deine Reisedaten ein und klicke auf „Angebote finden".
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Booking.com Section -->
+                <section class="section" aria-labelledby="booking-heading" id="favorites-section">
+                    <div class="section-header">
+                        <div class="section-icon booking" aria-hidden="true">
+                            <i class="fa-solid fa-hotel" style="color:#003580;font-size:1rem;"></i>
+                        </div>
+                        <h2 id="booking-heading" class="section-title">Booking.com Favoriten</h2>
+                        <span id="booking-count" class="result-badge" style="display:none;"></span>
+                    </div>
+                    <div id="booking-grid" class="deals-grid">
+                        <div class="empty-state">
+                            <div class="empty-icon">🏨</div>
+                            <div class="empty-title">Noch keine Suche gestartet</div>
+                            <div class="empty-desc">Trage links deine Reisedaten ein und klicke auf „Angebote finden".
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="weather-section"></div>
+            </main>
+        </div>
     </div>
-</div>
 
-<!-- ── Footer ──────────────────────────────────────────────────── -->
-<footer class="footer" role="contentinfo">
-    <p class="footer-text">
-        © 2026 Lars Urlaubs-Deals &nbsp;·&nbsp;
-        Mit <span class="footer-heart">♥</span> für Lars &amp; seinen Hund gebaut.
-    </p>
-</footer>
+    <!-- ── Footer ──────────────────────────────────────────────────── -->
+    <footer class="footer" role="contentinfo">
+        <p class="footer-text">
+            © 2026 Lars Urlaubs-Deals &nbsp;·&nbsp;
+            Mit <span class="footer-heart">♥</span> für Lars &amp; seinen Hund gebaut.
+        </p>
+    </footer>
 
-<script>
-    // ── Navbar: scroll shadow ──────────────────────────────────
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-        navbar.classList.toggle('scrolled', window.scrollY > 10);
-    }, { passive: true });
+    <script>
+        // ── Navbar: scroll shadow ──────────────────────────────────
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 10);
+        }, { passive: true });
 
-    // ── Hamburger ──────────────────────────────────────────────
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const mobileMenu   = document.getElementById('mobile-menu');
-    hamburgerBtn.addEventListener('click', () => {
-        const open = mobileMenu.classList.toggle('open');
-        hamburgerBtn.setAttribute('aria-expanded', String(open));
-        hamburgerBtn.setAttribute('aria-label', open ? 'Navigation schließen' : 'Navigation öffnen');
-    });
-    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-        mobileMenu.classList.remove('open');
-        hamburgerBtn.setAttribute('aria-expanded', 'false');
-        hamburgerBtn.setAttribute('aria-label', 'Navigation öffnen');
-    }));
+        // ── Hamburger ──────────────────────────────────────────────
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        hamburgerBtn.addEventListener('click', () => {
+            const open = mobileMenu.classList.toggle('open');
+            hamburgerBtn.setAttribute('aria-expanded', String(open));
+            hamburgerBtn.setAttribute('aria-label', open ? 'Navigation schließen' : 'Navigation öffnen');
+        });
+        mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+            hamburgerBtn.setAttribute('aria-expanded', 'false');
+            hamburgerBtn.setAttribute('aria-label', 'Navigation öffnen');
+        }));
 
-    // ── Number stepper ─────────────────────────────────────────
-    function stepNum(id, delta) {
-        const el  = document.getElementById(id);
-        const min = parseInt(el.min) || 0;
-        const max = parseInt(el.max) || 99;
-        el.value  = Math.min(max, Math.max(min, parseInt(el.value || 0) + delta));
-    }
+        // ── Number stepper ─────────────────────────────────────────
+        function stepNum(id, delta) {
+            const el = document.getElementById(id);
+            const min = parseInt(el.min) || 0;
+            const max = parseInt(el.max) || 99;
+            el.value = Math.min(max, Math.max(min, parseInt(el.value || 0) + delta));
+        }
 
-    // ── Carousel Scroll ────────────────────────────────────────
-    function scrollCarousel(id, direction) {
-        const container = document.getElementById('carousel-' + id);
-        if (!container) return;
-        const width = container.offsetWidth;
-        container.scrollBy({ left: direction * width, behavior: 'smooth' });
-    }
+        // ── Carousel Scroll ────────────────────────────────────────
+        function scrollCarousel(id, direction) {
+            const container = document.getElementById('carousel-' + id);
+            if (!container) return;
+            const width = container.offsetWidth;
+            container.scrollBy({ left: direction * width, behavior: 'smooth' });
+        }
 
-    // ── Inline validation ──────────────────────────────────────
-    function showError(el, errEl, msg) {
-        el.classList.add('invalid');
-        errEl.querySelector('span') ? errEl.querySelector('span').textContent = msg : (errEl.lastChild.textContent = ' ' + msg);
-        errEl.classList.add('show');
-    }
-    function clearError(el, errEl) {
-        el.classList.remove('invalid');
-        errEl.classList.remove('show');
-    }
-    ['cities','checkin','checkout'].forEach(key => {
-        const el    = document.getElementById('input-' + key);
-        const errEl = document.getElementById('error-' + key);
-        el.addEventListener('input', () => clearError(el, errEl));
-    });
+        // ── Inline validation ──────────────────────────────────────
+        function showError(el, errEl, msg) {
+            el.classList.add('invalid');
+            errEl.querySelector('span') ? errEl.querySelector('span').textContent = msg : (errEl.lastChild.textContent = ' ' + msg);
+            errEl.classList.add('show');
+        }
+        function clearError(el, errEl) {
+            el.classList.remove('invalid');
+            errEl.classList.remove('show');
+        }
+        ['cities', 'checkin', 'checkout'].forEach(key => {
+            const el = document.getElementById('input-' + key);
+            const errEl = document.getElementById('error-' + key);
+            el.addEventListener('input', () => clearError(el, errEl));
+        });
 
-    function validateInputs() {
-        const cities   = document.getElementById('input-cities');
-        const checkin  = document.getElementById('input-checkin');
-        const checkout = document.getElementById('input-checkout');
-        const eCities  = document.getElementById('error-cities');
-        const eCheckin = document.getElementById('error-checkin');
-        const eCheck   = document.getElementById('error-checkout');
-        let ok = true;
+        function validateInputs() {
+            const cities = document.getElementById('input-cities');
+            const checkin = document.getElementById('input-checkin');
+            const checkout = document.getElementById('input-checkout');
+            const eCities = document.getElementById('error-cities');
+            const eCheckin = document.getElementById('error-checkin');
+            const eCheck = document.getElementById('error-checkout');
+            let ok = true;
 
-        if (!cities.value.trim())  { showError(cities, eCities, 'Bitte mindestens ein Reiseziel eingeben.'); ok = false; }
-        else clearError(cities, eCities);
+            if (!cities.value.trim()) { showError(cities, eCities, 'Bitte mindestens ein Reiseziel eingeben.'); ok = false; }
+            else clearError(cities, eCities);
 
-        if (!checkin.value)  { showError(checkin, eCheckin, 'Bitte Check-In Datum wählen.'); ok = false; }
-        else clearError(checkin, eCheckin);
+            if (!checkin.value) { showError(checkin, eCheckin, 'Bitte Check-In Datum wählen.'); ok = false; }
+            else clearError(checkin, eCheckin);
 
-        if (!checkout.value) { showError(checkout, eCheck, 'Bitte Check-Out Datum wählen.'); ok = false; }
-        else if (checkin.value && checkout.value <= checkin.value) {
-            showError(checkout, eCheck, 'Check-Out muss nach dem Check-In liegen.');  ok = false;
-        } else clearError(checkout, eCheck);
+            if (!checkout.value) { showError(checkout, eCheck, 'Bitte Check-Out Datum wählen.'); ok = false; }
+            else if (checkin.value && checkout.value <= checkin.value) {
+                showError(checkout, eCheck, 'Check-Out muss nach dem Check-In liegen.'); ok = false;
+            } else clearError(checkout, eCheck);
 
-        return ok;
-    }
+            return ok;
+        }
 
-    // ── Skeleton HTML ──────────────────────────────────────────
-    function skeletonCard() {
-        return `<div class="skeleton-card">
+        // ── Skeleton HTML ──────────────────────────────────────────
+        function skeletonCard() {
+            return `<div class="skeleton-card">
             <div class="skeleton skeleton-img"></div>
             <div class="skeleton-body">
                 <div class="skeleton skeleton-line" style="width:85%"></div>
@@ -858,52 +1419,72 @@
                 <div class="skeleton skeleton-price" style="margin-top:16px;"></div>
             </div>
         </div>`;
-    }
-    function loadingHTML() {
-        return skeletonCard() + skeletonCard() + skeletonCard() + skeletonCard();
-    }
+        }
+        function loadingHTML() {
+            return skeletonCard() + skeletonCard() + skeletonCard() + skeletonCard();
+        }
 
-    // ── Render deals ───────────────────────────────────────────
-    function renderDeals(deals, source) {
-        const grid      = document.getElementById(source + '-grid');
-        const countBadge = document.getElementById(source + '-count');
-        if (!deals || deals.length === 0) {
-            countBadge.style.display = 'none';
-            grid.innerHTML = `<div class="empty-state">
+        // ── Render deals ───────────────────────────────────────────
+        function renderDeals(deals, source, hadSourceResults = false) {
+            const grid = document.getElementById(source + '-grid');
+            const countBadge = document.getElementById(source + '-count');
+            if (!deals || deals.length === 0) {
+                countBadge.style.display = 'none';
+                const emptyDesc = hadSourceResults
+                    ? 'Aktive Filter haben alle Angebote ausgeblendet. Passe Filter oder Sortierung an.'
+                    : 'Für diese Quelle wurden keine Ergebnisse gefunden. Versuche andere Reiseziele oder Daten.';
+                grid.innerHTML = `<div class="empty-state">
                 <div class="empty-icon">😕</div>
                 <div class="empty-title">Keine passenden Angebote</div>
-                <div class="empty-desc">Für diese Quelle wurden keine Ergebnisse gefunden. Versuche andere Reiseziele oder Daten.</div>
+                <div class="empty-desc">${emptyDesc}</div>
             </div>`;
-            return;
-        }
-        countBadge.textContent = deals.length + ' Ergebnisse';
-        countBadge.style.display = 'inline-block';
+                return;
+            }
+            countBadge.textContent = deals.length + ' Ergebnisse';
+            countBadge.style.display = 'inline-block';
 
-        const sourceName = source === 'airbnb' ? 'Airbnb' : 'Booking.com';
-        grid.innerHTML = deals.map((deal, idx) => {
-            // Generate a truly unique and safe ID for the carousel
-            const safeId = `${source}-${idx}`;
-            
-            // Determine source badge color
-            const sourceLabel = deal.source || 'unbekannt';
-            let sourceColor = 'bg-gray-100 text-gray-600';
-            if (sourceLabel.includes('verified') || sourceLabel.includes('cloud')) sourceColor = 'bg-blue-100 text-blue-700';
-            if (sourceLabel.includes('fallback')) sourceColor = 'bg-red-100 text-red-700';
-            if (sourceLabel.includes('cache')) sourceColor = 'bg-emerald-100 text-emerald-700';
+            const sourceName = source === 'airbnb' ? 'Airbnb' : 'Booking.com';
+            grid.innerHTML = deals.map((deal, idx) => {
+                const safeId = `${source}-${idx}`;
 
-            return `
+                const sourceLabel = deal.source || 'unbekannt';
+                let sourceColor = 'bg-gray-100 text-gray-600';
+                if (sourceLabel.includes('verified') || sourceLabel.includes('cloud')) sourceColor = 'bg-blue-100 text-blue-700';
+                if (sourceLabel.includes('fallback')) sourceColor = 'bg-red-100 text-red-700';
+                if (sourceLabel.includes('cache')) sourceColor = 'bg-emerald-100 text-emerald-700';
+
+                const rawDelta = Number(deal.price_delta_percent);
+                const hasDelta = Number.isFinite(rawDelta);
+                let trendClass = 'stable';
+                let trendIcon = '→';
+                let trendText = 'Stabil';
+                if (hasDelta && rawDelta <= -0.5) {
+                    trendClass = 'down';
+                    trendIcon = '↓';
+                    trendText = `${Math.abs(rawDelta).toFixed(1)}% günstiger`;
+                } else if (hasDelta && rawDelta >= 0.5) {
+                    trendClass = 'up';
+                    trendIcon = '↑';
+                    trendText = `${Math.abs(rawDelta).toFixed(1)}% teurer`;
+                }
+
+                const trendHtml = hasDelta
+                    ? `<div class="price-trend ${trendClass}" title="Preistrend zum letzten Suchlauf">${trendIcon} ${trendText}</div>`
+                    : '';
+
+                return `
             <article class="deal-card">
                 <div class="deal-img-wrap">
                     <div class="deal-img-container" id="carousel-${safeId}">
                         ${(deal.images && deal.images.length > 0 ? deal.images : [deal.image_url]).map(img => `
-                            <img src="${img}" 
+                            <img src="${img}"
                                  onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'"
-                                 alt="${deal.name}" 
+                                 alt="${deal.name}"
                                  loading="lazy">
                         `).join('')}
                     </div>
                     <div class="deal-img-overlay" aria-hidden="true"></div>
-                    
+
                     ${deal.images && deal.images.length > 1 ? `
                         <button class="carousel-btn prev" onclick="scrollCarousel('${safeId}', -1)" aria-label="Vorheriges Bild">
                             <i class="fa-solid fa-chevron-left"></i>
@@ -932,6 +1513,7 @@
                         <div class="price-block">
                             <div class="price-label">Pro Nacht</div>
                             <div class="price-main">€${deal.price_per_night}</div>
+                            ${trendHtml}
                         </div>
                         <div class="price-block" style="text-align:right;">
                             <div class="price-label">Gesamt</div>
@@ -946,188 +1528,355 @@
                     </a>
                 </div>
             </article>`;
-        }).join('');
-    }
-
-    function renderWeather(deals) {
-        const weatherDiv = document.getElementById('weather-display');
-        const cities = [...new Set(deals.map(d => d.location))];
-        
-        if (cities.length === 0) {
-            weatherDiv.classList.add('hidden');
-            return;
+            }).join('');
         }
 
-        const cityWeather = {};
-        deals.forEach(d => {
-            if (d.weather && !cityWeather[d.location]) {
-                cityWeather[d.location] = d.weather;
+        function renderWeather(deals) {
+            const weatherDiv = document.getElementById('weather-display');
+            const cities = [...new Set(deals.map(d => d.location))];
+
+            if (cities.length === 0) {
+                weatherDiv.classList.add('hidden');
+                return;
             }
-        });
 
-        const weatherHTML = Object.entries(cityWeather).map(([city, w]) => `
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-emerald-100 flex items-center justify-between">
-                <div>
-                    <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">${city}</div>
-                    <div class="text-lg font-bold text-gray-800">${w.temp}°C</div>
-                    <div class="text-xs text-gray-500">${w.description}</div>
+            const cityWeather = {};
+            deals.forEach(d => {
+                if (d.weather_forecast && !cityWeather[d.location]) {
+                    cityWeather[d.location] = d.weather_forecast;
+                }
+            });
+
+            // Weather icon mapping
+            const getWeatherIcon = (icon) => {
+                const iconMap = {
+                    '01d': '☀️', '01n': '🌙',
+                    '02d': '⛅', '02n': '☁️',
+                    '03d': '☁️', '03n': '☁️',
+                    '04d': '☁️', '04n': '☁️',
+                    '09d': '🌧️', '09n': '🌧️',
+                    '10d': '🌦️', '10n': '🌧️',
+                    '11d': '⛈️', '11n': '⛈️',
+                    '13d': '❄️', '13n': '❄️',
+                    '50d': '🌫️', '50n': '🌫️'
+                };
+                return iconMap[icon] || '☀️';
+            };
+
+            // Format date
+            const formatDate = (dateStr) => {
+                const date = new Date(dateStr);
+                const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+                return days[date.getDay()];
+            };
+
+            // Activity score label
+            const getActivityLabel = (score) => {
+                if (score >= 80) return { text: 'Perfekt', color: 'text-green-600' };
+                if (score >= 60) return { text: 'Gut', color: 'text-emerald-500' };
+                if (score >= 40) return { text: 'OK', color: 'text-amber-500' };
+                return { text: 'Nicht ideal', color: 'text-red-400' };
+            };
+
+            const weatherHTML = Object.entries(cityWeather).map(([city, w]) => {
+                // Build 5-day forecast HTML - LARGER
+                const forecastHTML = (w.forecast || []).slice(0, 5).map(f => `
+                    <div class="flex flex-col items-center text-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <span class="text-sm font-semibold text-gray-500 mb-2">${formatDate(f.date)}</span>
+                        <span class="text-4xl mb-2">${getWeatherIcon(f.weather_icon)}</span>
+                        <span class="text-2xl font-bold text-gray-800">${f.temp}°</span>
+                        <span class="text-xs text-gray-400 mt-1">${f.temp_min}° / ${f.temp_max}°</span>
+                        <span class="text-xs text-blue-500 mt-1">💧 ${f.rain_probability}%</span>
+                    </div>
+                `).join('');
+
+                // Activity scores HTML - LARGER
+                const activities = w.activity_scores || {};
+                const activityIcons = {
+                    beach: '🏖️',
+                    hiking: '🥾',
+                    dog_walk: '🐕',
+                    cycling: '🚴'
+                };
+                const activityLabels = {
+                    beach: 'Strandwetter',
+                    hiking: 'Wanderwetter',
+                    dog_walk: 'Hundespaziergang',
+                    cycling: 'Radwetter'
+                };
+                const activityHTML = Object.entries(activities).map(([key, score]) => {
+                    const label = getActivityLabel(score);
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-2">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">${activityIcons[key]}</span>
+                                <span class="text-base font-medium text-gray-700">${activityLabels[key]}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-32 h-4 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full ${score >= 60 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-400' : 'bg-red-400'}" style="width: ${score}%"></div>
+                                </div>
+                                <span class="text-lg font-bold ${label.color} w-12 text-right">${score}%</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Weather alert HTML
+                let alertHTML = '';
+                if (w.weather_alert) {
+                    const alert = w.weather_alert;
+                    const alertColors = {
+                        severe: 'bg-red-100 border-red-500 text-red-700',
+                        warning: 'bg-amber-100 border-amber-500 text-amber-700',
+                        info: 'bg-blue-100 border-blue-500 text-blue-700'
+                    };
+                    alertHTML = `
+                        <div class="mt-4 p-4 ${alertColors[alert.severity] || alertColors.info} border-l-4 rounded-lg text-base">
+                            <strong>⚠️ ${alert.message}</strong>
+                        </div>
+                    `;
+                }
+
+                return `
+                <div class="bg-white p-6 rounded-2xl shadow-lg border-2 border-emerald-100 mb-6">
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                        <div>
+                            <div class="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-1">${city}</div>
+                            <div class="text-5xl font-bold text-gray-800">${w.avg_temp}°C</div>
+                            <div class="text-xl text-gray-500 capitalize mt-1">${w.conditions}</div>
+                        </div>
+                        <div class="text-7xl">${getWeatherIcon(w.forecast?.[0]?.weather_icon || '01d')}</div>
+                    </div>
+                    
+                    <!-- Weather Details - LARGER -->
+                    <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                            <div class="text-3xl mb-2">💧</div>
+                            <div class="text-xs text-blue-600 font-semibold uppercase">Regen</div>
+                            <div class="text-2xl font-bold text-gray-800">${w.max_rain_probability}%</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                            <div class="text-3xl mb-2">💨</div>
+                            <div class="text-xs text-gray-600 font-semibold uppercase">Wind</div>
+                            <div class="text-2xl font-bold text-gray-800">${w.avg_wind_speed || 0} <span class="text-sm">km/h</span></div>
+                        </div>
+                        <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-4 border border-cyan-200">
+                            <div class="text-3xl mb-2">💦</div>
+                            <div class="text-xs text-cyan-600 font-semibold uppercase">Luftfeuchte</div>
+                            <div class="text-2xl font-bold text-gray-800">${w.avg_humidity || 0}%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 5-Day Forecast - LARGER -->
+                    <div class="mb-6">
+                        <div class="text-base font-bold text-gray-700 mb-3 px-1">📅 5-Tage Wettervorhersage</div>
+                        <div class="grid grid-cols-5 gap-3">${forecastHTML}</div>
+                    </div>
+                    
+                    <!-- Activity Scores - LARGER -->
+                    <div>
+                        <div class="text-base font-bold text-gray-700 mb-3 px-1">🏃 Aktivitäts-Scores</div>
+                        <div class="space-y-2">${activityHTML}</div>
+                    </div>
+                    
+                    <!-- Weather Alert -->
+                    ${alertHTML}
                 </div>
-                <div class="text-3xl">${w.icon_emoji || '☀️'}</div>
-            </div>
-        `).join('');
+            `}).join('');
 
-        if (weatherHTML) {
-            weatherDiv.innerHTML = weatherHTML;
-            weatherDiv.classList.remove('hidden');
-        } else {
-            weatherDiv.classList.add('hidden');
-        }
-    }
-
-    function renderAlerts(alerts) {
-        const container = document.getElementById('alerts-container');
-        const list = document.getElementById('alerts-list');
-        
-        if (!alerts || alerts.length === 0) {
-            container.classList.add('hidden');
-            return;
+            if (weatherHTML) {
+                weatherDiv.innerHTML = `<div class="space-y-2">${weatherHTML}</div>`;
+                weatherDiv.classList.remove('hidden');
+            } else {
+                weatherDiv.classList.add('hidden');
+            }
         }
 
-        list.innerHTML = alerts.map(alert => `
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            const list = document.getElementById('alerts-list');
+
+            if (!alerts || alerts.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            list.innerHTML = alerts.map(alert => `
             <div class="p-3 bg-white border-l-4 border-amber-400 shadow-sm rounded-r-lg text-xs text-gray-700 whitespace-pre-line">
                 ${alert}
             </div>
         `).join('');
-        container.classList.remove('hidden');
-    }
-
-    // ── Search ─────────────────────────────────────────────────
-    const searchBtn = document.getElementById('search-btn');
-    const statusBar = document.getElementById('status-bar');
-    const statusBarText = document.getElementById('status-bar-text');
-    const sortSelect = document.getElementById('sort-select');
-    const exportPdfBtn = document.getElementById('export-pdf-btn');
-    
-    let lastSearchResults = { airbnb: [], booking: [], search_params: {} };
-
-    exportPdfBtn.addEventListener('click', async () => {
-        try {
-            exportPdfBtn.disabled = true;
-            exportPdfBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Exportiert...';
-            
-            const payload = {
-                deals: [...lastSearchResults.airbnb, ...lastSearchResults.booking],
-                search_params: lastSearchResults.search_params
-            };
-            
-            const res = await fetch('/export-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `UrlaubsDeals_${new Date().toISOString().split('T')[0]}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            } else {
-                alert('PDF Export fehlgeschlagen.');
-            }
-        } catch (err) {
-            console.error('PDF Error:', err);
-            alert('Fehler beim PDF Export.');
-        } finally {
-            exportPdfBtn.disabled = false;
-            exportPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF Export';
+            container.classList.remove('hidden');
         }
-    });
 
-    sortSelect.addEventListener('change', () => {
-        sortAndRender();
-    });
+        // ── Search ─────────────────────────────────────────────────
+        const searchBtn = document.getElementById('search-btn');
+        const statusBar = document.getElementById('status-bar');
+        const statusBarText = document.getElementById('status-bar-text');
+        const sortSelect = document.getElementById('sort-select');
+        const minRatingSelect = document.getElementById('min-rating-select');
+        const maxPriceInput = document.getElementById('max-price-input');
+        const petOnlyToggle = document.getElementById('pet-only-toggle');
+        const exportPdfBtn = document.getElementById('export-pdf-btn');
 
-    function sortAndRender() {
-        const criteria = sortSelect.value;
-        const sortFn = (a, b) => {
-            if (criteria === 'price_asc') return a.price_per_night - b.price_per_night;
-            if (criteria === 'rating_desc') return b.rating - a.rating;
-            if (criteria === 'rank') return b.rank_score - a.rank_score;
-            if (criteria === 'weather') {
-                const tempA = a.weather?.temp || 0;
-                const tempB = b.weather?.temp || 0;
-                return tempB - tempA;
+        let lastSearchResults = { airbnb: [], booking: [], search_params: {}, run_id: null, validation: null };
+
+        exportPdfBtn.addEventListener('click', async () => {
+            try {
+                exportPdfBtn.disabled = true;
+                exportPdfBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Exportiert...';
+
+                const payload = {
+                    deals: [...lastSearchResults.airbnb, ...lastSearchResults.booking],
+                    search_params: lastSearchResults.search_params
+                };
+
+                const res = await fetch('/export-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `UrlaubsDeals_${new Date().toISOString().split('T')[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else {
+                    alert('PDF Export fehlgeschlagen.');
+                }
+            } catch (err) {
+                console.error('PDF Error:', err);
+                alert('Fehler beim PDF Export.');
+            } finally {
+                exportPdfBtn.disabled = false;
+                exportPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF Export';
             }
-            return 0;
-        };
+        });
 
-        const sortedAirbnb = [...lastSearchResults.airbnb].sort(sortFn);
-        const sortedBooking = [...lastSearchResults.booking].sort(sortFn);
-
-        renderDeals(sortedAirbnb, 'airbnb');
-        renderDeals(sortedBooking, 'booking');
-    }
-
-    searchBtn.addEventListener('click', async () => {
-        if (!validateInputs()) return;
-
-        const cities     = document.getElementById('input-cities').value;
-        const checkin    = document.getElementById('input-checkin').value;
-        const checkout   = document.getElementById('input-checkout').value;
-        const adults     = document.getElementById('input-adults').value;
-        const children   = document.getElementById('input-children').value;
-        const pets       = document.getElementById('input-pets').checked ? 1 : 0;
-        const budget     = document.getElementById('input-budget').value;
-        const budgetType = document.getElementById('input-budget-type').value;
-
-        // Loading
-        searchBtn.disabled = true;
-        searchBtn.setAttribute('aria-busy', 'true');
-        searchBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Suche läuft…';
-        statusBar.classList.add('hidden');
-
-        document.getElementById('airbnb-count').style.display = 'none';
-        document.getElementById('booking-count').style.display = 'none';
-        document.getElementById('airbnb-grid').innerHTML  = loadingHTML();
-        document.getElementById('booking-grid').innerHTML = loadingHTML();
-
-        try {
-            const url = `/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}&adults=${adults}&children=${children}&pets=${pets}&budget=${budget}&budget_type=${budgetType}`;
-            const res  = await fetch(url);
-            const data = await res.json();
-
-            lastSearchResults.airbnb = data.top_airbnb_deals || [];
-            lastSearchResults.booking = data.top_booking_deals || [];
-            lastSearchResults.search_params = data.search_params || {};
-            
+        sortSelect.addEventListener('change', () => {
             sortAndRender();
-            renderWeather([...lastSearchResults.airbnb, ...lastSearchResults.booking]);
-            renderAlerts(data.price_alerts);
-            exportPdfBtn.classList.remove('hidden');
+        });
+        minRatingSelect.addEventListener('change', () => {
+            sortAndRender();
+        });
+        maxPriceInput.addEventListener('input', () => {
+            sortAndRender();
+        });
+        petOnlyToggle.addEventListener('change', () => {
+            sortAndRender();
+        });
 
-            const nights = data.search_params?.nights ?? '?';
-            statusBarText.textContent = `${data.total_deals_found} Deals gefunden · ${nights} Nächte · ${adults} Erw.${pets ? ' · 🐕' : ''}`;
-            statusBar.classList.remove('hidden');
-            document.getElementById('status-text').textContent = `${data.total_deals_found} Deals verarbeitet für ${nights} Nächte`;
-        } catch (err) {
-            console.error('Search error:', err);
-            const errHTML = `<div class="empty-state">
+        function applyClientFilters(deals) {
+            const minRating = Number(minRatingSelect.value || 0);
+            const maxPrice = Number(maxPriceInput.value || 0);
+            const petOnly = petOnlyToggle.checked;
+
+            return deals.filter((deal) => {
+                const rating = Number(deal.rating || 0);
+                const price = Number(deal.price_per_night || 0);
+
+                if (minRating > 0 && rating < minRating) return false;
+                if (maxPrice > 0 && price > maxPrice) return false;
+                if (petOnly && !deal.pet_friendly) return false;
+                return true;
+            });
+        }
+
+        function sortAndRender() {
+            const criteria = sortSelect.value;
+            const sortFn = (a, b) => {
+                if (criteria === 'price_asc') return a.price_per_night - b.price_per_night;
+                if (criteria === 'rating_desc') return b.rating - a.rating;
+                if (criteria === 'rank') return b.rank_score - a.rank_score;
+                if (criteria === 'weather') {
+                    const tempA = a.weather_forecast?.avg_temp || 0;
+                    const tempB = b.weather_forecast?.avg_temp || 0;
+                    return tempB - tempA;
+                }
+                return 0;
+            };
+
+            const filteredAirbnb = applyClientFilters(lastSearchResults.airbnb || []);
+            const filteredBooking = applyClientFilters(lastSearchResults.booking || []);
+
+            const sortedAirbnb = [...filteredAirbnb].sort(sortFn);
+            const sortedBooking = [...filteredBooking].sort(sortFn);
+
+            renderDeals(sortedAirbnb, 'airbnb', (lastSearchResults.airbnb || []).length > 0);
+            renderDeals(sortedBooking, 'booking', (lastSearchResults.booking || []).length > 0);
+        }
+
+        searchBtn.addEventListener('click', async () => {
+            if (!validateInputs()) return;
+
+            const cities = document.getElementById('input-cities').value;
+            const checkin = document.getElementById('input-checkin').value;
+            const checkout = document.getElementById('input-checkout').value;
+            const adults = document.getElementById('input-adults').value;
+            const children = document.getElementById('input-children').value;
+            const pets = document.getElementById('input-pets').checked ? 1 : 0;
+            const budget = document.getElementById('input-budget').value;
+            const budgetType = document.getElementById('input-budget-type').value;
+
+            // Loading
+            searchBtn.disabled = true;
+            searchBtn.setAttribute('aria-busy', 'true');
+            searchBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Suche läuft…';
+            statusBar.classList.add('hidden');
+
+            document.getElementById('airbnb-count').style.display = 'none';
+            document.getElementById('booking-count').style.display = 'none';
+            document.getElementById('airbnb-grid').innerHTML = loadingHTML();
+            document.getElementById('booking-grid').innerHTML = loadingHTML();
+
+            try {
+                const url = `/search?cities=${encodeURIComponent(cities)}&checkin=${checkin}&checkout=${checkout}&adults=${adults}&children=${children}&pets=${pets}&budget=${budget}&budget_type=${budgetType}`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const data = await res.json();
+
+                lastSearchResults.airbnb = data.top_airbnb_deals || [];
+                lastSearchResults.booking = data.top_booking_deals || [];
+                lastSearchResults.search_params = data.search_params || {};
+                lastSearchResults.run_id = data.run_id || null;
+                lastSearchResults.validation = data.validation || null;
+
+                sortAndRender();
+                renderWeather([...lastSearchResults.airbnb, ...lastSearchResults.booking]);
+                renderAlerts(data.price_alerts);
+                exportPdfBtn.classList.remove('hidden');
+
+                const nights = data.search_params?.nights ?? '?';
+                const rejected = data.validation?.rejected_count ?? 0;
+                const runIdText = data.run_id ? ` · Run ${data.run_id}` : '';
+                const rejectedText = rejected > 0 ? ` · ${rejected} verworfen` : '';
+                statusBarText.textContent = `${data.total_deals_found} Deals gefunden · ${nights} Nächte · ${adults} Erw.${pets ? ' · 🐕' : ''}${rejectedText}${runIdText}`;
+                statusBar.classList.remove('hidden');
+                document.getElementById('status-text').textContent = `${data.total_deals_found} Deals verarbeitet für ${nights} Nächte${rejectedText}`;
+            } catch (err) {
+                console.error('Search error:', err);
+                const errHTML = `<div class="empty-state">
                 <div class="empty-icon">⚠️</div>
                 <div class="empty-title">Verbindungsfehler</div>
                 <div class="empty-desc">Suche konnte nicht gestartet werden. Bitte prüfe die Verbindung und versuche es erneut.</div>
             </div>`;
-            document.getElementById('airbnb-grid').innerHTML  = errHTML;
-            document.getElementById('booking-grid').innerHTML = errHTML;
-        } finally {
-            searchBtn.disabled = false;
-            searchBtn.setAttribute('aria-busy', 'false');
-            searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Angebote finden';
-        }
-    });
-</script>
+                document.getElementById('airbnb-grid').innerHTML = errHTML;
+                document.getElementById('booking-grid').innerHTML = errHTML;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.setAttribute('aria-busy', 'false');
+                searchBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Angebote finden';
+            }
+        });
+    </script>
 </body>
+
 </html>
