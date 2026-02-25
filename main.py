@@ -7,8 +7,7 @@ import asyncio
 import argparse
 import json
 import sys
-from datetime import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 from holland_agent import VacationAgent  # pyre-ignore[21]
 from html_report_generator import HTMLReportGenerator  # pyre-ignore[21]
 
@@ -103,6 +102,20 @@ Examples:
         help="Generate report file: 'html' for VacationDeals_YYYYMMDD.html (default: html)"
     )
 
+    parser.add_argument(
+        "--schedule-minutes",
+        type=int,
+        default=0,
+        help="Run search every N minutes (0 = run once and exit, default: 0)"
+    )
+
+    parser.add_argument(
+        "--max-runs",
+        type=int,
+        default=0,
+        help="Maximum scheduled runs (only used with --schedule-minutes, 0 = unlimited)"
+    )
+
     return parser.parse_args()
 
 
@@ -184,49 +197,80 @@ def print_summary(results: dict, top_n: int):
     print("\n" + "="*70)
 
 
+async def run_once(agent: VacationAgent, args, cities, run_index: int = 1):
+    """Execute one search cycle and handle output/report generation."""
+    results = await agent.find_best_deals(
+        cities=cities,
+        checkin=args.checkin,
+        checkout=args.checkout,
+        group_size=args.adults,
+        pets=args.pets
+    )
+
+    if args.output == "json":
+        print("\n" + json.dumps(results, indent=2, ensure_ascii=False))
+    else:
+        print_summary(results, args.top)
+
+    if args.report == "html":
+        report_gen = HTMLReportGenerator()
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"VacationDeals_{timestamp}_run{run_index}.html"
+        path = report_gen.generate_report(
+            deals=results["top_10_deals"],
+            search_params=results["search_params"],
+            filename=filename
+        )
+        print(f"\n📊 Report generated: {path}")
+
+
 async def main():
     """Main CLI entry point"""
     args = parse_args()
 
-    # Validate dates
     if not validate_dates(args.checkin, args.checkout):
         sys.exit(1)
 
-    # Parse cities
     cities = [city.strip() for city in args.cities.split(",")]
 
-    # Create agent
     agent = VacationAgent(
         budget_min=args.budget_min,
         budget_max=args.budget_max
     )
 
     try:
-        # Run search
-        results = await agent.find_best_deals(
-            cities=cities,
-            checkin=args.checkin,
-            checkout=args.checkout,
-            group_size=args.adults,
-            pets=args.pets
-        )
+        interval = max(0, int(args.schedule_minutes))
+        max_runs = max(0, int(args.max_runs))
 
-        # Output results
-        if args.output == "json":
-            print("\n" + json.dumps(results, indent=2, ensure_ascii=False))
-        else:
-            print_summary(results, args.top)
-            
-        # Generate Report
-        if args.report == "html":
-            report_gen = HTMLReportGenerator()
-            filename = f"VacationDeals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-            path = report_gen.generate_report(
-                deals=results["top_10_deals"], # Or all deals if preferred, but top is cleaner
-                search_params=results["search_params"],
-                filename=filename
+        if interval == 0:
+            await run_once(agent, args, cities, run_index=1)
+            return
+
+        run_count = 0
+        print(f"\n⏱️ Scheduler active: every {interval} minute(s)")
+        if max_runs > 0:
+            print(f"   Max runs: {max_runs}")
+
+        while True:
+            run_count += 1
+            started = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"\n🚀 Scheduled run #{run_count} started at {started}")
+
+            try:
+                await run_once(agent, args, cities, run_index=run_count)
+            except Exception as cycle_error:
+                print(f"\nRun #{run_count} failed: {cycle_error}", file=sys.stderr)
+
+            if max_runs > 0 and run_count >= max_runs:
+                print("\n✅ Scheduler finished: max runs reached")
+                break
+
+            next_run = datetime.now() + timedelta(minutes=interval)
+            print(
+                f"\n⏳ Waiting {interval} minute(s) until next run "
+                f"({next_run.strftime('%Y-%m-%d %H:%M:%S')})"
             )
-            print(f"\n📊 Report generated: {path}")
+            await asyncio.sleep(float(interval * 60))
 
     except KeyboardInterrupt:
         print("\n\nSearch cancelled by user")

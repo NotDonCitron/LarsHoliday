@@ -3,7 +3,7 @@ Deal Ranking System for Holland Vacation Agent
 Scores and ranks vacation deals based on multiple criteria
 """
 
-from typing import List, Dict
+from typing import Any, Dict, List
 from dataclasses import dataclass
 
 
@@ -34,6 +34,15 @@ class DealRanker:
 
     def __init__(self, budget_max: int = 250):
         self.budget_max = budget_max
+        self.fx_rates_to_eur = {
+            "EUR": 1.0,
+            "USD": 0.92,
+            "GBP": 1.17,
+            "CHF": 1.03,
+            "NOK": 0.085,
+            "SEK": 0.088,
+            "DKK": 0.134,
+        }
 
     def rank_deals(self, deals: List[Dict], nights: int = 7) -> List[Dict]:
         """
@@ -53,21 +62,31 @@ class DealRanker:
                 continue
 
             # Calculate base score
-            score = self._calculate_base_score(deal)
+            normalized_price = self._normalize_price_to_eur(
+                price=deal.get("price_per_night", 0),
+                currency=deal.get("currency", "EUR"),
+                custom_rate=deal.get("fx_rate_to_eur"),
+            )
+
+            deal_for_score = dict(deal)
+            deal_for_score["price_per_night"] = normalized_price
+
+            # Calculate base score
+            score = self._calculate_base_score(deal_for_score)
 
             # Apply multipliers
-            score = self._apply_multipliers(score, deal)
+            score = self._apply_multipliers(score, deal_for_score)
 
-            # Calculate total cost
-            total_cost = deal.get("price_per_night", 0) * nights
+            # Calculate total cost (normalized to EUR)
+            total_cost = normalized_price * nights
 
             # Build scored deal
             scored_deal = {
-                "rank_score": round(score, 1),
+                "rank_score": self._round_to(score, 1),
                 "name": deal.get("name", "Unknown"),
                 "location": deal.get("location", "Unknown"),
-                "price_per_night": deal.get("price_per_night", 0),
-                "total_cost_for_trip": total_cost,
+                "price_per_night": self._round_to(normalized_price, 2),
+                "total_cost_for_trip": self._round_to(total_cost, 2),
                 "rating": deal.get("rating", 0),
                 "reviews": deal.get("reviews", 0),
                 "pet_friendly": deal.get("pet_friendly", False),
@@ -76,6 +95,9 @@ class DealRanker:
                 "image_url": deal.get("image_url", ""),
                 "images": deal.get("images", []),
                 "weather_forecast": deal.get("weather_forecast"),
+                "currency": "EUR",
+                "original_currency": str(deal.get("currency", "EUR")).upper(),
+                "original_price_per_night": deal.get("price_per_night", 0),
                 "recommendation": self._get_recommendation(score, total_cost)
             }
 
@@ -85,27 +107,31 @@ class DealRanker:
         return sorted(scored_deals, key=lambda x: x["rank_score"], reverse=True)
 
     def _calculate_base_score(self, deal: Dict) -> float:
-        """Calculate base score from price, rating, and reviews"""
+        """Calculate base score from price, rating, and reviews."""
         score = 0.0
 
         # 1. Price Score (0-40 points)
         # Lower price = higher score
-        price = deal.get("price_per_night", 0)
+        price = self._safe_float(deal.get("price_per_night", 0))
         if price <= 0:
-            return 0.0 # Invalid deal
-        price_score = max(0, 40 - (price / 3))
+            return 0.0  # Invalid deal
+        price_score = 40.0 - (price / 3.0)
+        if price_score < 0:
+            price_score = 0.0
         score += price_score
 
         # 2. Rating Score (0-30 points)
         # Max 30 points for 5-star rating
-        rating = deal.get("rating", 0)
+        rating = self._safe_float(deal.get("rating", 0))
         rating_score = rating * 6
         score += rating_score
 
         # 3. Review Count Score (0-20 points)
         # More reviews = more trustworthy
-        reviews = deal.get("reviews", 0)
-        review_score = min(20, reviews / 20)
+        reviews = self._safe_float(deal.get("reviews", 0))
+        review_score = reviews / 20.0
+        if review_score > 20.0:
+            review_score = 20.0
         score += review_score
 
         return score
@@ -122,6 +148,48 @@ class DealRanker:
         score *= weather_bonus
 
         return score
+
+    def _normalize_price_to_eur(self, price: object, currency: object, custom_rate: object = None) -> float:
+        """Normalize arbitrary currency to EUR for fair ranking and sorting."""
+        base_price = self._safe_float(price)
+        if base_price <= 0:
+            return 0.0
+
+        if isinstance(custom_rate, (int, float)) and float(custom_rate) > 0:
+            return base_price * float(custom_rate)
+
+        code = str(currency or "EUR").upper()
+        rate = self.fx_rates_to_eur.get(code, 1.0)
+        return base_price * rate
+
+    def _safe_float(self, value: Any, default: float = 0.0) -> float:
+        if isinstance(value, bool):
+            return default
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value)
+            except ValueError:
+                return default
+        return default
+
+    def _round_to(self, value: float, digits: int = 2) -> float:
+        try:
+            return float(f"{float(value):.{digits}f}")
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _first_n(self, items: List[Dict], count: int) -> List[Dict]:
+        if count <= 0:
+            return []
+        out: List[Dict] = []
+        idx = 0
+        total = len(items)
+        while idx < total and idx < count:
+            out.append(items[idx])
+            idx += 1
+        return out
 
     def _get_recommendation(self, score: float, total_cost: float) -> str:
         """Generate human-readable recommendation"""
@@ -155,7 +223,7 @@ class DealRanker:
         if not ranked_deals:
             return {"status": "No deals found"}
 
-        top_3 = ranked_deals[:3]
+        top_3 = self._first_n(ranked_deals, 3)
 
         # Calculate budget breakdown
         prices = [d["price_per_night"] for d in ranked_deals]
@@ -163,7 +231,7 @@ class DealRanker:
             "nights": nights,
             "cheapest_per_night": min(prices),
             "most_expensive_per_night": max(prices),
-            "average_per_night": round(sum(prices) / len(prices), 2)
+            "average_per_night": self._round_to(sum(prices) / len(prices), 2)
         }
 
         # Find best options

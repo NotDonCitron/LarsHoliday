@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wireframe – Lars Urlaubs-Deals (Redesign)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    /* ── Wireframe legend ── */
+    .wf-legend {
+      background: #fff;
+      border: 2px solid #333;
+      padding: 12px 20px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .wf-legend strong { font-size: 13px; margin-right: 8px; }
+    .badge-reuse { background: #4CAF50; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+    .badge-new   { background: #FF9800; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+    .badge-fix   { background: #F44336; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+
+    /* ── Layout shell ── */
+    .page { max-width: 1200px; margin: 16px auto; border: 2px solid #333; background: #fff; }
+
+    /* ── Top bar: breadcrumb improvements note ── */
+    .wf-note {
+      background: #fffde7;
+      border: 1px dashed #bbb;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #666;
+      font-family: Arial, sans-serif;
+      font-style: italic;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      background: #ccc;
+      border-bottom: 2px solid #333;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .paw-icon { width: 28px; height: 28px; background: #888; border-radius: 50%; display: inline-block; }
+    .navbar-links { display: flex; gap: 16px; }
+    .navbar-link {
+      background: #e0e0e0;
+      border: 2px solid #333;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #333;
+    }
+    .navbar-link.active { background: #999; font-weight: bold; }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .hamburger span { width: 26px; height: 3px; background: #333; border-radius: 2px; }
+
+    /* ── Skip link ── */
+    .skip-link {
+      display: block;
+      background: #333;
+      color: #fff;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      border-bottom: 1px solid #666;
+    }
+
+    /* ── Body layout ── */
+    .body-layout {
+      display: flex;
+      gap: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      border-right: 2px solid #333;
+      padding: 20px;
+      background: #fafafa;
+      position: relative;
+    }
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 8px;
+    }
+    .slider-icon { display: inline-block; width: 16px; height: 16px; background: #888; border-radius: 2px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #555; font-family: Arial, sans-serif; }
+    .form-label .req { color: #cc0000; margin-left: 2px; }
+    .form-input {
+      width: 100%;
+      border: 2px solid #999;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: 'Comic Sans MS', cursive;
+      font-size: 13px;
+      background: #f0f0f0;
+      color: #333;
+    }
+    .form-input-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .form-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .budget-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .budget-row .form-label { margin: 0; flex: 1; }
+    .budget-type-select {
+      border: 2px solid #999;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      background: #e8e8e8;
+      cursor: pointer;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-top: 1px dashed #ccc;
+      border-bottom: 1px dashed #ccc;
+      margin: 10px 0;
+    }
+    .checkbox-box {
+      width: 18px; height: 18px;
+      border: 2px solid #999;
+      border-radius: 3px;
+      background: #aaa;
+      flex-shrink: 0;
+    }
+    .checkbox-label { font-size: 13px; }
+
+    /* Input validation hint */
+    .validation-hint {
+      font-size: 10px;
+      color: #cc0000;
+      font-family: Arial, sans-serif;
+      margin-top: 2px;
+      display: none;
+    }
+    .validation-hint.show { display: block; }
+
+    .search-btn {
+      width: 100%;
+      background: #555;
+      color: #fff;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 15px;
+      font-family: 'Comic Sans MS', cursive;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .search-btn:focus { outline: 3px solid #333; outline-offset: 2px; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      background: #e8e8e8;
+      border-bottom: 2px solid #333;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+    }
+    .status-pill {
+      background: #bbb;
+      border: 1px solid #999;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+    }
+    .status-pill.active { background: #777; color: #fff; }
+
+    /* ── Main content ── */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      min-width: 0;
+    }
+
+    .page-header {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .page-title { font-size: 26px; font-weight: bold; }
+    .page-subtitle { font-size: 13px; color: #666; margin-top: 4px; font-family: Arial, sans-serif; }
+    .sort-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+    }
+    .sort-select {
+      border: 2px solid #999;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      background: #f0f0f0;
+    }
+
+    /* ── Section ── */
+    .section { margin-bottom: 32px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    .source-icon {
+      width: 24px; height: 24px;
+      background: #bbb;
+      border-radius: 50%;
+      border: 2px solid #888;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 18px; font-weight: bold; }
+    .result-count {
+      background: #ddd;
+      border: 1px solid #999;
+      border-radius: 12px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-family: Arial, sans-serif;
+      margin-left: auto;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      border: 2px dashed #bbb;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      background: #fafafa;
+    }
+    .empty-icon { width: 48px; height: 48px; background: #ccc; border-radius: 50%; margin: 0 auto 12px; }
+    .empty-title { font-size: 15px; font-weight: bold; margin-bottom: 6px; }
+    .empty-desc { font-size: 12px; color: #777; font-family: Arial, sans-serif; margin-bottom: 16px; }
+    .empty-cta {
+      background: #555;
+      color: #fff;
+      border: 2px solid #333;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    /* ── Deal cards grid ── */
+    .deals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .deal-card {
+      border: 2px solid #999;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+    .deal-card:hover { box-shadow: 4px 4px 0 #999; }
+    .deal-card:focus-within { outline: 3px solid #333; }
+
+    .deal-img {
+      width: 100%;
+      height: 160px;
+      background: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #777;
+      font-family: Arial, sans-serif;
+      border-bottom: 2px solid #bbb;
+      position: relative;
+    }
+    .deal-img-text { font-style: italic; }
+    .deal-img-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #999;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .star-icon { display: inline-block; width: 10px; height: 10px; background: #bbb; border-radius: 2px; }
+    .deal-score-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #555;
+      color: #fff;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+    }
+    .pet-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #999;
+      border-radius: 20px;
+      padding: 3px 8px;
+      font-size: 11px;
+    }
+
+    .deal-body { padding: 14px; }
+    .deal-name {
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      /* Clamped to 2 lines */
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .deal-location { font-size: 11px; color: #777; font-family: Arial, sans-serif; margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
+    .loc-dot { width: 8px; height: 8px; background: #bbb; border-radius: 50%; }
+
+    .deal-pricing {
+      border-top: 1px dashed #ccc;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 10px;
+    }
+    .price-label { font-size: 9px; color: #999; text-transform: uppercase; font-family: Arial, sans-serif; letter-spacing: 0.5px; }
+    .price-main { font-size: 18px; font-weight: bold; }
+    .price-total { font-size: 13px; font-weight: bold; }
+
+    .deal-actions { display: flex; gap: 8px; }
+    .btn-primary {
+      flex: 1;
+      background: #555;
+      color: #fff;
+      border: 2px solid #333;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 12px;
+      font-family: 'Comic Sans MS', cursive;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-primary:focus { outline: 3px solid #333; outline-offset: 2px; }
+    .btn-icon {
+      background: #f0f0f0;
+      border: 2px solid #999;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+    }
+    .btn-icon:focus { outline: 3px solid #333; outline-offset: 2px; }
+
+    /* ── Footer ── */
+    .footer {
+      background: #888;
+      color: #fff;
+      padding: 16px 20px;
+      text-align: center;
+      border-top: 2px solid #333;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+    }
+
+    /* ── Component badges ── */
+    .comp-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .comp-badge.reuse { background: #4CAF50; color: #fff; }
+    .comp-badge.new   { background: #FF9800; color: #fff; }
+    .comp-badge.fix   { background: #F44336; color: #fff; }
+
+    /* ── Annotation callouts ── */
+    .annotation {
+      border: 1px dashed #F44336;
+      border-radius: 4px;
+      background: #fff9f9;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: Arial, sans-serif;
+      color: #c62828;
+      margin-top: 4px;
+    }
+
+    /* ── Improvements panel ── */
+    .improvements-panel {
+      background: #fffde7;
+      border: 2px dashed #bbb;
+      padding: 16px 20px;
+      margin: 12px 20px;
+      border-radius: 6px;
+    }
+    .improvements-panel h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+    .improvements-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .improvement-tag {
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .body-layout { flex-direction: column; }
+      .sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 2px solid #333; }
+      .navbar-links { display: none; }
+      .hamburger { display: flex; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .deals-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── WIREFRAME LEGEND ─────────────────────────────────── -->
+<div class="wf-legend">
+  <strong>Wireframe: Lars Urlaubs-Deals — Redesign Suggestion</strong>
+  <span><span class="badge-reuse">[REUSE]</span> Existing pattern</span>
+  <span><span class="badge-new">[NEW]</span> New component / improvement</span>
+  <span><span class="badge-fix">[FIX]</span> Accessibility / UX fix</span>
+  <span style="font-family:Arial;font-size:11px;color:#888;">Balsamiq-style · Grayscale · Mid-fidelity</span>
+</div>
+
+<!-- ── PAGE SHELL ────────────────────────────────────────── -->
+<div class="page">
+
+  <!-- Skip to content -->
+  <!-- NEW: Skip link for keyboard accessibility -->
+  <div style="position:relative;">
+    <span class="comp-badge new">[NEW] SkipLink</span>
+  </div>
+  <a href="#main-content" class="skip-link">⌨ Zum Hauptinhalt springen (Skip to content)</a>
+
+  <!-- ── NAVBAR ── -->
+  <!-- REUSE: nav element structure; FIX: nav links get real href/routes; NEW: hamburger menu on mobile -->
+  <div style="position:relative;">
+    <span class="comp-badge reuse" style="top:6px;right:6px;">[REUSE] Navbar</span>
+    <span class="comp-badge fix" style="top:6px;right:80px;">[FIX] Nav hrefs</span>
+  </div>
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="paw-icon" title="Paw icon"></div>
+      Lars Urlaubs-Deals
+    </div>
+    <div class="navbar-links">
+      <a href="#suche" class="navbar-link active">Suche</a>
+      <a href="#favoriten" class="navbar-link">Favoriten</a>
+      <a href="#wetter" class="navbar-link">Wetter</a>
+    </div>
+    <!-- NEW: Hamburger menu for mobile — replaces hidden nav on small screens -->
+    <div class="hamburger" title="Menu (Mobile)">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- ── IMPROVEMENTS PANEL ── -->
+  <div class="improvements-panel">
+    <h3>🔧 Key Redesign Goals shown in this wireframe:</h3>
+    <div class="improvements-list">
+      <span class="improvement-tag">✅ Accessible label[for] on all inputs</span>
+      <span class="improvement-tag">✅ Hamburger nav on mobile</span>
+      <span class="improvement-tag">✅ Skip-to-content link</span>
+      <span class="improvement-tag">✅ Inline validation (no alert())</span>
+      <span class="improvement-tag">✅ Sort control on deal sections</span>
+      <span class="improvement-tag">✅ Favicon added</span>
+      <span class="improvement-tag">✅ Favorite / save button on cards</span>
+      <span class="improvement-tag">✅ Status pill count per source</span>
+      <span class="improvement-tag">✅ Improved button contrast</span>
+      <span class="improvement-tag">✅ Empty state with CTA guidance</span>
+      <span class="improvement-tag">✅ Result count badges per section</span>
+      <span class="improvement-tag">✅ focus-visible ring on interactive elements</span>
+    </div>
+  </div>
+
+  <!-- ── BODY: SIDEBAR + MAIN ── -->
+  <div class="body-layout">
+
+    <!-- ── SIDEBAR ── -->
+    <!-- REUSE: Sidebar structure; FIX: all labels need for="" attr matching input IDs -->
+    <aside class="sidebar">
+      <div style="position:relative;">
+        <span class="comp-badge fix">[FIX] label[for] on all inputs</span>
+      </div>
+      <div class="sidebar-title">
+        <div class="slider-icon"></div>
+        Suche anpassen
+      </div>
+
+      <!-- Reiseziele -->
+      <div class="form-group">
+        <!-- FIX: label must have for="input-cities" -->
+        <label class="form-label" for="wf-cities">Reiseziele <span class="req">*</span></label>
+        <input id="wf-cities" class="form-input" type="text" value="Amsterdam, Zandvoort, Rotterdam" placeholder="z.B. Amsterdam, Rotterdam">
+        <div class="annotation">⚡ FIX: label missing for="input-cities" in current code</div>
+      </div>
+
+      <!-- Dates -->
+      <div class="form-group">
+        <div class="form-input-pair">
+          <div>
+            <label class="form-label" for="wf-checkin">Check-In <span class="req">*</span></label>
+            <input id="wf-checkin" class="form-input" type="text" value="08.03.2026">
+          </div>
+          <div>
+            <label class="form-label" for="wf-checkout">Check-Out <span class="req">*</span></label>
+            <input id="wf-checkout" class="form-input" type="text" value="15.03.2026">
+          </div>
+        </div>
+        <!-- NEW: Inline validation message instead of alert() -->
+        <div class="validation-hint">⚠ Check-Out muss nach Check-In sein</div>
+        <div class="annotation">⚡ NEW: Inline error instead of browser alert()</div>
+      </div>
+
+      <!-- Adults / Children -->
+      <div class="form-group">
+        <div class="form-input-row">
+          <div>
+            <label class="form-label" for="wf-adults">Erwachsene</label>
+            <input id="wf-adults" class="form-input" type="number" value="2" min="1">
+          </div>
+          <div>
+            <label class="form-label" for="wf-children">Kinder</label>
+            <input id="wf-children" class="form-input" type="number" value="0" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Pet toggle -->
+      <div class="checkbox-row">
+        <div class="checkbox-box" title="Checked: Reisen mit Hund"></div>
+        <label class="checkbox-label" for="wf-pets">🐕 Reisen mit Hund</label>
+        <div class="annotation" style="margin-top:0;margin-left:auto;font-size:9px;">✅ Already has label[for]</div>
+      </div>
+
+      <!-- Budget -->
+      <div class="form-group" style="margin-top:12px;">
+        <!-- NEW: Budget label and select properly grouped with fieldset-like treatment -->
+        <div class="budget-row">
+          <label class="form-label" for="wf-budget">Max. Budget (€)</label>
+          <select class="budget-type-select" id="wf-budget-type" aria-label="Budget-Typ">
+            <option>pro Nacht</option>
+            <option>Gesamt</option>
+          </select>
+        </div>
+        <input id="wf-budget" class="form-input" type="number" value="250" step="10">
+        <div class="annotation">⚡ FIX: Budget-Type select needs aria-label; style to match other inputs</div>
+      </div>
+
+      <!-- Search Button -->
+      <!-- FIX: button type="button" not "submit"; add aria-busy during loading; improve contrast -->
+      <div style="position:relative;">
+        <span class="comp-badge fix" style="bottom:0;top:auto;">[FIX] btn contrast + aria-busy</span>
+      </div>
+      <button class="search-btn" type="button" aria-label="Urlaubs-Angebote suchen">
+        🔍 Angebote finden
+      </button>
+      <div class="annotation">⚡ FIX: emerald-600 (#059669) on white = ~3.76:1, fails WCAG AA. Use emerald-700.</div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="main-content" id="main-content">
+
+      <!-- Page header with sort control -->
+      <!-- NEW: Sort dropdown to allow ranking by Price/Rating/Score -->
+      <div class="page-header" style="position:relative;">
+        <span class="comp-badge new">[NEW] SortControl</span>
+        <div>
+          <div class="page-title">Deine Urlaubs-Deals</div>
+          <div class="page-subtitle">Gefundene Deals für Holland</div>
+        </div>
+        <div class="sort-control">
+          Sortieren:
+          <select class="sort-select" aria-label="Ergebnisse sortieren">
+            <option>Bester Score</option>
+            <option>Preis aufsteigend</option>
+            <option>Bewertung</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Status bar -->
+      <!-- NEW: Status pills showing result count per source -->
+      <div style="position:relative;">
+        <span class="comp-badge new">[NEW] StatusBar</span>
+      </div>
+      <div class="status-bar">
+        <span>Letzte Suche: <strong>7 Nächte · 2 Erw. · 1 Hund</strong></span>
+        <span class="status-pill active">Airbnb: 4 Ergebnisse</span>
+        <span class="status-pill active">Booking.com: 6 Ergebnisse</span>
+        <span class="status-pill">Gesamt: 10 Deals</span>
+      </div>
+
+      <!-- ── AIRBNB SECTION ── -->
+      <!-- REUSE: section structure; NEW: result count badge; NEW: save/favorite button on cards -->
+      <section class="section">
+        <div class="section-header" style="position:relative;">
+          <span class="comp-badge new" style="right:0;top:0;">[NEW] ResultCount</span>
+          <div class="source-icon" title="Airbnb logo"></div>
+          <!-- FIX: section heading should be h3 (child of h2 "Deine Urlaubs-Deals") -->
+          <h3 class="section-title">Airbnb Empfehlungen</h3>
+          <span class="result-count">4 Ergebnisse</span>
+        </div>
+        <div class="annotation" style="margin-bottom:12px;">⚡ FIX: These are &lt;h2&gt; in current code but should be &lt;h3&gt; (children of the page h2)</div>
+
+        <!-- Deal cards -->
+        <div class="deals-grid">
+
+          <!-- CARD 1 -->
+          <div class="deal-card" style="position:relative;">
+            <span class="comp-badge reuse">[REUSE] DealCard</span>
+            <span class="comp-badge new" style="top:24px;">[NEW] FavoriteBtn</span>
+            <div class="deal-img">
+              <span class="deal-img-text">[Listing Image 400×220]</span>
+              <div class="deal-img-badge">⭐ 4.8</div>
+              <div class="deal-score-badge">Score: 91</div>
+              <div class="pet-badge">🐕</div>
+            </div>
+            <div class="deal-body">
+              <div class="deal-name">Strandhaus am Meer – Ruhige Lage</div>
+              <div class="deal-location"><div class="loc-dot"></div> Zandvoort, Noord-Holland</div>
+              <div class="deal-pricing">
+                <div>
+                  <div class="price-label">Pro Nacht</div>
+                  <div class="price-main">€185</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="price-label">Gesamt</div>
+                  <div class="price-total">€1.295</div>
+                </div>
+              </div>
+              <div class="deal-actions">
+                <button class="btn-primary" aria-label="Zum Angebot auf Airbnb öffnen">Zum Angebot ↗</button>
+                <!-- NEW: Save to favorites button -->
+                <button class="btn-icon" aria-label="Zu Favoriten hinzufügen" title="Speichern">♡</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2 (placeholder) -->
+          <div class="deal-card" style="background:#f9f9f9;">
+            <div class="deal-img" style="background:#e0e0e0;"><span class="deal-img-text">[Listing Image 400×220]</span></div>
+            <div class="deal-body">
+              <div class="deal-name">Gemütliche Wohnung im Stadtzentr...</div>
+              <div class="deal-location"><div class="loc-dot"></div> Amsterdam, Noord-Holland</div>
+              <div class="deal-pricing">
+                <div><div class="price-label">Pro Nacht</div><div class="price-main">€220</div></div>
+                <div style="text-align:right;"><div class="price-label">Gesamt</div><div class="price-total">€1.540</div></div>
+              </div>
+              <div class="deal-actions">
+                <button class="btn-primary" aria-label="Zum Angebot öffnen">Zum Angebot ↗</button>
+                <button class="btn-icon" aria-label="Speichern">♡</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── BOOKING SECTION ── -->
+      <section class="section">
+        <div class="section-header">
+          <div class="source-icon" title="Booking.com hotel icon"></div>
+          <h3 class="section-title">Booking.com Favoriten</h3>
+          <span class="result-count">6 Ergebnisse</span>
+        </div>
+
+        <!-- EMPTY STATE with CTA – shown before first search -->
+        <!-- NEW: Rich empty state with guidance CTA -->
+        <div style="position:relative;">
+          <span class="comp-badge new">[NEW] EmptyState</span>
+        </div>
+        <div class="empty-state">
+          <div class="empty-icon"></div>
+          <div class="empty-title">Noch keine Suche gestartet</div>
+          <div class="empty-desc">Trage links deine Reisedaten ein und klicke auf „Angebote finden",<br>um die besten Deals zu entdecken.</div>
+          <div class="empty-cta">→ Suche starten</div>
+        </div>
+        <div class="annotation" style="margin-top:8px;">⚡ NEW: Actionable empty state with instructions instead of generic icon+text</div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <!-- REUSE: footer; FIX: add role="contentinfo" -->
+  <div style="position:relative;">
+    <span class="comp-badge fix">[FIX] role=contentinfo</span>
+  </div>
+  <footer class="footer" role="contentinfo">
+    © 2026 Lars Urlaubs-Deals — Mit ❤ für Lars &amp; seinen Hund gebaut.
+    <span style="margin-left:20px;opacity:0.6;">v1.0</span>
+  </footer>
+
+</div>
+<!-- end .page -->
+
+<div style="max-width:1200px;margin:12px auto;padding:8px 12px;font-family:Arial,sans-serif;font-size:11px;color:#888;border-top:1px solid #ddd;">
+  Wireframe generated by Kombai · 2026-02-24 · Route: / (frontend_dashboard.html)
+</div>
+
+</body>
+</html>

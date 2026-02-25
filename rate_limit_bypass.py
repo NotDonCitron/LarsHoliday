@@ -295,15 +295,25 @@ cache = Cache(ttl_minutes=30)
 # ============================================================================
 
 class PriceAlertSystem:
-    """Track prices and alert on significant drops"""
-    
-    def __init__(self, storage_file: str = 'price_alerts.json', alert_threshold: float = 0.20):
+    """Track prices and emit robust alerts with dedupe and cooldown."""
+
+    def __init__(
+        self,
+        storage_file: str = 'price_alerts.json',
+        alert_threshold: float = 0.20,
+        cooldown_minutes: int = 360,
+        dedupe_minutes: int = 30,
+        max_history: int = 20,
+    ):
         self.storage_file = storage_file
         self.alert_threshold = alert_threshold
+        self.cooldown_minutes = cooldown_minutes
+        self.dedupe_minutes = dedupe_minutes
+        self.max_history = max_history
         self.alerts = self._load_alerts()
-    
+
     def _load_alerts(self) -> dict:
-        """Load alerts from file"""
+        """Load alerts from file."""
         if os.path.exists(self.storage_file):
             try:
                 with open(self.storage_file, 'r', encoding='utf-8') as f:
@@ -311,28 +321,53 @@ class PriceAlertSystem:
             except (json.JSONDecodeError, IOError):
                 pass
         return {'properties': {}}
-    
+
     def _save_alerts(self):
-        """Save alerts to file"""
+        """Save alerts to file."""
         with open(self.storage_file, 'w', encoding='utf-8') as f:
             json.dump(self.alerts, f, indent=2, ensure_ascii=False)
-    
+
+    def _parse_iso_datetime(self, value: Any) -> Optional[datetime]:
+        if not value or not isinstance(value, str):
+            return None
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return None
+
+    def _within_minutes(self, then: Optional[datetime], minutes: int) -> bool:
+        if then is None:
+            return False
+        return (datetime.now() - then) < timedelta(minutes=max(0, minutes))
+
+    def _same_price(self, old_price: Any, new_price: float) -> bool:
+        try:
+            old_val = float(old_price)
+            return abs(old_val - new_price) < 0.01
+        except (TypeError, ValueError):
+            return False
+
     def track_property(
         self,
         property_id: str,
         name: str,
         price: float,
         url: str,
-        source: str = "unknown"
+        source: str = "unknown",
+        threshold: Optional[float] = None,
+        cooldown_minutes: Optional[int] = None,
     ) -> tuple[bool, str]:
         """
         Track a property price and check for drops.
-        
+
         Returns:
             (alert_triggered: bool, message: str)
         """
+        if price <= 0:
+            return False, ""
+
         props = self.alerts['properties']
-        
+
         if property_id not in props:
             props[property_id] = {
                 'name': name,
@@ -340,31 +375,70 @@ class PriceAlertSystem:
                 'source': source,
                 'prices': [],
                 'alert_threshold': self.alert_threshold,
+                'cooldown_minutes': self.cooldown_minutes,
                 'last_alert': None,
+                'last_alert_price': None,
             }
-        
+
         prop = props[property_id]
-        
-        # Record price
+        prop['name'] = name or prop.get('name')
+        prop['url'] = url or prop.get('url')
+        prop['source'] = source or prop.get('source')
+
+        if isinstance(threshold, (int, float)) and threshold > 0:
+            prop['alert_threshold'] = float(threshold)
+        if isinstance(cooldown_minutes, int) and cooldown_minutes >= 0:
+            prop['cooldown_minutes'] = cooldown_minutes
+
+        prices = prop.get('prices', [])
+        now = datetime.now()
+
+        # Dedupe: skip identical consecutive price updates in a short window.
+        if prices:
+            last_entry = prices[-1]
+            last_price = last_entry.get('price')
+            last_source = str(last_entry.get('source', ''))
+            last_time = self._parse_iso_datetime(last_entry.get('date'))
+            if (
+                self._same_price(last_price, float(price))
+                and last_source == source
+                and self._within_minutes(last_time, self.dedupe_minutes)
+            ):
+                return False, ""
+
         price_entry = {
-            'price': price,
-            'date': datetime.now().isoformat(),
+            'price': float(price),
+            'date': now.isoformat(),
             'source': source,
         }
-        prop['prices'].append(price_entry)
-        
-        # Check for price drop
+        prices.append(price_entry)
+
+        if len(prices) > self.max_history:
+            prices = prices[-self.max_history:]
+        prop['prices'] = prices
+
         alert_triggered = False
         message = ""
-        
-        if len(prop['prices']) >= 2:
-            old_price = prop['prices'][-2]['price']
-            new_price = price
-            
-            if old_price > new_price:
+
+        if len(prices) >= 2:
+            old_price_raw = prices[-2].get('price')
+            try:
+                old_price = float(old_price_raw)
+            except (TypeError, ValueError):
+                old_price = 0.0
+            new_price = float(price)
+
+            if old_price > 0 and old_price > new_price:
                 drop_percent = (old_price - new_price) / old_price
-                
-                if drop_percent >= prop['alert_threshold']:
+                threshold_value = float(prop.get('alert_threshold', self.alert_threshold))
+                cooldown_value = int(prop.get('cooldown_minutes', self.cooldown_minutes))
+                last_alert_ts = self._parse_iso_datetime(prop.get('last_alert'))
+                last_alert_price = prop.get('last_alert_price')
+
+                in_cooldown = self._within_minutes(last_alert_ts, cooldown_value)
+                duplicate_alert_price = self._same_price(last_alert_price, new_price)
+
+                if drop_percent >= threshold_value and not (in_cooldown and duplicate_alert_price):
                     message = (
                         f"\n{'='*60}\n"
                         f"🔔 PRICE ALERT! 🔔\n"
@@ -373,17 +447,15 @@ class PriceAlertSystem:
                         f"Previous: €{old_price:.2f}\n"
                         f"Current:  €{new_price:.2f}\n"
                         f"Drop: {drop_percent*100:.1f}%\n"
+                        f"Threshold: {threshold_value*100:.1f}%\n"
                         f"Source: {source}\n"
                         f"URL: {url}\n"
                         f"{'='*60}\n"
                     )
                     alert_triggered = True
-                    prop['last_alert'] = datetime.now().isoformat()
-        
-        # Keep only last 10 prices
-        if len(prop['prices']) > 10:
-            prop['prices'] = prop['prices'][-10:]
-        
+                    prop['last_alert'] = now.isoformat()
+                    prop['last_alert_price'] = new_price
+
         self._save_alerts()
         return alert_triggered, message
     

@@ -3,6 +3,7 @@ import re
 import os
 import httpx
 import random
+import time
 from typing import List, Dict
 from datetime import datetime
 from urllib.parse import quote
@@ -15,6 +16,8 @@ from rate_limit_bypass import (
     cache,
     RequestDelayer
 )
+from scraper_health import scraper_metrics
+
 
 class PatchrightAirbnbScraper:
     def __init__(self):
@@ -44,21 +47,52 @@ class PatchrightAirbnbScraper:
         strategies = [
             ("curl", self._search_curl),
             ("firecrawl", self._search_firecrawl),
-            ("fallback", self._get_fallback_data)
         ]
-        
+
         for name, strategy in strategies:
+            started = time.perf_counter()
             try:
                 print(f"   [Scraper] Trying {name} strategy for {search_region}...")
                 deals = await strategy(search_region, checkin, checkout, adults, children, pets, budget_max, nights)
+                duration = time.perf_counter() - started
+                scraper_metrics.record(
+                    source="airbnb",
+                    strategy=name,
+                    success=bool(deals),
+                    duration=duration,
+                    result_count=len(deals) if deals else 0,
+                    error=None if deals else "no_results",
+                )
+
                 if deals and len(deals) > 0:
                     print(f"   ✅ {name} strategy succeeded: {len(deals)} deals")
                     return deals
             except Exception as e:
-                print(f"   ❌ {name} strategy failed: {str(e)[:100]}")
+                duration = time.perf_counter() - started
+                scraper_metrics.record(
+                    source="airbnb",
+                    strategy=name,
+                    success=False,
+                    duration=duration,
+                    result_count=0,
+                    error=str(e),
+                )
+                err_short = self._truncate_text(str(e), 100)
+                print(f"   ❌ {name} strategy failed: {err_short}")
                 continue
-        
-        return self._get_fallback_data(search_region, nights)
+
+        fallback_started = time.perf_counter()
+        fallback_deals = self._get_fallback_data(search_region, nights)
+        fallback_duration = time.perf_counter() - fallback_started
+        scraper_metrics.record(
+            source="airbnb",
+            strategy="fallback",
+            success=bool(fallback_deals),
+            duration=fallback_duration,
+            result_count=len(fallback_deals),
+            error=None if fallback_deals else "no_results",
+        )
+        return fallback_deals
 
     async def _search_curl(self, region: str, checkin: str, checkout: str, adults: int, children: int, pets: int, budget_max: int, nights: int) -> List[Dict]:
         """
@@ -82,14 +116,16 @@ class PatchrightAirbnbScraper:
                 # Basic check for block
                 if "dropped her ice cream" in response.text or "unusual activity" in response.text:
                     raise Exception("429 Blocked by Airbnb (Ice Cream/Bot detection)")
-                
+
                 # If we got real HTML, parse it (parsing logic might need to be different for raw HTML vs Markdown)
                 # For now, we reuse the markdown parser if the text looks okay, or return empty to trigger next strategy
-                return [] # Placeholder: HTML parsing is complex, fallback to Firecrawl for now
+                return []  # Placeholder: HTML parsing is complex, fallback to Firecrawl for now
             elif response.status_code == 429:
                 raise Exception("429 Too Many Requests")
             else:
                 raise Exception(f"HTTP Error {response.status_code}")
+
+        return []
 
     async def _search_firecrawl(self, region: str, checkin: str, checkout: str, adults: int, children: int, pets: int, budget_max: int, nights: int) -> List[Dict]:
         """Verified strategy using Firecrawl cloud scraping."""
@@ -196,7 +232,7 @@ class PatchrightAirbnbScraper:
             start_search = max(prev_pos, pos - 2000)
             end_search = unique_matches[i+1][1] if i + 1 < len(unique_matches) else len(clean_text)
             
-            block = clean_text[start_search:end_search]
+            block = self._substring(clean_text, start_search, end_search)
             
             # --- PARSING LOGIC ---
             
@@ -314,5 +350,35 @@ class PatchrightAirbnbScraper:
                 })
                 
         return deals
+
+    def _truncate_text(self, value: object, limit: int = 120) -> str:
+        text = str(value)
+        if len(text) <= limit:
+            return text
+
+        result = ""
+        idx = 0
+        while idx < limit and idx < len(text):
+            result = result + text[idx]
+            idx += 1
+        return result
+
+    def _substring(self, text: str, start: int, end: int) -> str:
+        safe_start = max(0, start)
+        safe_end = max(safe_start, end)
+        text_len = len(text)
+
+        if safe_start >= text_len:
+            return ""
+        if safe_end > text_len:
+            safe_end = text_len
+
+        out = ""
+        idx = safe_start
+        while idx < safe_end:
+            out = out + text[idx]
+            idx += 1
+        return out
+
 
 SmartAirbnbScraper = PatchrightAirbnbScraper

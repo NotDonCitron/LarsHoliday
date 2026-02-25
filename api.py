@@ -1,16 +1,13 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from typing import List, Optional, Dict
+from typing import Dict, List
 from pydantic import BaseModel
-from fastapi.responses import FileResponse, StreamingResponse
 from holland_agent import HollandVacationAgent
+from observability import observability_tracker
 from report_generator import ReportGenerator
-import uvicorn
-import asyncio
 import os
-import io
+import uvicorn
 
 class ExportRequest(BaseModel):
     deals: List[Dict]
@@ -29,9 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-agent = HollandVacationAgent()
-
-def get_env_robust(key_name):
+def get_env_robust(key_name: str):
     # Try exact match
     val = os.getenv(key_name)
     if val: return val
@@ -48,10 +43,11 @@ async def health_check():
         "keys_found": {
             "OPENWEATHER_API_KEY": bool(get_env_robust("OPENWEATHER_API_KEY")),
             "FIRECRAWL_API_KEY": bool(get_env_robust("FIRECRAWL_API_KEY")),
-            "AGENT_BROWSER_SESSION": bool(get_env_robust("AGENT_BROWSER_SESSION"))
+            "AGENT_BROWSER_SESSION": bool(get_env_robust("AGENT_BROWSER_SESSION")),
         },
         "available_vars": [k for k in os.environ.keys() if "API" in k or "KEY" in k],
-        "python_version": os.sys.version
+        "python_version": os.sys.version,
+        "observability": observability_tracker.snapshot(),
     }
 
 @app.get("/")
@@ -82,9 +78,12 @@ async def search_deals(
         children=children,
         pets=pets,
         budget=budget,
-        budget_type=budget_type
+        budget_type=budget_type,
     )
-    print(f"--- [API Request] Agent fertig. {results.get('total_deals_found')} Deals gefunden.")
+    print(
+        f"--- [API Request] Agent fertig. Run-ID={results.get('run_id')} | "
+        f"{results.get('total_deals_found')} Deals gefunden."
+    )
     
     # Process all deal lists for image fallbacks
     for key in ["top_10_deals", "top_airbnb_deals", "top_booking_deals"]:

@@ -1,8 +1,9 @@
 import asyncio
 import re
 import os
+import time
 import httpx
-from typing import List, Dict
+from typing import Dict, List
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import quote
@@ -15,6 +16,7 @@ from rate_limit_bypass import (
     cache,
     RequestDelayer
 )
+from scraper_health import scraper_metrics
 
 class BookingScraper:
     def __init__(self):
@@ -44,21 +46,53 @@ class BookingScraper:
         strategies = [
             ("curl", self._search_curl),
             ("firecrawl", self._search_firecrawl),
-            ("fallback", self._get_fallback_data)
         ]
-        
+
         for name, strategy in strategies:
+            started = time.perf_counter()
             try:
                 print(f"   [Booking] Trying {name} strategy for {search_city}...")
                 deals = await strategy(search_city, checkin, checkout, adults, children, nights)
+                duration = time.perf_counter() - started
+
+                scraper_metrics.record(
+                    source="booking",
+                    strategy=name,
+                    success=bool(deals),
+                    duration=duration,
+                    result_count=len(deals) if deals else 0,
+                    error=None if deals else "no_results",
+                )
+
                 if deals and len(deals) > 0:
                     print(f"   ✅ {name} strategy succeeded: {len(deals)} deals")
                     return deals
             except Exception as e:
-                print(f"   ❌ {name} strategy failed: {str(e)[:100]}")
+                duration = time.perf_counter() - started
+                scraper_metrics.record(
+                    source="booking",
+                    strategy=name,
+                    success=False,
+                    duration=duration,
+                    result_count=0,
+                    error=str(e),
+                )
+                err_short = self._truncate_text(str(e), 100)
+                print(f"   ❌ {name} strategy failed: {err_short}")
                 continue
-        
-        return self._get_fallback_data(search_city, nights)
+
+        fallback_started = time.perf_counter()
+        fallback_deals = self._get_fallback_data(search_city, nights)
+        fallback_duration = time.perf_counter() - fallback_started
+        scraper_metrics.record(
+            source="booking",
+            strategy="fallback",
+            success=bool(fallback_deals),
+            duration=fallback_duration,
+            result_count=len(fallback_deals),
+            error=None if fallback_deals else "no_results",
+        )
+        return fallback_deals
 
     async def _search_curl(self, city: str, checkin: str, checkout: str, adults: int, children: int, nights: int) -> List[Dict]:
         """Fast strategy using local httpx request."""
@@ -81,6 +115,8 @@ class BookingScraper:
                 return self._parse_html(soup, city, checkin, checkout, nights)
             else:
                 raise Exception(f"HTTP Error {response.status_code}")
+
+        return []
 
     async def _search_firecrawl(self, city: str, checkin: str, checkout: str, adults: int, children: int, nights: int) -> List[Dict]:
         """Verified strategy using Firecrawl cloud scraping with improved extraction."""
@@ -134,9 +170,10 @@ class BookingScraper:
         # Pattern for property names in markdown: ### [Name](url)
         # Split into property sections
         sections = re.split(r'###\s*\[', markdown)
-        for section in sections[1:]: # Skip header
+        section_index = 1
+        while section_index < len(sections):
             try:
-                section = '[' + section
+                section = '[' + sections[section_index]
                 name_match = re.search(r'\[([^\]]+)\]\((https://www\.booking\.com/hotel/[^\)]+)\)', section)
                 if not name_match: continue
                 
@@ -170,7 +207,10 @@ class BookingScraper:
                     "source": "booking (markdown)", "url": url, 
                     "image_url": image_url
                 })
-            except: continue
+            except:
+                section_index += 1
+                continue
+            section_index += 1
         return deals
 
     def _parse_html(self, soup, city, checkin, checkout, nights):
@@ -291,6 +331,18 @@ class BookingScraper:
                 "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=720"
             }
         ]
+
+    def _truncate_text(self, value: object, limit: int = 120) -> str:
+        text = str(value)
+        if len(text) <= limit:
+            return text
+
+        result = ""
+        idx = 0
+        while idx < limit and idx < len(text):
+            result = result + text[idx]
+            idx += 1
+        return result
 
     def _build_booking_url(self, city: str, checkin: str, checkout: str, adults: int, children: int):
         base = "https://www.booking.com/searchresults.html"

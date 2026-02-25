@@ -1,54 +1,56 @@
 import unittest
-import asyncio
-from unittest.mock import MagicMock, patch
-import sys
 import os
+import sys
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from holland_agent import HollandVacationAgent
 
+
 class TestAgentValidation(unittest.TestCase):
     def test_pet_filter_enforcement(self):
         """
-        Test that the agent filters out any non-pet-friendly deals 
+        Test that the agent filters out any non-pet-friendly deals
         if the user requested pet-friendly accommodations.
         """
         agent = HollandVacationAgent()
-        
-        # Mock deals from different sources
+
+        # Mock deals with all required fields so only pet filter decides
         mock_deals = [
             {
                 "name": "Dog Friendly Villa",
+                "location": "Amsterdam",
+                "source": "booking.com",
+                "url": "https://example.com/dog-friendly",
                 "pet_friendly": True,
                 "price_per_night": 100,
-                "source": "booking.com"
+                "rating": 4.7,
+                "reviews": 120,
             },
             {
                 "name": "No Pets Apartment",
+                "location": "Amsterdam",
+                "source": "airbnb",
+                "url": "https://example.com/no-pets",
                 "pet_friendly": False,
                 "price_per_night": 80,
-                "source": "airbnb"
-            }
+                "rating": 4.4,
+                "reviews": 90,
+            },
         ]
-        
-        # Patch the internal search method to return our mock deals
-        with patch.object(HollandVacationAgent, '_search_single_city', return_value=asyncio.Future()):
-             # We need to manually populate all_deals and run validation
-             agent.all_deals = mock_deals
-             
-             # Call validation (which we will implement)
-             # Future signature: agent._validate_deals(pets=1)
-             try:
-                 agent._validate_deals(pets=1)
-             except AttributeError:
-                 # If not implemented, it won't filter
-                 pass
-             
-             # Assertions
-             self.assertEqual(len(agent.all_deals), 1, "Should have filtered out the non-pet-friendly deal")
-             self.assertEqual(agent.all_deals[0]['name'], "Dog Friendly Villa")
+
+        agent.all_deals = mock_deals
+        validation = agent._validate_deals(pets=1)
+
+        self.assertEqual(validation["total_raw"], 2)
+        self.assertEqual(validation["valid_count"], 1)
+        self.assertEqual(validation["rejected_count"], 1)
+        self.assertEqual(validation["rejected_reasons"].get("not_pet_friendly"), 1)
+
+        self.assertEqual(len(agent.all_deals), 1)
+        self.assertEqual(agent.all_deals[0]["name"], "Dog Friendly Villa")
+
 
 if __name__ == '__main__':
     unittest.main()
