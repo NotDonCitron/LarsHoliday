@@ -72,6 +72,9 @@ class WeatherIntegration:
             "lang": "en"
         }
 
+        if not self.api_key:
+            return self._get_error_response(city, "Missing API Key")
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -79,6 +82,8 @@ class WeatherIntegration:
                     params=params,
                     timeout=15.0
                 )
+                if response.status_code == 401:
+                    return self._get_error_response(city, "Invalid API Key")
                 response.raise_for_status()
                 weather_data = response.json()
 
@@ -90,18 +95,22 @@ class WeatherIntegration:
             for i in range(0, min(40, len(forecast_list)), 8):
                 if i < len(forecast_list):
                     item = forecast_list[i]
+                    main = item.get("main", {})
+                    wind = item.get("wind", {})
+                    weather = item.get("weather", [{}])
+                    
                     daily_forecasts.append({
                         "date": item.get("dt_txt", "").split(" ")[0],
-                        "temp": round(item["main"]["temp"], 1),
-                        "temp_min": round(item["main"]["temp_min"], 1),
-                        "temp_max": round(item["main"]["temp_max"], 1),
-                        "humidity": item["main"]["humidity"],
-                        "weather": item["weather"][0]["main"] if item.get("weather") else "Unknown",
-                        "weather_description": item["weather"][0]["description"] if item.get("weather") else "",
-                        "weather_icon": item["weather"][0]["icon"] if item.get("weather") else "01d",
-                        "wind_speed": round(item["wind"]["speed"] * 3.6, 1) if item.get("wind") else 0,  # m/s to km/h
-                        "rain_probability": round(item.get("pop", 0) * 100),  # Probability of precipitation %
-                        "rain_mm": round(item.get("rain", {}).get("3h", 0), 1),
+                        "temp": round(float(main.get("temp", 0)), 1),
+                        "temp_min": round(float(main.get("temp_min", 0)), 1),
+                        "temp_max": round(float(main.get("temp_max", 0)), 1),
+                        "humidity": main.get("humidity", 0),
+                        "weather": weather[0].get("main", "Unknown") if weather else "Unknown",
+                        "weather_description": weather[0].get("description", "") if weather else "",
+                        "weather_icon": weather[0].get("icon", "01d") if weather else "01d",
+                        "wind_speed": round(float(wind.get("speed", 0)) * 3.6, 1),  # m/s to km/h
+                        "rain_probability": round(float(item.get("pop", 0)) * 100),  # Probability of precipitation %
+                        "rain_mm": round(float(item.get("rain", {}).get("3h", 0)), 1),
                         "uv_index": self._estimate_uv_index(item),
                     })
 
@@ -131,26 +140,33 @@ class WeatherIntegration:
 
         except Exception as e:
             print(f"   Warning: Weather API error for {city}: {e}")
-            return {
-                "city": city,
-                "forecast": [],
-                "avg_temp": None,
-                "avg_humidity": None,
-                "avg_wind_speed": None,
-                "max_rain_probability": 0,
-                "conditions": "unavailable",
-                "activity_scores": {
-                    "beach": 0,
-                    "hiking": 0,
-                    "dog_walk": 0,
-                    "cycling": 0
-                },
-                "weather_alert": None
-            }
+            return self._get_error_response(city, str(e))
+
+    def _get_error_response(self, city: str, error_msg: str) -> Dict:
+        return {
+            "city": city,
+            "forecast": [],
+            "avg_temp": None,
+            "avg_humidity": None,
+            "avg_wind_speed": None,
+            "max_rain_probability": 0,
+            "conditions": "unavailable",
+            "error": error_msg,
+            "activity_scores": {
+                "beach": 0,
+                "hiking": 0,
+                "dog_walk": 0,
+                "cycling": 0
+            },
+            "weather_alert": None
+        }
 
     def _calculate_avg_temp(self, data: Dict) -> Optional[float]:
         """Calculate average temperature from forecast data"""
-        temps = [item["main"]["temp"] for item in data.get("list", [])]
+        list_data = data.get("list", [])
+        if not list_data:
+            return None
+        temps = [item.get("main", {}).get("temp") for item in list_data if item.get("main", {}).get("temp") is not None]
         return round(sum(temps) / len(temps), 1) if temps else None
 
     def _get_weather_summary(self, data: Dict) -> str:
@@ -221,11 +237,12 @@ class WeatherIntegration:
         
         # Beach score: warm, sunny, low wind, low rain
         beach_score = 0
-        if avg_temp >= 20 and avg_temp <= 30:
+        temp = float(avg_temp)
+        if temp >= 20 and temp <= 30:
             beach_score += 50
-        elif avg_temp >= 15 and avg_temp < 20:
+        elif temp >= 15 and temp < 20:
             beach_score += 25
-        elif avg_temp > 30:
+        elif temp > 30:
             beach_score += 30  # Too hot
         
         # Check for sunny/cloudy conditions
@@ -244,11 +261,11 @@ class WeatherIntegration:
         
         # Hiking score: moderate temp, not too rainy, not too hot
         hiking_score = 0
-        if avg_temp >= 10 and avg_temp <= 22:
+        if temp >= 10 and temp <= 22:
             hiking_score += 50
-        elif avg_temp >= 5 and avg_temp < 10:
+        elif temp >= 5 and temp < 10:
             hiking_score += 30
-        elif avg_temp > 22 and avg_temp <= 28:
+        elif temp > 22 and temp <= 28:
             hiking_score += 25
         
         if max_rain_prob < 30:
@@ -264,15 +281,15 @@ class WeatherIntegration:
         # Dog walk score: comfortable temp, any weather OK
         dog_walk_score = 50  # Base score
         
-        if avg_temp >= 5 and avg_temp <= 25:
+        if temp >= 5 and temp <= 25:
             dog_walk_score += 30
-        elif avg_temp >= 0 and avg_temp < 5:
+        elif temp >= 0 and temp < 5:
             dog_walk_score += 15
-        elif avg_temp > 25 and avg_temp <= 30:
+        elif temp > 25 and temp <= 30:
             dog_walk_score += 15  # Warm but OK
-        elif avg_temp > 30:
+        elif temp > 30:
             dog_walk_score -= 10  # Too hot for dog
-        elif avg_temp < 0:
+        elif temp < 0:
             dog_walk_score -= 10  # Too cold
         
         # Rain is OK for dog walks
@@ -283,11 +300,11 @@ class WeatherIntegration:
         
         # Cycling score: dry, moderate temp, not too windy
         cycling_score = 0
-        if avg_temp >= 12 and avg_temp <= 25:
+        if temp >= 12 and temp <= 25:
             cycling_score += 40
-        elif avg_temp >= 8 and avg_temp < 12:
+        elif temp >= 8 and temp < 12:
             cycling_score += 25
-        elif avg_temp > 25 and avg_temp <= 30:
+        elif temp > 25 and temp <= 30:
             cycling_score += 20
         
         if avg_rain_prob < 30:
