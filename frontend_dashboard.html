@@ -1146,7 +1146,8 @@
             </div>
             <div class="navbar-links" role="list">
                 <a href="#search-section" class="navbar-link" role="listitem">Suche</a>
-                <a href="#favorites-section" class="navbar-link" role="listitem" id="nav-favorites">
+                <a href="#results-section" class="navbar-link" role="listitem" id="nav-favorites"
+                    onclick="showFavorites(); return false;">
                     Favoriten <span id="fav-count-badge" class="fav-badge" style="display: none;">0</span>
                 </a>
                 <a href="#weather-section" class="navbar-link" role="listitem">Wetter</a>
@@ -1158,7 +1159,8 @@
         </nav>
         <div id="mobile-menu" role="list" aria-label="Mobile Navigation">
             <a href="#search-section" role="listitem">Suche</a>
-            <a href="#favorites-section" role="listitem" id="nav-favorites-mobile">
+            <a href="#results-section" role="listitem" id="nav-favorites-mobile"
+                onclick="showFavorites(); return false;">
                 Favoriten <span id="fav-count-badge-mobile" class="fav-badge" style="display: none;">0</span>
             </a>
             <a href="#weather-section" role="listitem">Wetter</a>
@@ -1831,6 +1833,18 @@
             const airbnbGrid = document.getElementById('airbnb-grid');
             const bookingGrid = document.getElementById('booking-grid');
 
+            // Store current search results for later restore
+            if (!window.lastSearchResults) {
+                window.lastSearchResults = {
+                    airbnb: airbnbGrid.innerHTML,
+                    booking: bookingGrid.innerHTML,
+                    airbnbCount: document.getElementById('airbnb-count').textContent,
+                    bookingCount: document.getElementById('booking-count').textContent,
+                    airbnbHeading: document.getElementById('airbnb-heading').innerHTML,
+                    bookingVisible: document.getElementById('booking-heading').parentElement.style.display !== 'none'
+                };
+            }
+
             // Clear current results
             airbnbGrid.innerHTML = '';
             bookingGrid.innerHTML = '';
@@ -1844,42 +1858,66 @@
                     </div>`;
                 document.getElementById('airbnb-count').style.display = 'none';
                 document.getElementById('booking-count').style.display = 'none';
-                return;
+            } else {
+                // Render favorites as deal cards
+                const favHTML = favorites.map((fav, idx) => `
+                    <article class="deal-card" data-fav-id="${fav.id}">
+                        <div class="deal-img-wrap">
+                            <button class="favorite-btn active" onclick="toggleFavorite('${fav.id}', this)" aria-label="Aus Favoriten entfernen">
+                                <span class="heart">❤️</span>
+                            </button>
+                            <div class="deal-img-container">
+                                <img src="${fav.image}" onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'" alt="${fav.name}" loading="lazy">
+                            </div>
+                            <div class="deal-img-overlay" aria-hidden="true"></div>
+                            <div class="img-badge-rating">${fav.rating}</div>
+                        </div>
+                        <div class="deal-body">
+                            <div class="deal-source">❤️ Favorit</div>
+                            <div class="deal-title">${fav.name}</div>
+                            <div class="deal-location">${fav.location}</div>
+                            <div class="deal-footer">
+                                <div class="deal-price">${fav.price}</div>
+                                <a href="${fav.url}" target="_blank" rel="noopener" class="deal-btn">Zum Angebot ↗</a>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+
+                airbnbGrid.innerHTML = favHTML;
+                document.getElementById('airbnb-count').textContent = favorites.length + ' Favoriten';
+                document.getElementById('airbnb-count').style.display = 'inline-block';
             }
 
-            // Render favorites as deal cards
-            const favHTML = favorites.map((fav, idx) => `
-                <article class="deal-card" data-fav-id="${fav.id}">
-                    <div class="deal-img-wrap">
-                        <button class="favorite-btn active" onclick="toggleFavorite('${fav.id}', this)" aria-label="Aus Favoriten entfernen">
-                            <span class="heart">❤️</span>
-                        </button>
-                        <div class="deal-img-container">
-                            <img src="${fav.image}" onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'" alt="${fav.name}" loading="lazy">
-                        </div>
-                        <div class="deal-img-overlay" aria-hidden="true"></div>
-                        <div class="img-badge-rating">${fav.rating}</div>
-                    </div>
-                    <div class="deal-body">
-                        <div class="deal-source">❤️ Favorit</div>
-                        <div class="deal-title">${fav.name}</div>
-                        <div class="deal-location">${fav.location}</div>
-                        <div class="deal-footer">
-                            <div class="deal-price">${fav.price}</div>
-                            <a href="${fav.url}" target="_blank" rel="noopener" class="deal-btn">Zum Angebot ↗</a>
-                        </div>
-                    </div>
-                </article>
-            `).join('');
-
-            airbnbGrid.innerHTML = favHTML;
-            document.getElementById('airbnb-count').textContent = favorites.length + ' Favoriten';
-            document.getElementById('airbnb-count').style.display = 'inline-block';
             document.getElementById('booking-count').style.display = 'none';
 
-            // Update section title
-            document.getElementById('airbnb-heading').innerHTML = '<i class="fa-solid fa-heart"></i> Meine Favoriten';
+            // Update section title with back button
+            document.getElementById('airbnb-heading').innerHTML = `
+                <button onclick="restoreSearchResults()" class="mr-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition">
+                    ← Zurück
+                </button>
+                <i class="fa-solid fa-heart text-red-500"></i> Meine Favoriten
+            `;
             document.getElementById('booking-heading').parentElement.style.display = 'none';
+
+            // Scroll to results
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function restoreSearchResults() {
+            if (!window.lastSearchResults) return;
+
+            document.getElementById('airbnb-grid').innerHTML = window.lastSearchResults.airbnb;
+            document.getElementById('booking-grid').innerHTML = window.lastSearchResults.booking;
+            document.getElementById('airbnb-count').textContent = window.lastSearchResults.airbnbCount;
+            document.getElementById('booking-count').textContent = window.lastSearchResults.bookingCount;
+            document.getElementById('airbnb-count').style.display = window.lastSearchResults.airbnbCount ? 'inline-block' : 'none';
+            document.getElementById('booking-count').style.display = window.lastSearchResults.bookingCount ? 'inline-block' : 'none';
+            document.getElementById('airbnb-heading').innerHTML = window.lastSearchResults.airbnbHeading;
+            document.getElementById('booking-heading').parentElement.style.display = window.lastSearchResults.bookingVisible ? 'block' : 'none';
+
+            // Re-attach favorite button handlers
+            updateFavCount();
         }
 
         // Initialize favorites count on page load
