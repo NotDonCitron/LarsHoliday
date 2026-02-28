@@ -47,6 +47,59 @@
             --radius-xl: 1.5rem;
         }
 
+        /* ── Favorites Button ────────────────────────────────────── */
+        .favorite-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.1);
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .favorite-btn.active {
+            background: #fee2e2;
+        }
+
+        .favorite-btn .heart {
+            transition: transform 0.2s ease;
+        }
+
+        .favorite-btn:active .heart {
+            transform: scale(0.85);
+        }
+
+        /* ── Favorites Badge in Navbar ───────────────────────────── */
+        .fav-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 10px;
+            min-width: 16px;
+            text-align: center;
+        }
+
         /* ── Base ──────────────────────────────────────────────── */
         *,
         *::before,
@@ -1093,7 +1146,9 @@
             </div>
             <div class="navbar-links" role="list">
                 <a href="#search-section" class="navbar-link" role="listitem">Suche</a>
-                <a href="#favorites-section" class="navbar-link" role="listitem">Favoriten</a>
+                <a href="#favorites-section" class="navbar-link" role="listitem" id="nav-favorites">
+                    Favoriten <span id="fav-count-badge" class="fav-badge" style="display: none;">0</span>
+                </a>
                 <a href="#weather-section" class="navbar-link" role="listitem">Wetter</a>
             </div>
             <button id="hamburger-btn" class="hamburger-btn" aria-label="Navigation öffnen" aria-expanded="false"
@@ -1103,7 +1158,9 @@
         </nav>
         <div id="mobile-menu" role="list" aria-label="Mobile Navigation">
             <a href="#search-section" role="listitem">Suche</a>
-            <a href="#favorites-section" role="listitem">Favoriten</a>
+            <a href="#favorites-section" role="listitem" id="nav-favorites-mobile">
+                Favoriten <span id="fav-count-badge-mobile" class="fav-badge" style="display: none;">0</span>
+            </a>
             <a href="#weather-section" role="listitem">Wetter</a>
         </div>
     </header>
@@ -1472,9 +1529,16 @@
                     ? `<div class="price-trend ${trendClass}" title="Preistrend zum letzten Suchlauf">${trendIcon} ${trendText}</div>`
                     : '';
 
+                const favId = deal.url ? btoa(deal.url).substring(0, 16) : `${source}-${idx}`;
+                const isFav = isFavorite(favId);
+
                 return `
-            <article class="deal-card">
+            <article class="deal-card" data-fav-id="${favId}">
                 <div class="deal-img-wrap">
+                    <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${favId}', this)" aria-label="${isFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}">
+                        <span class="heart">${isFav ? '❤️' : '🤍'}</span>
+                    </button>
+                    
                     <div class="deal-img-container" id="carousel-${safeId}">
                         ${(deal.images && deal.images.length > 0 ? deal.images : [deal.image_url]).map(img => `
                             <img src="${img}"
@@ -1689,6 +1753,137 @@
                 weatherDiv.classList.add('hidden');
             }
         }
+
+        // ── Favorites System ────────────────────────────────────────
+        const FAVORITES_KEY = 'lars_favorites';
+
+        function getFavorites() {
+            try {
+                const stored = localStorage.getItem(FAVORITES_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveFavorites(favorites) {
+            try {
+                localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+                updateFavCount();
+            } catch (e) {
+                console.error('Failed to save favorites:', e);
+            }
+        }
+
+        function isFavorite(favId) {
+            return getFavorites().some(f => f.id === favId);
+        }
+
+        function toggleFavorite(favId, btn) {
+            const heart = btn.querySelector('.heart');
+            let favorites = getFavorites();
+
+            if (isFavorite(favId)) {
+                // Remove from favorites
+                favorites = favorites.filter(f => f.id !== favId);
+                heart.textContent = '🤍';
+                btn.classList.remove('active');
+                btn.setAttribute('aria-label', 'Zu Favoriten hinzufügen');
+            } else {
+                // Add to favorites - get deal data from the card
+                const card = btn.closest('.deal-card');
+                const dealData = {
+                    id: favId,
+                    name: card.querySelector('.deal-title')?.textContent || 'Unbekannt',
+                    location: card.querySelector('.deal-location')?.textContent || '',
+                    price: card.querySelector('.deal-price')?.textContent || '',
+                    rating: card.querySelector('.img-badge-rating')?.textContent?.trim() || '',
+                    image: card.querySelector('.deal-img-container img')?.src || '',
+                    url: card.querySelector('.deal-btn')?.href || '',
+                    dateAdded: new Date().toISOString()
+                };
+                favorites.push(dealData);
+                heart.textContent = '❤️';
+                btn.classList.add('active');
+                btn.setAttribute('aria-label', 'Aus Favoriten entfernen');
+            }
+
+            saveFavorites(favorites);
+        }
+
+        function updateFavCount() {
+            const count = getFavorites().length;
+            const badges = [
+                document.getElementById('fav-count-badge'),
+                document.getElementById('fav-count-badge-mobile')
+            ];
+
+            badges.forEach(badge => {
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'inline-block' : 'none';
+                }
+            });
+        }
+
+        function showFavorites() {
+            const favorites = getFavorites();
+            const airbnbGrid = document.getElementById('airbnb-grid');
+            const bookingGrid = document.getElementById('booking-grid');
+
+            // Clear current results
+            airbnbGrid.innerHTML = '';
+            bookingGrid.innerHTML = '';
+
+            if (favorites.length === 0) {
+                airbnbGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🤍</div>
+                        <div class="empty-title">Keine Favoriten</div>
+                        <div class="empty-desc">Klicke auf das Herz bei Angeboten, um sie hier zu speichern.</div>
+                    </div>`;
+                document.getElementById('airbnb-count').style.display = 'none';
+                document.getElementById('booking-count').style.display = 'none';
+                return;
+            }
+
+            // Render favorites as deal cards
+            const favHTML = favorites.map((fav, idx) => `
+                <article class="deal-card" data-fav-id="${fav.id}">
+                    <div class="deal-img-wrap">
+                        <button class="favorite-btn active" onclick="toggleFavorite('${fav.id}', this)" aria-label="Aus Favoriten entfernen">
+                            <span class="heart">❤️</span>
+                        </button>
+                        <div class="deal-img-container">
+                            <img src="${fav.image}" onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'" alt="${fav.name}" loading="lazy">
+                        </div>
+                        <div class="deal-img-overlay" aria-hidden="true"></div>
+                        <div class="img-badge-rating">${fav.rating}</div>
+                    </div>
+                    <div class="deal-body">
+                        <div class="deal-source">❤️ Favorit</div>
+                        <div class="deal-title">${fav.name}</div>
+                        <div class="deal-location">${fav.location}</div>
+                        <div class="deal-footer">
+                            <div class="deal-price">${fav.price}</div>
+                            <a href="${fav.url}" target="_blank" rel="noopener" class="deal-btn">Zum Angebot ↗</a>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+
+            airbnbGrid.innerHTML = favHTML;
+            document.getElementById('airbnb-count').textContent = favorites.length + ' Favoriten';
+            document.getElementById('airbnb-count').style.display = 'inline-block';
+            document.getElementById('booking-count').style.display = 'none';
+
+            // Update section title
+            document.getElementById('airbnb-heading').innerHTML = '<i class="fa-solid fa-heart"></i> Meine Favoriten';
+            document.getElementById('booking-heading').parentElement.style.display = 'none';
+        }
+
+        // Initialize favorites count on page load
+        updateFavCount();
 
         function renderAlerts(alerts) {
             const container = document.getElementById('alerts-container');
