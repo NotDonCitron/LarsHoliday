@@ -1579,17 +1579,17 @@
             };
 
             const weatherHTML = Object.entries(cityWeather).map(([city, w]) => {
-                // Build 5-day forecast HTML - COMPACT
+                // Build 5-day forecast HTML - ULTRA COMPACT for fixed width cards
                 const forecastHTML = (w.forecast || []).slice(0, 5).map(f => `
-                    <div class="flex flex-col items-center text-center p-2 bg-gray-50 rounded-lg border border-gray-100 min-w-[60px]">
-                        <span class="text-xs font-medium text-gray-500">${formatDate(f.date)}</span>
-                        <span class="text-2xl my-1">${getWeatherIcon(f.weather_icon)}</span>
-                        <span class="text-base font-bold text-gray-800">${f.temp}°</span>
-                        <span class="text-xs text-blue-500">💧${f.rain_probability}%</span>
+                    <div class="flex flex-col items-center text-center p-1 bg-gray-50 rounded border border-gray-100" style="min-width: 55px;">
+                        <span class="text-[10px] font-medium text-gray-500">${formatDate(f.date)}</span>
+                        <span class="text-xl my-0.5">${getWeatherIcon(f.weather_icon)}</span>
+                        <span class="text-sm font-bold text-gray-800">${f.temp}°</span>
+                        <span class="text-[9px] text-blue-500">💧${f.rain_probability}%</span>
                     </div>
                 `).join('');
 
-                // Activity scores HTML - COMPACT 2x2 GRID
+                // Activity scores HTML - ULTRA COMPACT 2x2 GRID
                 const activities = w.activity_scores || {};
                 const activityIcons = {
                     beach: '🏖️',
@@ -1606,13 +1606,13 @@
                 const activityHTML = Object.entries(activities).map(([key, score]) => {
                     const label = getActivityLabel(score);
                     return `
-                        <div class="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-                            <span class="text-xl mb-1">${activityIcons[key]}</span>
-                            <span class="text-xs font-medium text-gray-600 mb-1">${activityLabels[key]}</span>
-                            <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
+                        <div class="flex flex-col items-center p-1 bg-gray-50 rounded">
+                            <span class="text-base">${activityIcons[key]}</span>
+                            <span class="text-[10px] font-medium text-gray-600">${activityLabels[key]}</span>
+                            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden my-0.5">
                                 <div class="h-full ${score >= 60 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-400' : 'bg-red-400'}" style="width: ${score}%"></div>
                             </div>
-                            <span class="text-xs font-bold ${label.color}">${score}%</span>
+                            <span class="text-[10px] font-bold ${label.color}">${score}%</span>
                         </div>
                     `;
                 }).join('');
@@ -1634,46 +1634,46 @@
                 }
 
                 return `
-                <div class="bg-white p-4 rounded-xl shadow-md border border-emerald-100">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                <div class="bg-white p-3 rounded-xl shadow-md border border-emerald-100 flex-shrink-0" style="width: 320px; max-width: 100%;">
+                    <!-- Compact Header -->
+                    <div class="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
                         <div>
-                            <div class="text-xs font-bold text-emerald-600 uppercase tracking-wider">${city}</div>
-                            <div class="text-3xl font-bold text-gray-800">${w.avg_temp}°C</div>
-                            <div class="text-sm text-gray-500 capitalize">${w.conditions}</div>
+                            <div class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">${city}</div>
+                            <div class="text-2xl font-bold text-gray-800">${w.avg_temp}°C</div>
+                            <div class="text-xs text-gray-500 capitalize">${w.conditions}</div>
                         </div>
-                        <div class="text-5xl">${getWeatherIcon(w.forecast?.[0]?.weather_icon || '01d')}</div>
+                        <div class="text-4xl">${getWeatherIcon(w.forecast?.[0]?.weather_icon || '01d')}</div>
                     </div>
                     
-                    <!-- Weather Details Row -->
-                    <div class="flex justify-center gap-4 mb-4 text-center">
-                        <div class="bg-blue-50 rounded-lg px-3 py-2 border border-blue-100">
-                            <div class="text-lg">💧</div>
-                            <div class="text-xs text-blue-600 font-semibold">Regen</div>
-                            <div class="text-lg font-bold text-gray-800">${w.max_rain_probability}%</div>
+                    <!-- Compact Weather Details -->
+                    <div class="flex justify-center gap-2 mb-2 text-center">
+                        <div class="bg-blue-50 rounded-lg px-2 py-1 border border-blue-100">
+                            <div class="text-sm">💧</div>
+                            <div class="text-[10px] text-blue-600 font-semibold">Regen</div>
+                            <div class="text-base font-bold text-gray-800">${w.max_rain_probability}%</div>
                         </div>
-                        <div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                            <div class="text-lg">💨</div>
-                            <div class="text-xs text-gray-600 font-semibold">Wind</div>
-                            <div class="text-lg font-bold text-gray-800">${w.avg_wind_speed || 0} <span class="text-xs">km/h</span></div>
+                        <div class="bg-gray-50 rounded-lg px-2 py-1 border border-gray-100">
+                            <div class="text-sm">💨</div>
+                            <div class="text-[10px] text-gray-600 font-semibold">Wind</div>
+                            <div class="text-base font-bold text-gray-800">${w.avg_wind_speed || 0}</div>
                         </div>
-                        <div class="bg-cyan-50 rounded-lg px-3 py-2 border border-cyan-100">
-                            <div class="text-lg">💦</div>
-                            <div class="text-xs text-cyan-600 font-semibold">Feuchte</div>
-                            <div class="text-lg font-bold text-gray-800">${w.avg_humidity || 0}%</div>
+                        <div class="bg-cyan-50 rounded-lg px-2 py-1 border border-cyan-100">
+                            <div class="text-sm">💦</div>
+                            <div class="text-[10px] text-cyan-600 font-semibold">Feuchte</div>
+                            <div class="text-base font-bold text-gray-800">${w.avg_humidity || 0}%</div>
                         </div>
                     </div>
                     
-                    <!-- 5-Day Forecast -->
-                    <div class="mb-4">
-                        <div class="text-xs font-bold text-gray-600 mb-2">📅 5-Tage Vorhersage</div>
-                        <div class="flex justify-between gap-1 overflow-x-auto">${forecastHTML}</div>
+                    <!-- Compact 5-Day Forecast -->
+                    <div class="mb-2">
+                        <div class="text-[10px] font-bold text-gray-600 mb-1">📅 5-Tage</div>
+                        <div class="flex justify-between gap-0.5">${forecastHTML}</div>
                     </div>
                     
-                    <!-- Activity Scores - 2x2 Grid -->
+                    <!-- Compact Activity Scores -->
                     <div>
-                        <div class="text-xs font-bold text-gray-600 mb-2">🏃 Aktivitäten</div>
-                        <div class="grid grid-cols-2 gap-2">${activityHTML}</div>
+                        <div class="text-[10px] font-bold text-gray-600 mb-1">🏃 Aktivitäten</div>
+                        <div class="grid grid-cols-2 gap-1">${activityHTML}</div>
                     </div>
                     
                     <!-- Weather Alert -->
@@ -1682,8 +1682,8 @@
             `}).join('');
 
             if (weatherHTML) {
-                // Responsive grid: 1 column on mobile, 2 columns on larger screens
-                weatherDiv.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${weatherHTML}</div>`;
+                // All weather cards in one row, right-aligned, responsive sizing
+                weatherDiv.innerHTML = `<div class="flex flex-wrap justify-end gap-3">${weatherHTML}</div>`;
                 weatherDiv.classList.remove('hidden');
             } else {
                 weatherDiv.classList.add('hidden');
