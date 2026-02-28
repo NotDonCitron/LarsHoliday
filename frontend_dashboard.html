@@ -1531,7 +1531,7 @@
                     ? `<div class="price-trend ${trendClass}" title="Preistrend zum letzten Suchlauf">${trendIcon} ${trendText}</div>`
                     : '';
 
-                const favId = deal.url ? btoa(deal.url).substring(0, 16) : `${source}-${idx}`;
+                const favId = deal.url ? btoa(encodeURIComponent(deal.url)).substring(0, 16) : `${source}-${idx}`;
                 const isFav = isFavorite(favId);
 
                 return `
@@ -1794,14 +1794,16 @@
             } else {
                 // Add to favorites - get deal data from the card
                 const card = btn.closest('.deal-card');
+                // Find the CTA link which contains the actual deal URL
+                const ctaLink = card.querySelector('.deal-cta');
                 const dealData = {
                     id: favId,
-                    name: card.querySelector('.deal-title')?.textContent || 'Unbekannt',
+                    name: card.querySelector('.deal-name')?.textContent || 'Unbekannt',
                     location: card.querySelector('.deal-location')?.textContent || '',
-                    price: card.querySelector('.deal-price')?.textContent || '',
+                    price: card.querySelector('.price-total')?.textContent || card.querySelector('.price-main')?.textContent || '',
                     rating: card.querySelector('.img-badge-rating')?.textContent?.trim() || '',
                     image: card.querySelector('.deal-img-container img')?.src || '',
-                    url: card.querySelector('.deal-btn')?.href || '',
+                    url: ctaLink?.href || ctaLink?.getAttribute('href') || '',
                     dateAdded: new Date().toISOString()
                 };
                 favorites.push(dealData);
@@ -1870,16 +1872,22 @@
                                 <img src="${fav.image}" onerror="this.src='https://picsum.photos/800/450?grayscale&blur=2'" alt="${fav.name}" loading="lazy">
                             </div>
                             <div class="deal-img-overlay" aria-hidden="true"></div>
-                            <div class="img-badge-rating">${fav.rating}</div>
+                            <div class="img-badge-rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${fav.rating}</div>
                         </div>
                         <div class="deal-body">
-                            <div class="deal-source">❤️ Favorit</div>
-                            <div class="deal-title">${fav.name}</div>
-                            <div class="deal-location">${fav.location}</div>
-                            <div class="deal-footer">
-                                <div class="deal-price">${fav.price}</div>
-                                <a href="${fav.url}" target="_blank" rel="noopener" class="deal-btn">Zum Angebot ↗</a>
+                            <div class="deal-source" style="background: linear-gradient(135deg, #ec4899, #f43f5e); color: white;">❤️ Favorit</div>
+                            <h3 class="deal-name">${fav.name}</h3>
+                            <p class="deal-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ${fav.location}</p>
+                            <div class="deal-pricing" style="margin: 12px 0;">
+                                <div class="price-block">
+                                    <div class="price-label">Gesamtpreis</div>
+                                    <div class="price-total">${fav.price}</div>
+                                </div>
                             </div>
+                            <a href="${fav.url}" target="_blank" rel="noopener noreferrer" class="deal-cta">
+                                Zum Angebot
+                                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.65rem;" aria-hidden="true"></i>
+                            </a>
                         </div>
                     </article>
                 `).join('');
